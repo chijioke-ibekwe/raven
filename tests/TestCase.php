@@ -3,6 +3,7 @@
 namespace ChijiokeIbekwe\Messenger\Tests;
 
 use ChijiokeIbekwe\Messenger\MessengerServiceProvider;
+use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {
@@ -21,10 +22,8 @@ class TestCase extends \Orchestra\Testbench\TestCase
 
     protected function getEnvironmentSetUp($app): void
     {
-        $app['config']->set('database.default', 'test-db');
-        $app['config']->set('database.connections.test-db', [
-            'driver' => 'sqlite',
-            'database' => ':memory:'
-        ]);
+        $app->useEnvironmentPath(__DIR__.'/..');
+        $app->bootstrapWith([LoadEnvironmentVariables::class]);
+        parent::getEnvironmentSetUp($app);
     }
 }

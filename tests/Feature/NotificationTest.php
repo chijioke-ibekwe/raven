@@ -15,6 +15,7 @@ use ChijiokeIbekwe\Messenger\Notifications\DatabaseNotificationSender;
 use ChijiokeIbekwe\Messenger\Notifications\EmailNotificationSender;
 use ChijiokeIbekwe\Messenger\Tests\TestCase;
 use ChijiokeIbekwe\Messenger\Tests\Utilities\User;
+use Illuminate\Http\UploadedFile;
 
 class  NotificationTest extends TestCase
 {
