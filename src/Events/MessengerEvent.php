@@ -13,7 +13,7 @@ class MessengerEvent
     /**
      * Create a new event instance.
      */
-    public function __construct(public NotificationData $notificationDTO)
+    public function __construct(public NotificationData $notificationData)
     {
         //
     }

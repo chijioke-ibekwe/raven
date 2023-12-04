@@ -31,7 +31,7 @@ class NotificationData
     /**
      * @var array
      */
-    private array $attachments;
+    private array $attachmentUrls;
 
     /**
      *
@@ -84,9 +84,9 @@ class NotificationData
     /**
      * @return array
      */
-    public function getAttachments(): array
+    public function getAttachmentUrls(): array
     {
-        return $this->attachments ?? [];
+        return $this->attachmentUrls ?? [];
     }
 
     /**
@@ -139,12 +139,12 @@ class NotificationData
      * @param mixed $attachments
      * @return void
      */
-    public function setAttachments(mixed $attachments): void
+    public function setAttachmentUrls(mixed $attachmentUrls): void
     {
-        if(is_array($attachments)){
-            $this->attachments = $attachments;
+        if(is_array($attachmentUrls)){
+            $this->attachmentUrls = $attachmentUrls;
         } else {
-            $this->attachments[] = $attachments;
+            $this->attachmentUrls[] = $attachmentUrls;
         }
     }
 
@@ -155,6 +155,6 @@ class NotificationData
     {
         $notifiable = in_array(Notifiable::class, class_uses_recursive($recipient));
         throw_if(!$notifiable, MessengerInvalidDataException::class,
-            "Notification recipient is not notifiable");
+            "Notification recipient is not a notifiable");
     }
 }

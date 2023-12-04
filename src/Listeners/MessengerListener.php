@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Notification;
 use ChijiokeIbekwe\Messenger\Events\MessengerEvent;
 use ChijiokeIbekwe\Messenger\Exceptions\MessengerEntityNotFoundException;
 use ChijiokeIbekwe\Messenger\Models\NotificationContext;
-use ChijiokeIbekwe\Messenger\Services\NotificationSenderFactory;
+use ChijiokeIbekwe\Messenger\Services\ChannelSenderFactory;
 
 /**
  *
@@ -28,8 +28,8 @@ class MessengerListener
      */
     public function handle(MessengerEvent $event): void
     {
-        $dto = $event->notificationDTO;
-        $context_name = $dto->getContextName();
+        $data = $event->notificationData;
+        $context_name = $data->getContextName();
 
         $context = NotificationContext::where('name', $context_name)->first();
 
@@ -38,20 +38,20 @@ class MessengerListener
 
         $channels = $context->notification_channels;
 
-        $factory = new NotificationSenderFactory($dto, $context);
+        $factory = new ChannelSenderFactory($data, $context);
 
         foreach($channels as $channel){
             $channel_type = $channel->type;
 
             Log::debug("Processing notification for context $context_name through channel $channel_type->name");
 
-            $sender = $factory->getSender($channel_type);
+            $channel_sender = $factory->getSender($channel_type);
 
-            $recipients = $dto->getRecipients();
+            $recipients = $data->getRecipients();
 
-            if($sender){
+            if($channel_sender){
                 Log::debug("Sending notification for context $context_name through channel $channel_type->name");
-                Notification::send($recipients, $sender);
+                Notification::send($recipients, $channel_sender);
             } else {
                 Log::error("Notification channel $channel_type->name is not currently supported");
             }
