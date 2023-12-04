@@ -1,12 +1,12 @@
 {
-  "name": "jetstreamafrica/raven",
-  "description": "Jetstream Africa's multi-channel Laravel notification sender",
+  "name": "chijioke-ibekwe/messenger",
+  "description": "Multi-channel Laravel notification sender",
   "type": "library",
   "license": "MIT",
   "authors": [
     {
       "name": "Chijioke Ibekwe",
-      "email": "cki@jetstreamafrica.com"
+      "email": "ibekwe.chijioke18@gmail.com"
     }
   ],
   "require": {
@@ -18,13 +18,13 @@
   },
   "autoload": {
     "psr-4": {
-      "JetstreamAfrica\\Raven\\": "src/",
-      "JetstreamAfrica\\Raven\\Database\\Factories\\": "database/factories"
+      "ChijiokeIbekwe\\Messenger\\": "src/",
+      "ChijiokeIbekwe\\Messenger\\Database\\Factories\\": "database/factories"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "JetstreamAfrica\\Raven\\Tests\\": "tests/"
+      "ChijiokeIbekwe\\Messenger\\Tests\\": "tests/"
     }
   },
   "scripts": {
@@ -33,7 +33,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "JetstreamAfrica\\Raven\\RavenServiceProvider"
+        "ChijiokeIbekwe\\Messenger\\MessengerServiceProvider"
       ]
     }
   }
