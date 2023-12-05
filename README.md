@@ -247,7 +247,7 @@ This package is not available on Packagist. Hence, to use this package in your l
                 'name' => $verified_user->name
                 'email' => $verified_user->email
             ]);
-            $data->setAttachments($document_url)
+            $data->setAttachmentUrls($document_url)
     
             event(new MessengerEvent($data));
     ```
