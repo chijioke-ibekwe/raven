@@ -48,7 +48,7 @@ class MessengerServiceProvider extends ServiceProvider {
         $this->registerRoutes();
 
         $this->app->singleton(SendGrid::class, function ($app) {
-            return new SendGrid(config('api-key.sendgrid'));
+            return new SendGrid(config('messenger.api-key.sendgrid'));
         });
 
         Notification::extend('sendgrid-mail', function ($app) {
