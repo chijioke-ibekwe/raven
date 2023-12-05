@@ -254,12 +254,12 @@ This package is not available on Packagist. Hence, to use this package in your l
     The `contextName` property is required and must match the notification context name for that notification 
     on the database.  
     The `recipients` property is required and takes any single notifiable or an array of notifiables that should receive 
-    the notification.
+    the notification.  
     The `ccs` property is exclusively for email notifications and takes an associative array with a key-value pair of 
-    the emails and names of people you want to CC on the email.
+    the emails and names of people you want to CC on the email.  
     The `params` property is an associative array of all the variables that exist on the notification 
     template with their values, where the key must match the variable name on the template.  
-    Finally, the `attachments` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
+    Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
     needs to be attached to the email notification.  
 
 9. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
