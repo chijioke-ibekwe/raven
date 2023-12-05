@@ -65,7 +65,7 @@ class  NotificationTest extends TestCase
         $data->setParams([
             'booking_id' => 'JET12345'
         ]);
-        $data->setAttachments('https://cdn.iconscout.com/icon/free/png-256/free-docker-226091.png');
+        $data->setAttachmentUrls('https://cdn.iconscout.com/icon/free/png-256/free-docker-226091.png');
 
         (new MessengerListener())->handle(
             new MessengerEvent($data)
@@ -354,7 +354,7 @@ class  NotificationTest extends TestCase
     public function test_that_exception_is_thrown_when_a_non_notifiable_recipient_is_provided_in_notification_data()
     {
         $this->expectException(MessengerInvalidDataException::class);
-        $this->expectExceptionMessage('Notification recipient is not notifiable');
+        $this->expectExceptionMessage('Notification recipient is not a notifiable');
         $this->expectExceptionCode(422);
 
         Notification::fake();

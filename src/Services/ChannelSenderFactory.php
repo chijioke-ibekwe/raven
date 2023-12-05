@@ -9,7 +9,7 @@ use ChijiokeIbekwe\Messenger\Data\NotificationData;
 use ChijiokeIbekwe\Messenger\Models\NotificationContext;
 use ChijiokeIbekwe\Messenger\Notifications\SmsNotificationSender;
 
-class NotificationSenderFactory
+class ChannelSenderFactory
 {
 
     /**
@@ -19,16 +19,16 @@ class NotificationSenderFactory
 
 
     /**
-     * @param NotificationData $notificationDTO
+     * @param NotificationData $notificationData
      * @param NotificationContext $notificationContext
      */
-    public function __construct(private readonly NotificationData    $notificationDTO,
+    public function __construct(private readonly NotificationData    $notificationData,
                                 private readonly NotificationContext $notificationContext)
     {
 
-        $email_sender = new EmailNotificationSender($this->notificationDTO, $this->notificationContext);
-        $sms_sender = new SmsNotificationSender($this->notificationDTO, $this->notificationContext);
-        $database_sender = new DatabaseNotificationSender($this->notificationDTO, $this->notificationContext);
+        $email_sender = new EmailNotificationSender($this->notificationData, $this->notificationContext);
+        $sms_sender = new SmsNotificationSender($this->notificationData, $this->notificationContext);
+        $database_sender = new DatabaseNotificationSender($this->notificationData, $this->notificationContext);
 
 
         $this->sender_store = [
@@ -39,7 +39,7 @@ class NotificationSenderFactory
     }
 
     /**
-     * Supplies the correct notification sender class using the channel
+     * Supplies the correct notification channel sender class using the channel
      * @param ChannelType $channel
      * @return mixed
      * @throws \Throwable

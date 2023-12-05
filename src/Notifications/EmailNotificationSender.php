@@ -55,9 +55,9 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
         $substitutions = $this->notificationData->getParams();
         $email->addDynamicTemplateDatas($substitutions);
 
-        if(!empty($this->notificationData->getAttachments())) {
+        if(!empty($this->notificationData->getAttachmentUrls())) {
             $attachments = [];
-            foreach ($this->notificationData->getAttachments() as $url){
+            foreach ($this->notificationData->getAttachmentUrls() as $url){
                 $attachment = new Attachment();
                 $filename = basename($url);
                 $file_encoded = base64_encode(file_get_contents($url));
