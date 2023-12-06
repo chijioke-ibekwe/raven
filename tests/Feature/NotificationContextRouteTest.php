@@ -14,14 +14,6 @@ class NotificationContextRouteTest extends TestCase
 
     public function getEnvironmentSetUp($app): void
     {
-        $app['config']->set('messenger.api.prefix', 'api/v1');
-        $app['config']->set('messenger.api.middleware', 'api');
-        $app['config']->set('database.default', 'test-db');
-        $app['config']->set('database.connections.test-db', [
-            'driver' => 'sqlite',
-            'database' => ':memory:'
-        ]);
-
         // run the up() method (perform the migration)
         (new \CreateNotificationContextsTable)->up();
         (new \CreateNotificationChannelsTable)->up();

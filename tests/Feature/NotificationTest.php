@@ -15,7 +15,6 @@ use ChijiokeIbekwe\Messenger\Notifications\DatabaseNotificationSender;
 use ChijiokeIbekwe\Messenger\Notifications\EmailNotificationSender;
 use ChijiokeIbekwe\Messenger\Tests\TestCase;
 use ChijiokeIbekwe\Messenger\Tests\Utilities\User;
-use Illuminate\Http\UploadedFile;
 
 class  NotificationTest extends TestCase
 {
@@ -25,11 +24,6 @@ class  NotificationTest extends TestCase
     {
         $app['config']->set('messenger.notification-service.email', 'sendgrid-mail');
         $app['config']->set('messenger.notification-service.database', 'database');
-        $app['config']->set('database.default', 'test-db');
-        $app['config']->set('database.connections.test-db', [
-            'driver' => 'sqlite',
-            'database' => ':memory:'
-        ]);
 
         // run the up() method (perform the migration)
         (new \CreateNotificationContextsTable)->up();
@@ -65,7 +59,6 @@ class  NotificationTest extends TestCase
         $data->setParams([
             'booking_id' => 'JET12345'
         ]);
-        $data->setAttachmentUrls('https://cdn.iconscout.com/icon/free/png-256/free-docker-226091.png');
 
         (new MessengerListener())->handle(
             new MessengerEvent($data)
