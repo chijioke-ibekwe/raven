@@ -1,5 +1,5 @@
 {
-  "name": "chijioke-ibekwe/messenger",
+  "name": "chijioke-ibekwe/raven",
   "description": "Multi-channel Laravel notification sender",
   "type": "library",
   "license": "MIT",
@@ -18,13 +18,13 @@
   },
   "autoload": {
     "psr-4": {
-      "ChijiokeIbekwe\\Messenger\\": "src/",
-      "ChijiokeIbekwe\\Messenger\\Database\\Factories\\": "database/factories"
+      "ChijiokeIbekwe\\Raven\\": "src/",
+      "ChijiokeIbekwe\\Raven\\Database\\Factories\\": "database/factories"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "ChijiokeIbekwe\\Messenger\\Tests\\": "tests/"
+      "ChijiokeIbekwe\\Raven\\Tests\\": "tests/"
     }
   },
   "scripts": {
@@ -33,7 +33,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "ChijiokeIbekwe\\Messenger\\MessengerServiceProvider"
+        "ChijiokeIbekwe\\Raven\\RavenServiceProvider"
       ]
     }
   }

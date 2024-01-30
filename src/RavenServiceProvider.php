@@ -1,16 +1,16 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger;
+namespace ChijiokeIbekwe\Raven;
 
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use ChijiokeIbekwe\Messenger\Channels\SendGridChannel;
-use ChijiokeIbekwe\Messenger\Console\InstallCommand;
-use ChijiokeIbekwe\Messenger\Providers\EventServiceProvider;
+use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
+use ChijiokeIbekwe\Raven\Console\InstallCommand;
+use ChijiokeIbekwe\Raven\Providers\EventServiceProvider;
 use SendGrid;
 
-class MessengerServiceProvider extends ServiceProvider {
+class RavenServiceProvider extends ServiceProvider {
 
     public function register(): void
     {
@@ -24,8 +24,8 @@ class MessengerServiceProvider extends ServiceProvider {
 
             //publish config file
             $this->publishes([
-                __DIR__.'/../config/messenger.php' => config_path('messenger.php'),
-            ], 'messenger-config');
+                __DIR__.'/../config/raven.php' => config_path('raven.php'),
+            ], 'raven-config');
 
 
             //publish migration files
@@ -36,7 +36,7 @@ class MessengerServiceProvider extends ServiceProvider {
                     database_path('migrations/2023_05_12_142924_create_notification_channels_table.php'),
                 __DIR__ . '/../database/migrations/create_notification_channel_notification_context_table.php.stub' =>
                     database_path('migrations/2023_05_12_142925_create_notification_channel_notification_context_table.php')
-            ], 'messenger-migrations');
+            ], 'raven-migrations');
 
 
 
@@ -48,7 +48,7 @@ class MessengerServiceProvider extends ServiceProvider {
         $this->registerRoutes();
 
         $this->app->singleton(SendGrid::class, function ($app) {
-            return new SendGrid(config('messenger.api-key.sendgrid'));
+            return new SendGrid(config('raven.api-key.sendgrid'));
         });
 
         Notification::extend('sendgrid-mail', function ($app) {
@@ -66,8 +66,8 @@ class MessengerServiceProvider extends ServiceProvider {
     protected function routeConfiguration(): array
     {
         return [
-            'prefix' => config('messenger.api.prefix'),
-            'middleware' => config('messenger.api.middleware'),
+            'prefix' => config('raven.api.prefix'),
+            'middleware' => config('raven.api.middleware'),
         ];
     }
 }

@@ -1,12 +1,12 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Notifications;
+namespace ChijiokeIbekwe\Raven\Notifications;
 
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
-use ChijiokeIbekwe\Messenger\Data\NotificationData;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
 
 class SmsNotificationSender extends Notification implements ShouldQueue, INotificationSender
 {
@@ -19,7 +19,7 @@ class SmsNotificationSender extends Notification implements ShouldQueue, INotifi
     }
 
     public function via($notifiable): array {
-        return ['messenger.notification-service.sms'];
+        return ['raven.notification-service.sms'];
     }
 
     public function validateNotification()

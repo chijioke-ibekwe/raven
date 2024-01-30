@@ -1,12 +1,12 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Tests\Feature;
+namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use ChijiokeIbekwe\Messenger\Models\NotificationChannel;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
-use ChijiokeIbekwe\Messenger\Tests\TestCase;
-use ChijiokeIbekwe\Messenger\Tests\Utilities\User;
+use ChijiokeIbekwe\Raven\Models\NotificationChannel;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Tests\TestCase;
+use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 
 class NotificationContextRouteTest extends TestCase
 {
@@ -25,7 +25,7 @@ class NotificationContextRouteTest extends TestCase
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $context = NotificationContext::factory(1)->create([

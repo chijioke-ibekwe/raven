@@ -1,6 +1,6 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Notifications;
+namespace ChijiokeIbekwe\Raven\Notifications;
 
 interface INotificationSender
 {

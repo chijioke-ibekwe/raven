@@ -1,11 +1,11 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Channels;
+namespace ChijiokeIbekwe\Raven\Channels;
 
 use Exception;
 use Illuminate\Support\Facades\Log;
 use SendGrid;
-use ChijiokeIbekwe\Messenger\Notifications\EmailNotificationSender;
+use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 
 class SendGridChannel
 {
@@ -24,7 +24,7 @@ class SendGridChannel
             $email = $sender->toSendgrid($notifiable);
             $email->setClickTracking(true, true);
             $email->setOpenTracking(true, "--sub--");
-            $email->setFrom(config('messenger.mail.from.address'), config('messenger.mail.from.name'));
+            $email->setFrom(config('raven.mail.from.address'), config('raven.mail.from.name'));
 
             $response = $sendGrid->send($email);
 

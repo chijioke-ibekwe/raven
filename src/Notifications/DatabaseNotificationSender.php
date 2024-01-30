@@ -1,13 +1,13 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Notifications;
+namespace ChijiokeIbekwe\Raven\Notifications;
 
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
-use ChijiokeIbekwe\Messenger\Data\NotificationData;
-use ChijiokeIbekwe\Messenger\Exceptions\MessengerInvalidDataException;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
 
 class DatabaseNotificationSender extends Notification implements ShouldQueue, INotificationSender
 {
@@ -21,7 +21,7 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
 
     public function via($notifiable): array
     {
-        return [config('messenger.notification-service.database')];
+        return [config('raven.notification-service.database')];
     }
 
     /**
@@ -58,10 +58,10 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
     {
         $context_name = $this->notificationContext->name;
 
-        throw_if(empty($this->notificationContext->title), MessengerInvalidDataException::class,
+        throw_if(empty($this->notificationContext->title), RavenInvalidDataException::class,
             "Database notification context with name $context_name has no title");
 
-        throw_if(empty($this->notificationContext->body), MessengerInvalidDataException::class,
+        throw_if(empty($this->notificationContext->body), RavenInvalidDataException::class,
             "Database notification context with name $context_name has no body");
     }
 

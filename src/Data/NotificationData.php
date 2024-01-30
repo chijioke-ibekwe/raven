@@ -1,9 +1,9 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Data;
+namespace ChijiokeIbekwe\Raven\Data;
 
 use Illuminate\Notifications\Notifiable;
-use ChijiokeIbekwe\Messenger\Exceptions\MessengerInvalidDataException;
+use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 
 class NotificationData
 {
@@ -47,7 +47,7 @@ class NotificationData
      */
     public function getContextName(): string
     {
-        throw_if(empty($this->contextName), MessengerInvalidDataException::class,
+        throw_if(empty($this->contextName), RavenInvalidDataException::class,
             'Notification context name is not set');
 
         return $this->contextName;
@@ -59,7 +59,7 @@ class NotificationData
      */
     public function getRecipients(): array
     {
-        throw_if(empty($this->recipients), MessengerInvalidDataException::class,
+        throw_if(empty($this->recipients), RavenInvalidDataException::class,
             'Notification recipient is not set');
 
         return $this->recipients;
@@ -154,7 +154,7 @@ class NotificationData
     private function confirmRecipientIsNotifiable($recipient): void
     {
         $notifiable = in_array(Notifiable::class, class_uses_recursive($recipient));
-        throw_if(!$notifiable, MessengerInvalidDataException::class,
+        throw_if(!$notifiable, RavenInvalidDataException::class,
             "Notification recipient is not a notifiable");
     }
 }

@@ -1,11 +1,11 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Tests\Feature;
+namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
-use ChijiokeIbekwe\Messenger\Tests\TestCase;
+use ChijiokeIbekwe\Raven\Tests\TestCase;
 
 class  InstallCommandTest extends TestCase
 {
@@ -15,8 +15,8 @@ class  InstallCommandTest extends TestCase
     {
         parent::tearDown();
 
-        if(File::exists(config_path('messenger.php'))){
-            unlink(config_path('messenger.php'));
+        if(File::exists(config_path('raven.php'))){
+            unlink(config_path('raven.php'));
         }
 
         if(!empty(File::allFiles(database_path('migrations')))){
@@ -26,10 +26,10 @@ class  InstallCommandTest extends TestCase
 
     function test_that_install_command_publishes_the_config_file_and_migrations(): void
     {
-        $this->assertFalse(File::exists(config_path('messenger.php')));
+        $this->assertFalse(File::exists(config_path('raven.php')));
         $this->assertEmpty(File::allFiles(database_path('migrations')));
 
-        $command = $this->artisan('messenger:install');
+        $command = $this->artisan('raven:install');
 
         $command->expectsOutput('Published configuration');
 
@@ -44,7 +44,7 @@ class  InstallCommandTest extends TestCase
 
         $command->expectsOutput('Migrations ran successfully');
 
-        $this->assertTrue(File::exists(config_path('messenger.php')));
+        $this->assertTrue(File::exists(config_path('raven.php')));
         $this->assertNotEmpty(File::allFiles(database_path('migrations')));
         $this->assertTrue(Schema::hasTable('notification_contexts'));
         $this->assertTrue(Schema::hasTable('notification_channels'));
@@ -55,11 +55,11 @@ class  InstallCommandTest extends TestCase
     public function test_that_when_config_file_exists_users_can_choose_not_to_overwrite_it()
     {
         File::put(database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php'), '');
-        File::put(config_path('messenger.php'), 'return [email => mail@messenger.com]');
+        File::put(config_path('raven.php'), 'return [email => mail@raven.com]');
 
-        $this->assertTrue(File::exists(config_path('messenger.php')));
+        $this->assertTrue(File::exists(config_path('raven.php')));
 
-        $command = $this->artisan('messenger:install');
+        $command = $this->artisan('raven:install');
 
         $command->expectsConfirmation(
             'Config file already exists. Do you want to overwrite it?',
@@ -70,19 +70,19 @@ class  InstallCommandTest extends TestCase
 
         $command->expectsOutput('Existing configuration was not overwritten');
 
-        $this->assertEquals('return [email => mail@messenger.com]',
-            file_get_contents(config_path('messenger.php')));
+        $this->assertEquals('return [email => mail@raven.com]',
+            file_get_contents(config_path('raven.php')));
     }
 
 
     public function test_that_when_config_file_exists_users_can_choose_to_overwrite_it()
     {
         File::put(database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php'), '');
-        File::put(config_path('messenger.php'), 'return [email => mail@messenger.com]');
+        File::put(config_path('raven.php'), 'return [email => mail@raven.com]');
 
-        $this->assertTrue(File::exists(config_path('messenger.php')));
+        $this->assertTrue(File::exists(config_path('raven.php')));
 
-        $command = $this->artisan('messenger:install');
+        $command = $this->artisan('raven:install');
 
         $command->expectsConfirmation(
             'Config file already exists. Do you want to overwrite it?',
@@ -94,8 +94,8 @@ class  InstallCommandTest extends TestCase
         $command->expectsOutput('Overwriting configuration file...');
 
         $this->assertEquals(
-            file_get_contents(__DIR__.'/../../config/messenger.php'),
-            file_get_contents(config_path('messenger.php'))
+            file_get_contents(__DIR__.'/../../config/raven.php'),
+            file_get_contents(config_path('raven.php'))
         );
     }
 
@@ -103,7 +103,7 @@ class  InstallCommandTest extends TestCase
     {
         File::put(database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php'), '');
 
-        $command = $this->artisan('messenger:install');
+        $command = $this->artisan('raven:install');
 
         $command->execute();
 
@@ -116,7 +116,7 @@ class  InstallCommandTest extends TestCase
     {
         $this->assertEmpty(File::allFiles(database_path('migrations')));
 
-        $command = $this->artisan('messenger:install');
+        $command = $this->artisan('raven:install');
 
         $command->expectsConfirmation(
             'Do you want to run migrations now?',

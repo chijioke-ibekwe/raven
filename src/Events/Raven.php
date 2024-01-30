@@ -1,12 +1,12 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Events;
+namespace ChijiokeIbekwe\Raven\Events;
 
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Foundation\Events\Dispatchable;
-use ChijiokeIbekwe\Messenger\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\NotificationData;
 
-class MessengerEvent
+class Raven
 {
     use Dispatchable, SerializesModels;
 

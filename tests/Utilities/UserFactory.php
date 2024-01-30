@@ -1,6 +1,6 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Tests\Utilities;
+namespace ChijiokeIbekwe\Raven\Tests\Utilities;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;

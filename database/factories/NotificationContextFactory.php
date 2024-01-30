@@ -1,9 +1,9 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Database\Factories;
+namespace ChijiokeIbekwe\Raven\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
 
 class NotificationContextFactory extends Factory
 {

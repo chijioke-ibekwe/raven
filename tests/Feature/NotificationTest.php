@@ -1,20 +1,20 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Tests\Feature;
+namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use ChijiokeIbekwe\Messenger\Data\NotificationData;
-use ChijiokeIbekwe\Messenger\Events\MessengerEvent;
-use ChijiokeIbekwe\Messenger\Exceptions\MessengerEntityNotFoundException;
-use ChijiokeIbekwe\Messenger\Exceptions\MessengerInvalidDataException;
-use ChijiokeIbekwe\Messenger\Listeners\MessengerListener;
-use ChijiokeIbekwe\Messenger\Models\NotificationChannel;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
-use ChijiokeIbekwe\Messenger\Notifications\DatabaseNotificationSender;
-use ChijiokeIbekwe\Messenger\Notifications\EmailNotificationSender;
-use ChijiokeIbekwe\Messenger\Tests\TestCase;
-use ChijiokeIbekwe\Messenger\Tests\Utilities\User;
+use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Events\Raven;
+use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
+use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
+use ChijiokeIbekwe\Raven\Listeners\RavenListener;
+use ChijiokeIbekwe\Raven\Models\NotificationChannel;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Notifications\DatabaseNotificationSender;
+use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
+use ChijiokeIbekwe\Raven\Tests\TestCase;
+use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 
 class  NotificationTest extends TestCase
 {
@@ -22,8 +22,8 @@ class  NotificationTest extends TestCase
 
     public function getEnvironmentSetUp($app): void
     {
-        $app['config']->set('messenger.notification-service.email', 'sendgrid-mail');
-        $app['config']->set('messenger.notification-service.database', 'database');
+        $app['config']->set('raven.notification-service.email', 'sendgrid-mail');
+        $app['config']->set('raven.notification-service.database', 'database');
 
         // run the up() method (perform the migration)
         (new \CreateNotificationContextsTable)->up();
@@ -34,13 +34,13 @@ class  NotificationTest extends TestCase
     /**
      * @throws \Throwable
      */
-    public function test_that_email_notifications_are_sent_when_the_messenger_listener_receives_an_email_context(){
+    public function test_that_email_notifications_are_sent_when_the_raven_listener_receives_an_email_context(){
 
         Notification::fake();
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $context = NotificationContext::factory(1)->create([
@@ -55,13 +55,13 @@ class  NotificationTest extends TestCase
         $data = new NotificationData();
         $data->setContextName('user-created');
         $data->setRecipients($user);
-        $data->setCcs(["email@messenger.com" => "Jane Doe"]);
+        $data->setCcs(["email@raven.com" => "Jane Doe"]);
         $data->setParams([
             'booking_id' => 'JET12345'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
 
         Notification::assertCount(1);
@@ -89,14 +89,14 @@ class  NotificationTest extends TestCase
     /**
      * @throws \Throwable
      */
-    public function test_that_database_notifications_are_sent_when_the_messenger_listener_receives_a_database_context()
+    public function test_that_database_notifications_are_sent_when_the_raven_listener_receives_a_database_context()
     {
 
         Notification::fake();
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $context = NotificationContext::factory(1)->create([
@@ -119,8 +119,8 @@ class  NotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
 
         Notification::assertCount(1);
@@ -148,7 +148,7 @@ class  NotificationTest extends TestCase
      */
     public function test_that_exception_is_thrown_when_notification_context_name_is_not_provided_in_data()
     {
-        $this->expectException(MessengerInvalidDataException::class);
+        $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Notification context name is not set');
         $this->expectExceptionCode(422);
 
@@ -156,7 +156,7 @@ class  NotificationTest extends TestCase
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $data = new NotificationData();
@@ -167,14 +167,14 @@ class  NotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
     }
 
     public function test_that_exception_is_thrown_when_notification_context_name_does_not_exist_on_the_database()
     {
-        $this->expectException(MessengerEntityNotFoundException::class);
+        $this->expectException(RavenEntityNotFoundException::class);
         $this->expectExceptionMessage('Notification context with name user-verified does not exist');
         $this->expectExceptionCode(404);
 
@@ -182,7 +182,7 @@ class  NotificationTest extends TestCase
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $data = new NotificationData();
@@ -194,14 +194,14 @@ class  NotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
     }
 
     public function test_that_exception_is_thrown_when_email_notification_context_has_no_email_template_id()
     {
-        $this->expectException(MessengerInvalidDataException::class);
+        $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Email notification context with name user-updated has no email template id');
         $this->expectExceptionCode(422);
 
@@ -209,7 +209,7 @@ class  NotificationTest extends TestCase
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $context = NotificationContext::factory(1)->create([
@@ -229,14 +229,14 @@ class  NotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
     }
 
     public function test_that_exception_is_thrown_when_database_notification_context_has_no_title()
     {
-        $this->expectException(MessengerInvalidDataException::class);
+        $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Database notification context with name user-updated has no title');
         $this->expectExceptionCode(422);
 
@@ -244,7 +244,7 @@ class  NotificationTest extends TestCase
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $context = NotificationContext::factory(1)->create([
@@ -265,14 +265,14 @@ class  NotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
     }
 
     public function test_that_exception_is_thrown_when_database_notification_context_has_no_body()
     {
-        $this->expectException(MessengerInvalidDataException::class);
+        $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Database notification context with name user-updated has no body');
         $this->expectExceptionCode(422);
 
@@ -280,7 +280,7 @@ class  NotificationTest extends TestCase
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $context = NotificationContext::factory(1)->create([
@@ -301,14 +301,14 @@ class  NotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
     }
 
     public function test_that_exception_is_thrown_when_recipients_are_not_provided_in_notification_data()
     {
-        $this->expectException(MessengerInvalidDataException::class);
+        $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Notification recipient is not set');
         $this->expectExceptionCode(422);
 
@@ -316,7 +316,7 @@ class  NotificationTest extends TestCase
 
         $user = User::factory(1)->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@messenger.com'
+            'email' => 'john.doe@raven.com'
         ])->get(0);
 
         $context = NotificationContext::factory(1)->create([
@@ -336,8 +336,8 @@ class  NotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
     }
 
@@ -346,7 +346,7 @@ class  NotificationTest extends TestCase
      */
     public function test_that_exception_is_thrown_when_a_non_notifiable_recipient_is_provided_in_notification_data()
     {
-        $this->expectException(MessengerInvalidDataException::class);
+        $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Notification recipient is not a notifiable');
         $this->expectExceptionCode(422);
 
@@ -370,8 +370,8 @@ class  NotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51'
         ]);
 
-        (new MessengerListener())->handle(
-            new MessengerEvent($data)
+        (new RavenListener())->handle(
+            new Raven($data)
         );
     }
 }

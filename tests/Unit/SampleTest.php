@@ -1,6 +1,6 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Tests\Unit;
+namespace ChijiokeIbekwe\Raven\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 

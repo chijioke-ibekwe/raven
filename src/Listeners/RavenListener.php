@@ -1,18 +1,18 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Listeners;
+namespace ChijiokeIbekwe\Raven\Listeners;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use ChijiokeIbekwe\Messenger\Events\MessengerEvent;
-use ChijiokeIbekwe\Messenger\Exceptions\MessengerEntityNotFoundException;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
-use ChijiokeIbekwe\Messenger\Services\ChannelSenderFactory;
+use ChijiokeIbekwe\Raven\Events\Raven;
+use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Services\ChannelSenderFactory;
 
 /**
  *
  */
-class MessengerListener
+class RavenListener
 {
     /**
      * Create the event listener.
@@ -26,14 +26,14 @@ class MessengerListener
      * Handle the event.
      * @throws \Throwable
      */
-    public function handle(MessengerEvent $event): void
+    public function handle(Raven $event): void
     {
         $data = $event->notificationData;
         $context_name = $data->getContextName();
 
         $context = NotificationContext::where('name', $context_name)->first();
 
-        throw_if(is_null($context), MessengerEntityNotFoundException::class,
+        throw_if(is_null($context), RavenEntityNotFoundException::class,
             "Notification context with name $context_name does not exist");
 
         $channels = $context->notification_channels;

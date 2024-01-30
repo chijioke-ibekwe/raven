@@ -1,13 +1,13 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Notifications;
+namespace ChijiokeIbekwe\Raven\Notifications;
 
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
-use ChijiokeIbekwe\Messenger\Data\NotificationData;
-use ChijiokeIbekwe\Messenger\Exceptions\MessengerInvalidDataException;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
 use SendGrid\Mail\Attachment;
 use SendGrid\Mail\Mail;
 use SendGrid\Mail\TypeException;
@@ -24,7 +24,7 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
 
     public function via(mixed $notifiable): array
     {
-        return [config('messenger.notification-service.email')];
+        return [config('raven.notification-service.email')];
     }
 
     /**
@@ -32,16 +32,16 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
      *
      * @param mixed $notifiable
      * @return Mail|null
-     * @throws MessengerInvalidDataException|TypeException
+     * @throws RavenInvalidDataException|TypeException
      */
     public function toSendgrid(mixed $notifiable): ?Mail {
 
-        $provider = config('messenger.notification-service.email');
+        $provider = config('raven.notification-service.email');
 
         $route = $notifiable->routeNotificationFor('mail');
 
         if (!$route) {
-            throw new MessengerInvalidDataException("Missing route for $provider");
+            throw new RavenInvalidDataException("Missing route for $provider");
         }
 
         $email = new Mail();
@@ -81,7 +81,7 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
     {
         $context_name = $this->notificationContext->name;
 
-        throw_if(empty($this->notificationContext->email_template_id), MessengerInvalidDataException::class,
+        throw_if(empty($this->notificationContext->email_template_id), RavenInvalidDataException::class,
             "Email notification context with name $context_name has no email template id");
     }
 }

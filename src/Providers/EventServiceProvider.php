@@ -1,16 +1,16 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Providers;
+namespace ChijiokeIbekwe\Raven\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use ChijiokeIbekwe\Messenger\Events\MessengerEvent;
-use ChijiokeIbekwe\Messenger\Listeners\MessengerListener;
+use ChijiokeIbekwe\Raven\Events\Raven;
+use ChijiokeIbekwe\Raven\Listeners\RavenListener;
 
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-        MessengerEvent::class => [
-            MessengerListener::class,
+        Raven::class => [
+            RavenListener::class,
         ]
     ];
 

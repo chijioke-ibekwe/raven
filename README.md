@@ -1,10 +1,10 @@
 
-# <div align="center">Messenger</div>
+# <div align="center">Raven</div>
 <div align="center">
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![GitHub Issues](https://img.shields.io/github/issues/chijioke-ibekwe/The-Documentation-Compendium.svg)](https://github.com/chijioke-ibekwe/messenger/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/chijioke-ibekwe/The-Documentation-Compendium.svg)](https://github.com/chijioke-ibekwe/messenger/pulls)
+[![GitHub Issues](https://img.shields.io/github/issues/chijioke-ibekwe/The-Documentation-Compendium.svg)](https://github.com/chijioke-ibekwe/raven/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/chijioke-ibekwe/The-Documentation-Compendium.svg)](https://github.com/chijioke-ibekwe/raven/pulls)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
 
 </div>
@@ -25,77 +25,33 @@
 - [Authors](#authors)
 
 ## 🧐 About <a name = "about"></a>
-Messenger is a Laravel package that handles sending notifications through multiple channels in a project, and allows you to 
-focus on more important parts of your business logic. Currently, Messenger supports sending email notifications (through Sendgrid) 
+Raven is a Laravel package that handles sending notifications through multiple channels in a project, and allows you to 
+focus on more important parts of your business logic. Currently, Raven supports sending email notifications (through Sendgrid) 
 and database notifications. SMS notifications support will be integrated soon.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
 ### Prerequisites
-Before setting up this project on your local machine, you need the following requirements:
+To use this package, you need the following requirements:
 
-1. PHP v8.2.4
-2. Composer v2.5.5
-
-NB: versions may vary
-
-### Setting up for Local Development
-To set up the project:
-
-- Fork the repository
-
-- Clone the repository using the command:
-    ```bash
-    git clone https://github.com/<your-github-username>/messenger.git
-    ```
-
-- Install dependencies using the command:
-    ```bash
-    composer install
-    ```
-
-- And, run tests using the command:
-    ```bash
-    composer test
-    ```
+1. PHP >= v8.0
+2. Laravel >= v8.0
+3. Composer
 
 ## 🎈 Usage <a name="usage"></a>
-This package is not available on Packagist. Hence, to use this package in your laravel project: 
-1. Add the following sections to your project's `composer.json` file:
-    
-    ```json
-    {
-      "require": {
-        "chijioke-ibekwe/messenger": "1.0.0"
-      }
-    }
-    ```
-    ```json
-    {
-      "repositories": [
-        {
-          "type": "vcs",
-          "name": "chijioke-ibekwe/messenger",
-          "url": "https://github.com/chijioke-ibekwe/messenger.git",
-          "branch": "1.0.0"
-        }
-      ]
-    }
+1. You can install this package via Composer using the command:
+   ```bash
+    composer require chijioke-ibekwe/raven
     ```
 
-2. Then, proceed to run the following command to resolve the dependency:
+3. Next, you will need to publish and run the migration files, and the config file. The following command will allow you do  
+   all of the above:
     ```bash
-    composer update
-    ```
-
-3. After successfully adding this package to your project, you will need to publish and run the migration files as well 
-    as the config file. The following command will allow you do all of the above:
-    ```bash
-    php artisan messenger:install
+    php artisan raven:install
     ```
 
 4. The migrations will be published in your project's migrations directory `./database/migrations` while the config file
-   `messenger.php`, will be published in your config directory `./config`. Don't forget to customize the config file to suit
+   `raven.php`, will be published in your config directory `./config`. Don't forget to customize the config file to suit
     your needs.
 
 5. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
@@ -235,13 +191,16 @@ This package is not available on Packagist. Hence, to use this package in your l
     ```
 
 6. To send a notification at any point in your code, build a `NotificationData` object, set the relevant 
-   fields as shown below, and dispatch a `MessengerEvent`:
+   fields as shown below, and dispatch a `Raven`:
 
     ```php
+            $verified_user = User::find(1);
+            $document_url = "https://example.com/laravel-cheatsheet.pdf";
+
             $data = new NotificationData();
             $data->setContextName('user-verified');
             $data->setRecipients($verified_user);
-            $data->setCcs(['john.doe@messenger.com' => 'John Doe', 'jane.doe@messenger.com' => 'Jane Doe'])
+            $data->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe'])
             $data->setParams([
                 'id' => $verified_user->id,
                 'name' => $verified_user->name
@@ -249,7 +208,7 @@ This package is not available on Packagist. Hence, to use this package in your l
             ]);
             $data->setAttachmentUrls($document_url)
     
-            event(new MessengerEvent($data));
+            Raven::dispatch($data);
     ```
     The `contextName` property is required and must match the notification context name for that notification 
     on the database.  
@@ -326,10 +285,10 @@ The following API is included in this package for ease of use:
 
 ### Exceptions
 The following exceptions can be thrown by the package for the scenarios outlined below:
-1. `MessengerEntityNotFoundException` `code: 404`
-   - Dispatching a Messenger event with a `NotificationData` object that has a `contextName` which does not exist on the database.
-2. `MessengerInvalidDataException` `code: 422`
-   - Dispatching a Messenger event with a `NotificationData` object without a `contextName` or `recipient`.
+1. `RavenEntityNotFoundException` `code: 404`
+   - Dispatching a Raven with a `NotificationData` object that has a `contextName` which does not exist on the database.
+2. `RavenInvalidDataException` `code: 422`
+   - Dispatching a Raven with a `NotificationData` object without a `contextName` or `recipient`.
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `title` or `body`.
    - Attempting to send an Email Notification to a non-notifiable.

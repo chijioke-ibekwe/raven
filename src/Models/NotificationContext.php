@@ -1,11 +1,11 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Models;
+namespace ChijiokeIbekwe\Raven\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use ChijiokeIbekwe\Messenger\Database\Factories\NotificationContextFactory;
+use ChijiokeIbekwe\Raven\Database\Factories\NotificationContextFactory;
 
 
 /**

@@ -1,9 +1,9 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Http\Controllers;
+namespace ChijiokeIbekwe\Raven\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
 
 class NotificationContextController extends Controller
 {

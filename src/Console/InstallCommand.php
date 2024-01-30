@@ -1,25 +1,25 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Console;
+namespace ChijiokeIbekwe\Raven\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
 class InstallCommand extends Command
 {
-    protected $signature = 'messenger:install';
+    protected $signature = 'raven:install';
 
-    protected $description = 'Install Messenger';
+    protected $description = 'Install Raven';
 
     public function handle(): void
     {
-        $this->info('Installing Messenger...');
+        $this->info('Installing Raven...');
 
         $this->handleConfigPublishing();
 
         $this->handleMigrationsPublishing();
 
-        $this->info('Installed Messenger');
+        $this->info('Installed Raven');
     }
 
     private function handleConfigPublishing(): void
@@ -59,7 +59,7 @@ class InstallCommand extends Command
 
     private function configExists(): bool
     {
-        return File::exists(config_path('messenger.php'));
+        return File::exists(config_path('raven.php'));
     }
 
     private function migrationsExist(): bool
@@ -87,8 +87,8 @@ class InstallCommand extends Command
     private function publishConfiguration($forcePublish = false): void
     {
         $params = [
-            '--provider' => "ChijiokeIbekwe\Messenger\MessengerServiceProvider",
-            '--tag' => "messenger-config"
+            '--provider' => "ChijiokeIbekwe\Raven\RavenServiceProvider",
+            '--tag' => "raven-config"
         ];
 
         if ($forcePublish === true) {
@@ -101,8 +101,8 @@ class InstallCommand extends Command
     private function publishMigrations(): void
     {
         $params = [
-            '--provider' => "ChijiokeIbekwe\Messenger\MessengerServiceProvider",
-            '--tag' => "messenger-migrations"
+            '--provider' => "ChijiokeIbekwe\Raven\RavenServiceProvider",
+            '--tag' => "raven-migrations"
         ];
 
         $this->call('vendor:publish', $params);

@@ -1,13 +1,13 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Services;
+namespace ChijiokeIbekwe\Raven\Services;
 
-use ChijiokeIbekwe\Messenger\Enums\ChannelType;
-use ChijiokeIbekwe\Messenger\Notifications\DatabaseNotificationSender;
-use ChijiokeIbekwe\Messenger\Notifications\EmailNotificationSender;
-use ChijiokeIbekwe\Messenger\Data\NotificationData;
-use ChijiokeIbekwe\Messenger\Models\NotificationContext;
-use ChijiokeIbekwe\Messenger\Notifications\SmsNotificationSender;
+use ChijiokeIbekwe\Raven\Enums\ChannelType;
+use ChijiokeIbekwe\Raven\Notifications\DatabaseNotificationSender;
+use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
+use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Notifications\SmsNotificationSender;
 
 class ChannelSenderFactory
 {

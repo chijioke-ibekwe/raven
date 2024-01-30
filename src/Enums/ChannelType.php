@@ -1,6 +1,6 @@
 <?php
 
-namespace ChijiokeIbekwe\Messenger\Enums;
+namespace ChijiokeIbekwe\Raven\Enums;
 
 enum ChannelType: string {
 
