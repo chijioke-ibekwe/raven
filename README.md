@@ -44,8 +44,7 @@ To use this package, you need the following requirements:
     composer require chijioke-ibekwe/raven
     ```
 
-3. Next, you will need to publish and run the migration files, and the config file. The following command will allow you do  
-   all of the above:
+3. Next, you will need to publish and run the migration files, and the config file. The following command will allow you do all of the above:
     ```bash
     php artisan raven:install
     ```
