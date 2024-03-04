@@ -22,7 +22,7 @@ class  NotificationTest extends TestCase
 
     public function getEnvironmentSetUp($app): void
     {
-        $app['config']->set('raven.notification-service.email', 'sendgrid-mail');
+        $app['config']->set('raven.notification-service.email', 'sendgrid');
         $app['config']->set('raven.notification-service.database', 'database');
 
         // run the up() method (perform the migration)
@@ -79,8 +79,62 @@ class  NotificationTest extends TestCase
                     $mail->getDynamicTemplateDatas() === [
                         'booking_id' => 'JET12345'
                     ] &&
-                    $via === ['sendgrid-mail'];
+                    $via === ['sendgrid'];
 
+            }
+        );
+
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function test_that_email_notifications_are_sent_when_the_an_email_address_is_provided_as_part_of_recipients(){
+
+        Notification::fake();
+
+        $user = User::factory(1)->make([
+            'name' => 'John Doe',
+            'email' => 'john.doe@raven.com'
+        ])->get(0);
+
+        $context = NotificationContext::factory(1)->create([
+            'email_template_id' => 'sendgrid-template',
+            'name' => 'user-created'
+        ])->get(0);
+
+        $channel = NotificationChannel::where('type', 'EMAIL')->first();
+
+        $context->notification_channels()->attach($channel->id);
+
+        $data = new NotificationData();
+        $data->setContextName('user-created');
+        $data->setRecipients([$user, 'jane.doe@raven.com']);
+        $data->setCcs(["email@raven.com" => "Jane Doe"]);
+        $data->setParams([
+            'booking_id' => 'JET12345'
+        ]);
+
+        (new RavenListener())->handle(
+            new Raven($data)
+        );
+
+        Notification::assertCount(2);
+
+        Notification::assertSentTo(
+            $user,
+            EmailNotificationSender::class,
+            function (EmailNotificationSender $notification) use ($user, $data, $context) {
+                $mail = $notification->toSendgrid($user);
+                $via = $notification->via($user);
+
+                return $notification->notificationData === $data &&
+                    $notification->notificationContext->name === $context->name &&
+                    $mail->getTemplateId()->getTemplateId() === 'sendgrid-template' &&
+                    $mail->getDynamicTemplateDatas() === [
+                        'booking_id' => 'JET12345'
+                    ] &&
+                    $via === ['sendgrid'];
             }
         );
 
@@ -159,7 +213,6 @@ class  NotificationTest extends TestCase
         $data = new NotificationData();
         $data->setRecipients($user);
         $data->setParams([
-            'id' => 345,
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
@@ -186,7 +239,6 @@ class  NotificationTest extends TestCase
         $data->setContextName('user-verified');
         $data->setRecipients($user);
         $data->setParams([
-            'id' => 345,
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
@@ -221,7 +273,6 @@ class  NotificationTest extends TestCase
         $data->setContextName('user-updated');
         $data->setRecipients($user);
         $data->setParams([
-            'id' => 345,
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
@@ -257,7 +308,6 @@ class  NotificationTest extends TestCase
         $data->setContextName('user-updated');
         $data->setRecipients($user);
         $data->setParams([
-            'id' => 345,
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
@@ -293,7 +343,6 @@ class  NotificationTest extends TestCase
         $data->setContextName('user-updated');
         $data->setRecipients($user);
         $data->setParams([
-            'id' => 345,
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
@@ -328,7 +377,6 @@ class  NotificationTest extends TestCase
         $data = new NotificationData();
         $data->setContextName('user-created');
         $data->setParams([
-            'id' => 345,
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
@@ -362,7 +410,6 @@ class  NotificationTest extends TestCase
         $data->setContextName('user-created');
         $data->setRecipients($channel);
         $data->setParams([
-            'id' => 345,
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
