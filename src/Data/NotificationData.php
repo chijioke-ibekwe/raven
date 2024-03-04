@@ -117,7 +117,7 @@ class NotificationData
      * @return void
      * @throws \Throwable
      */
-    public function setRecipients(object|string $recipients): void
+    public function setRecipients(object|string|array $recipients): void
     {
         if(is_array($recipients)){
 
