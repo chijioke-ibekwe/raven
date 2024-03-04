@@ -19,6 +19,11 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
         //
     }
 
+    public function via(mixed $notifiable): array
+    {
+        return ['database'];
+    }
+
     /**
      * Get the notification's database type.
      *

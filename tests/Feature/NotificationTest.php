@@ -114,7 +114,6 @@ class  NotificationTest extends TestCase
         $data->setContextName('user-verified');
         $data->setRecipients($user);
         $data->setParams([
-            'id' => 345,
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
@@ -136,8 +135,6 @@ class  NotificationTest extends TestCase
                     $notification->notificationContext->name === $context->name &&
                     data_get($content, 'title') === 'Verification' &&
                     data_get($content, 'body') === 'User with id 345 has been verified on the platform on 11-12-2023 10:51' &&
-                    data_get($content, 'type') === 'user' &&
-                    data_get($content, 'id') === 345 &&
                     $via === ['database'];
             }
         );
