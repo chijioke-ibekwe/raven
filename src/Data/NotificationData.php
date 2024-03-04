@@ -34,6 +34,11 @@ class NotificationData
     private array $attachmentUrls;
 
     /**
+     * @var bool
+     */
+    private bool $hasOnDemand = false;
+
+    /**
      *
      * @throws \Throwable
      */
@@ -89,6 +94,15 @@ class NotificationData
         return $this->attachmentUrls ?? [];
     }
 
+    
+    /**
+     * @return bool
+     */
+    public function getHasOnDemand(): bool
+    {
+        return $this->hasOnDemand;
+    }
+
     /**
      * @param string $contextName
      * @return void
@@ -103,15 +117,16 @@ class NotificationData
      * @return void
      * @throws \Throwable
      */
-    public function setRecipients(mixed $recipients): void
+    public function setRecipients(object|string $recipients): void
     {
         if(is_array($recipients)){
+
             foreach ($recipients as $recipient){
-                $this->confirmRecipientIsNotifiable($recipient);
+                $this->validateRecipient($recipient);
             }
             $this->recipients = $recipients;
         } else {
-            $this->confirmRecipientIsNotifiable($recipients);
+            $this->validateRecipient($recipients);
             $this->recipients[] = $recipients;
         }
     }
@@ -151,10 +166,18 @@ class NotificationData
     /**
      * @throws \Throwable
      */
-    private function confirmRecipientIsNotifiable($recipient): void
+    private function validateRecipient($recipient): void
     {
+        if(is_null($recipient)) {
+            throw new RavenInvalidDataException('Notification recipient cannot be null');
+        }
+
+        if(gettype($recipient) === 'string') {
+            $this->hasOnDemand = true;
+            return;
+        }
+
         $notifiable = in_array(Notifiable::class, class_uses_recursive($recipient));
-        throw_if(!$notifiable, RavenInvalidDataException::class,
-            "Notification recipient is not a notifiable");
+        throw_if(!$notifiable, RavenInvalidDataException::class, "Notification recipient is not a notifiable");
     }
 }
