@@ -19,9 +19,14 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
         //
     }
 
-    public function via($notifiable): array
+    /**
+     * Get the notification's database type.
+     *
+     * @return string
+     */
+    public function databaseType(object $notifiable): string
     {
-        return [config('raven.notification-service.database')];
+        return $this->notificationContext->name;
     }
 
     /**
@@ -30,7 +35,8 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
      * @param mixed $notifiable
      * @return array
      */
-    public function toDatabase(mixed $notifiable): array {
+    public function toDatabase(object $notifiable): array 
+    {
         $param_keys = array_keys($this->notificationData->getParams());
 
         for ($i = 0; $i < count($param_keys); $i++) {
@@ -41,13 +47,10 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
         $param_values = array_values($this->notificationData->getParams());
 
         $body = str_replace($param_keys, $param_values, $this->notificationContext->body);
-        $id = data_get($this->notificationData->getParams(), 'id') ?? null;
 
         return [
             'title' => $this->notificationContext->title,
-            'body' => $body,
-            'type' => $this->notificationContext->type,
-            'id' => $id
+            'body' => $body
         ];
     }
 
