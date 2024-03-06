@@ -3,9 +3,8 @@
 return [
 
     'notification-service' => [
-        'email' => env('EMAIL_NOTIFICATION_PROVIDER', 'sendgrid-mail'),
-        'sms' => env('SMS_NOTIFICATION_PROVIDER', 'nexmo'),
-        'database' => env('DATABASE_NOTIFICATION_PROVIDER', 'database')
+        'email' => env('EMAIL_NOTIFICATION_PROVIDER', 'sendgrid'),
+        'sms' => env('SMS_NOTIFICATION_PROVIDER', 'nexmo')
     ],
 
     'api-key' => [

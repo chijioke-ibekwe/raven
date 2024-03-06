@@ -33,7 +33,7 @@ class SendGridChannel
             }
 
         } catch (Exception $e) {
-            Log::error("Failed sending mail: " . $e->getMessage());
+            Log::error("Failed sending mail to $email: " . $e->getMessage());
         }
     }
 }
