@@ -51,8 +51,8 @@ class RavenServiceProvider extends ServiceProvider {
             return new SendGrid(config('raven.api-key.sendgrid'));
         });
 
-        Notification::extend('sendgrid-mail', function ($app) {
-            return new SendgridChannel();
+        Notification::extend('sendgrid', function ($app) {
+            return new SendGridChannel();
         });
     }
 
