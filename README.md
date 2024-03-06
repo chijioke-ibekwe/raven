@@ -198,7 +198,7 @@ To use this package, you need the following requirements:
 
             $data = new NotificationData();
             $data->setContextName('user-verified');
-            $data->setRecipients($verified_user);
+            $data->setRecipients([$verified_user, 'admin@raven.com']);
             $data->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe'])
             $data->setParams([
                 'id' => $verified_user->id,
@@ -234,14 +234,10 @@ To use this package, you need the following requirements:
     ```php
      [
         'title' => $title,
-        'body' => $body,
-        'type' => $type,
-        'id' => $id
+        'body' => $body
      ];
     ```
-    The `title`, `body`, and `type` properties are obtained from the notification context for the said notification on the 
-    database. The `id` field which could be used to build a link to the entity in question on the UI, is provided as a param 
-    whilst building the `NotificationData` object. 
+    The `title` and `body` properties are obtained from the notification context for the said notification on the database.
 
 10. The package takes care of the rest of the logic.
 
@@ -290,7 +286,6 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Dispatching a Raven with a `NotificationData` object without a `contextName` or `recipient`.
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `title` or `body`.
-   - Attempting to send an Email Notification to a non-notifiable.
    - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()` 
      method in the model class.
 
