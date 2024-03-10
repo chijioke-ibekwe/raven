@@ -3,17 +3,25 @@
   "description": "Multi-channel Laravel notification sender",
   "type": "library",
   "license": "MIT",
+  "keywords": [
+    "laravel",
+    "sendgrid",
+    "notifications",
+    "sendgrid-api",
+    "laravel-package"
+  ],
   "authors": [
     {
       "name": "Chijioke Ibekwe",
       "email": "ibekwe.chijioke18@gmail.com"
     }
   ],
+  "homepage": "https://github.com/chijioke-ibekwe/raven",
   "require": {
     "sendgrid/sendgrid": "~7"
   },
   "require-dev": {
-    "orchestra/testbench": "7.0",
+    "orchestra/testbench": "^6.0",
     "phpunit/phpunit": "^9.6"
   },
   "autoload": {
