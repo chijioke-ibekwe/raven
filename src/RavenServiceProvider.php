@@ -51,14 +51,14 @@ class RavenServiceProvider extends ServiceProvider {
         $this->registerRoutes();
 
         $this->app->singleton(SendGrid::class, function ($app) {
-            return new SendGrid(config('raven.credentials.sendgrid'));
+            return new SendGrid(config('raven.providers.sendgrid.key'));
         });
 
         $this->app->singleton(SesClient::class, function ($app) {
             return new SesClient([
-                'credentials' => Arr::except(config('raven.credentials.ses'), 'region'),
+                'credentials' => Arr::only(config('raven.providers.ses'), ['key', 'secret']),
                 'version' => 'latest',
-                'region' => config('raven.credentials.ses.region')
+                'region' => config('raven.providers.ses.region')
             ]);
         });
 
