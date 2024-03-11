@@ -19,7 +19,7 @@ class SmsNotificationSender extends Notification implements ShouldQueue, INotifi
     }
 
     public function via($notifiable): array {
-        return ['raven.notification-service.sms'];
+        return ['raven.default.sms'];
     }
 
     public function validateNotification()

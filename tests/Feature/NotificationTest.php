@@ -22,8 +22,7 @@ class  NotificationTest extends TestCase
 
     public function getEnvironmentSetUp($app): void
     {
-        $app['config']->set('raven.notification-service.email', 'sendgrid');
-        $app['config']->set('raven.notification-service.database', 'database');
+        $app['config']->set('raven.default.email', 'sendgrid');
 
         // run the up() method (perform the migration)
         (new \CreateNotificationContextsTable)->up();
