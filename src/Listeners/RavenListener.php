@@ -2,7 +2,7 @@
 
 namespace ChijiokeIbekwe\Raven\Listeners;
 
-use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\Scroll;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use ChijiokeIbekwe\Raven\Events\Raven;
@@ -48,9 +48,9 @@ class RavenListener
     /**
      * @throws \Throwable
      */
-    private function sendNotifications(NotificationData $data, NotificationContext $context): void
+    private function sendNotifications(Scroll $scroll, NotificationContext $context): void
     {
-        $factory = new ChannelSenderFactory($data, $context);
+        $factory = new ChannelSenderFactory($scroll, $context);
         $channels = $context->notification_channels;
 
         foreach($channels as $channel){
@@ -60,7 +60,7 @@ class RavenListener
 
             $channel_sender = $factory->getSender($channel_type);
 
-            $recipients = $data->getRecipients();
+            $recipients = $scroll->getRecipients();
 
             if(!$channel_sender) {
                 Log::error("Notification channel $channel_type->name is not currently supported");
@@ -69,7 +69,7 @@ class RavenListener
 
             Log::info("Sending notification for context $context->name through channel $channel_type->name");
 
-            if(!$data->getHasOnDemand()) {
+            if(!$scroll->getHasOnDemand()) {
                 Notification::send($recipients, $channel_sender);
                 continue;
             }

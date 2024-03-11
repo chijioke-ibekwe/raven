@@ -5,7 +5,7 @@ namespace ChijiokeIbekwe\Raven\Notifications;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
-use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Models\NotificationContext;
 use PHPMailer\PHPMailer\Exception;
@@ -18,7 +18,7 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
 {
     use Queueable;
 
-    public function __construct(public readonly NotificationData    $notificationData,
+    public function __construct(public readonly Scroll              $scroll,
                                 public readonly NotificationContext $notificationContext)
     {
         //
@@ -48,16 +48,16 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
         $email->setTemplateId($this->notificationContext->email_template_id);
         $email->addTo($route);
 
-        if(!empty($this->notificationData->getCcs())){
-            $email->addCcs($this->notificationData->getCcs());
+        if(!empty($this->scroll->getCcs())){
+            $email->addCcs($this->scroll->getCcs());
         }
 
-        $substitutions = $this->notificationData->getParams();
+        $substitutions = $this->scroll->getParams();
         $email->addDynamicTemplateDatas($substitutions);
 
-        if(!empty($this->notificationData->getAttachmentUrls())) {
+        if(!empty($this->scroll->getAttachmentUrls())) {
             $attachments = [];
-            foreach ($this->notificationData->getAttachmentUrls() as $url){
+            foreach ($this->scroll->getAttachmentUrls() as $url){
                 $attachment = new Attachment();
                 $filename = basename($url);
                 $file_encoded = base64_encode(file_get_contents($url));
@@ -92,14 +92,14 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
         $email = new PHPMailer(true);
         $email->addAddress($route);
 
-        if(!empty($this->notificationData->getCcs())){
-            foreach ($this->notificationData->getCcs() as $email){
+        if(!empty($this->scroll->getCcs())){
+            foreach ($this->scroll->getCcs() as $email){
                 $email->addCc($email);
             }
         }
 
-        if(!empty($this->notificationData->getAttachmentUrls())) {
-            foreach ($this->notificationData->getAttachmentUrls() as $url){
+        if(!empty($this->scroll->getAttachmentUrls())) {
+            foreach ($this->scroll->getAttachmentUrls() as $url){
                 $email->addAttachment($url);
             }
         }

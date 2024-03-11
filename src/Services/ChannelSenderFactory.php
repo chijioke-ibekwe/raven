@@ -5,7 +5,7 @@ namespace ChijiokeIbekwe\Raven\Services;
 use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Notifications\DatabaseNotificationSender;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
-use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Models\NotificationContext;
 use ChijiokeIbekwe\Raven\Notifications\SmsNotificationSender;
 
@@ -19,16 +19,16 @@ class ChannelSenderFactory
 
 
     /**
-     * @param NotificationData $notificationData
+     * @param Scroll $scroll
      * @param NotificationContext $notificationContext
      */
-    public function __construct(private readonly NotificationData    $notificationData,
+    public function __construct(private readonly Scroll              $scroll,
                                 private readonly NotificationContext $notificationContext)
     {
 
-        $email_sender = new EmailNotificationSender($this->notificationData, $this->notificationContext);
-        $sms_sender = new SmsNotificationSender($this->notificationData, $this->notificationContext);
-        $database_sender = new DatabaseNotificationSender($this->notificationData, $this->notificationContext);
+        $email_sender = new EmailNotificationSender($this->scroll, $this->notificationContext);
+        $sms_sender = new SmsNotificationSender($this->scroll, $this->notificationContext);
+        $database_sender = new DatabaseNotificationSender($this->scroll, $this->notificationContext);
 
 
         $this->sender_store = [

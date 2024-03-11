@@ -4,7 +4,7 @@ namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Events\Raven;
 use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
@@ -51,16 +51,16 @@ class  NotificationTest extends TestCase
 
         $context->notification_channels()->attach($channel->id);
 
-        $data = new NotificationData();
-        $data->setContextName('user-created');
-        $data->setRecipients($user);
-        $data->setCcs(["email@raven.com" => "Jane Doe"]);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-created');
+        $scroll->setRecipients($user);
+        $scroll->setCcs(["email@raven.com" => "Jane Doe"]);
+        $scroll->setParams([
             'booking_id' => 'JET12345'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
 
         Notification::assertCount(1);
@@ -68,11 +68,11 @@ class  NotificationTest extends TestCase
         Notification::assertSentTo(
             $user,
             EmailNotificationSender::class,
-            function (EmailNotificationSender $notification) use ($user, $data, $context) {
+            function (EmailNotificationSender $notification) use ($user, $scroll, $context) {
                 $mail = $notification->toSendgrid($user);
                 $via = $notification->via($user);
 
-                return $notification->notificationData === $data &&
+                return $notification->scroll === $scroll &&
                     $notification->notificationContext->name === $context->name &&
                     $mail->getTemplateId()->getTemplateId() === 'sendgrid-template' &&
                     $mail->getDynamicTemplateDatas() === [
@@ -106,16 +106,16 @@ class  NotificationTest extends TestCase
 
         $context->notification_channels()->attach($channel->id);
 
-        $data = new NotificationData();
-        $data->setContextName('user-created');
-        $data->setRecipients([$user, 'jane.doe@raven.com']);
-        $data->setCcs(["email@raven.com" => "Jane Doe"]);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-created');
+        $scroll->setRecipients([$user, 'jane.doe@raven.com']);
+        $scroll->setCcs(["email@raven.com" => "Jane Doe"]);
+        $scroll->setParams([
             'booking_id' => 'JET12345'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
 
         Notification::assertCount(2);
@@ -123,11 +123,11 @@ class  NotificationTest extends TestCase
         Notification::assertSentTo(
             $user,
             EmailNotificationSender::class,
-            function (EmailNotificationSender $notification) use ($user, $data, $context) {
+            function (EmailNotificationSender $notification) use ($user, $scroll, $context) {
                 $mail = $notification->toSendgrid($user);
                 $via = $notification->via($user);
 
-                return $notification->notificationData === $data &&
+                return $notification->scroll === $scroll &&
                     $notification->notificationContext->name === $context->name &&
                     $mail->getTemplateId()->getTemplateId() === 'sendgrid-template' &&
                     $mail->getDynamicTemplateDatas() === [
@@ -163,16 +163,16 @@ class  NotificationTest extends TestCase
 
         $context->notification_channels()->attach($channel->id);
 
-        $data = new NotificationData();
-        $data->setContextName('user-verified');
-        $data->setRecipients($user);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-verified');
+        $scroll->setRecipients($user);
+        $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
 
         Notification::assertCount(1);
@@ -180,11 +180,11 @@ class  NotificationTest extends TestCase
         Notification::assertSentTo(
             $user,
             DatabaseNotificationSender::class,
-            function (DatabaseNotificationSender $notification) use ($user, $data, $context) {
+            function (DatabaseNotificationSender $notification) use ($user, $scroll, $context) {
                 $content = $notification->toDatabase($user);
                 $via = $notification->via($user);
 
-                return $notification->notificationData === $data &&
+                return $notification->scroll === $scroll &&
                     $notification->notificationContext->name === $context->name &&
                     data_get($content, 'title') === 'Verification' &&
                     data_get($content, 'body') === 'User with id 345 has been verified on the platform on 11-12-2023 10:51' &&
@@ -209,15 +209,15 @@ class  NotificationTest extends TestCase
             'email' => 'john.doe@raven.com'
         ])->get(0);
 
-        $data = new NotificationData();
-        $data->setRecipients($user);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setRecipients($user);
+        $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
     }
 
@@ -234,16 +234,16 @@ class  NotificationTest extends TestCase
             'email' => 'john.doe@raven.com'
         ])->get(0);
 
-        $data = new NotificationData();
-        $data->setContextName('user-verified');
-        $data->setRecipients($user);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-verified');
+        $scroll->setRecipients($user);
+        $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
     }
 
@@ -268,16 +268,16 @@ class  NotificationTest extends TestCase
 
         $context->notification_channels()->attach($channel->id);
 
-        $data = new NotificationData();
-        $data->setContextName('user-updated');
-        $data->setRecipients($user);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-updated');
+        $scroll->setRecipients($user);
+        $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
     }
 
@@ -303,16 +303,16 @@ class  NotificationTest extends TestCase
 
         $context->notification_channels()->attach($channel->id);
 
-        $data = new NotificationData();
-        $data->setContextName('user-updated');
-        $data->setRecipients($user);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-updated');
+        $scroll->setRecipients($user);
+        $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
     }
 
@@ -338,16 +338,16 @@ class  NotificationTest extends TestCase
 
         $context->notification_channels()->attach($channel->id);
 
-        $data = new NotificationData();
-        $data->setContextName('user-updated');
-        $data->setRecipients($user);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-updated');
+        $scroll->setRecipients($user);
+        $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
     }
 
@@ -373,15 +373,15 @@ class  NotificationTest extends TestCase
 
         $context->notification_channels()->attach($channel->id);
 
-        $data = new NotificationData();
-        $data->setContextName('user-created');
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-created');
+        $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
     }
 
@@ -405,16 +405,16 @@ class  NotificationTest extends TestCase
 
         $context->notification_channels()->attach($channel->id);
 
-        $data = new NotificationData();
-        $data->setContextName('user-created');
-        $data->setRecipients($channel);
-        $data->setParams([
+        $scroll = new Scroll();
+        $scroll->setContextName('user-created');
+        $scroll->setRecipients($channel);
+        $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'
         ]);
 
         (new RavenListener())->handle(
-            new Raven($data)
+            new Raven($scroll)
         );
     }
 }

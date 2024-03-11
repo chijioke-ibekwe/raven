@@ -4,7 +4,7 @@ namespace ChijiokeIbekwe\Raven\Events;
 
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Foundation\Events\Dispatchable;
-use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\Scroll;
 
 class Raven
 {
@@ -13,7 +13,7 @@ class Raven
     /**
      * Create a new event instance.
      */
-    public function __construct(public NotificationData $notificationData)
+    public function __construct(public Scroll $scroll)
     {
         //
     }
