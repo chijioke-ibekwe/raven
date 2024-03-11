@@ -8,6 +8,8 @@ use Illuminate\Bus\Queueable;
 use ChijiokeIbekwe\Raven\Data\NotificationData;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Models\NotificationContext;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
 use SendGrid\Mail\Attachment;
 use SendGrid\Mail\Mail;
 use SendGrid\Mail\TypeException;
@@ -24,7 +26,7 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
 
     public function via(mixed $notifiable): array
     {
-        return [config('raven.notification-service.email')];
+        return [config('raven.default.email')];
     }
 
     /**
@@ -36,12 +38,10 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
      */
     public function toSendgrid(mixed $notifiable): ?Mail {
 
-        $provider = config('raven.notification-service.email');
-
         $route = $notifiable->routeNotificationFor('mail');
 
         if (!$route) {
-            throw new RavenInvalidDataException("Missing route for $provider");
+            throw new RavenInvalidDataException("Missing route for mail");
         }
 
         $email = new Mail();
@@ -69,6 +69,39 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
                 $attachments[] = $attachment;
             }
             $email->addAttachments($attachments);
+        }
+
+        return $email;
+    }
+
+    /**
+     * Get the PHPMailer object for Amazon SES channel.
+     *
+     * @param mixed $notifiable
+     * @return PHPMailer|null
+     * @throws RavenInvalidDataException|TypeException|Exception
+     */
+    public function toAmazonSes(mixed $notifiable): ?PHPMailer {
+
+        $route = $notifiable->routeNotificationFor('mail');
+
+        if (!$route) {
+            throw new RavenInvalidDataException("Missing route for mail");
+        }
+
+        $email = new PHPMailer(true);
+        $email->addAddress($route);
+
+        if(!empty($this->notificationData->getCcs())){
+            foreach ($this->notificationData->getCcs() as $email){
+                $email->addCc($email);
+            }
+        }
+
+        if(!empty($this->notificationData->getAttachmentUrls())) {
+            foreach ($this->notificationData->getAttachmentUrls() as $url){
+                $email->addAttachment($url);
+            }
         }
 
         return $email;
