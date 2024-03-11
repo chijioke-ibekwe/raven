@@ -18,7 +18,9 @@
   ],
   "homepage": "https://github.com/chijioke-ibekwe/raven",
   "require": {
-    "sendgrid/sendgrid": "~7"
+    "sendgrid/sendgrid": "~7",
+    "aws/aws-sdk-php": "^3.300",
+    "phpmailer/phpmailer": "^6.9"
   },
   "require-dev": {
     "orchestra/testbench": "^6.0",
