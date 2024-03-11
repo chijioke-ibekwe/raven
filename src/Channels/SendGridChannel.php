@@ -9,30 +9,32 @@ use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 
 class SendGridChannel
 {
-    public function __construct(private SendGrid $sendGrid)
+    private SendGrid $sendGrid;
+
+    public function __construct()
     {
-        //
+        $this->sendGrid = app(SendGrid::class);
     }
 
     /**
      * Send the given notification.
      *
      * @param  mixed  $notifiable
-     * @param  EmailNotificationSender $sender
+     * @param  EmailNotificationSender $emailNotification
      * @return void
      */
-    public function send(mixed $notifiable, EmailNotificationSender $sender): void
+    public function send(mixed $notifiable, EmailNotificationSender $emailNotification): void
     {
-
         try {
-            $email = $sender->toSendgrid($notifiable);
+            $email = $emailNotification->toSendgrid($notifiable);
             $email->setClickTracking(true, true);
             $email->setOpenTracking(true, "--sub--");
-            $email->setFrom(config('raven.mail.from.address'), config('raven.mail.from.name'));
+            $sender = config('raven.customizations.mail.from');
+            $email->setFrom($sender['address'], $sender['name']);
 
             $response = $this->sendGrid->send($email);
 
-            if ($response->statusCode() != '202') {
+            if($response->statusCode() >= '200' && $response->statusCode() < 300) {
                 Log::info("Mail success response: " . $response->body());
             }
 
