@@ -20,6 +20,7 @@ class RavenListener
 {
     const EMAIL_PATTERN = '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$#';
     const PHONE_PATTERN = '#^\+?[0-9\s-()]+$#';
+
     /**
      * Create the event listener.
      */
@@ -44,7 +45,10 @@ class RavenListener
         $this->sendNotifications($data, $context);
     }
 
-    private function sendNotifications(NotificationData $data, NotificationContext $context)
+    /**
+     * @throws \Throwable
+     */
+    private function sendNotifications(NotificationData $data, NotificationContext $context): void
     {
         $factory = new ChannelSenderFactory($data, $context);
         $channels = $context->notification_channels;
@@ -81,19 +85,19 @@ class RavenListener
         }
     }
 
-    private function resolveRouteWithChannelSender($recipient, $channel_sender) 
+    private function resolveRouteWithChannelSender($recipient, $channel_sender): void
     {
         $sender_class = get_class($channel_sender);
 
         switch($sender_class) {  
             case EmailNotificationSender::class:
                 if(preg_match(self::EMAIL_PATTERN, $recipient)) {
-                    Notification::route(config('raven.notification-service.email'), $recipient)->notify($channel_sender);
+                    Notification::route(config('raven.default.email'), $recipient)->notify($channel_sender);
                 };
                 return;
             case SmsNotificationSender::class:
                 if(preg_match(self::PHONE_PATTERN, $recipient)) {
-                    Notification::route(config('raven.notification-service.sms'), $recipient)->notify($channel_sender);
+                    Notification::route(config('raven.default.sms'), $recipient)->notify($channel_sender);
                 };
                 return;
             case DatabaseNotificationSender::class:
