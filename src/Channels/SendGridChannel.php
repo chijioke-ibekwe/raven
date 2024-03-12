@@ -3,9 +3,9 @@
 namespace ChijiokeIbekwe\Raven\Channels;
 
 use Exception;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use SendGrid;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 
 class SendGridChannel
 {
@@ -20,12 +20,13 @@ class SendGridChannel
      * Send the given notification.
      *
      * @param  mixed  $notifiable
-     * @param  EmailNotificationSender $emailNotification
+     * @param  Notification $emailNotification
      * @return void
      */
-    public function send(mixed $notifiable, EmailNotificationSender $emailNotification): void
+    public function send(mixed $notifiable, Notification $emailNotification): void
     {
         try {
+            $emailNotification->validateNotification();
             $email = $emailNotification->toSendgrid($notifiable);
             $email->setClickTracking(true, true);
             $email->setOpenTracking(true, "--sub--");
@@ -34,7 +35,7 @@ class SendGridChannel
 
             $response = $this->sendGrid->send($email);
 
-            if($response->statusCode() >= '200' && $response->statusCode() < 300) {
+            if($response->statusCode() >= '200' && $response->statusCode() < '300') {
                 Log::info("Mail success response: " . $response->body());
             }
 
