@@ -27,6 +27,7 @@ return [
                 'name' => env('MAIL_FROM_NAME', 'Example'),
             ]
         ],
+        'queue_name' => env('RAVEN_QUEUE_NAME')
     ],
 
     'api' => [
