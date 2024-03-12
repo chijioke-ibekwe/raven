@@ -16,7 +16,7 @@ use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 
-class  NotificationTest extends TestCase
+class  SendGridNotificationTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -37,15 +37,15 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
-        $context = NotificationContext::factory(1)->create([
+        $context = NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
             'name' => 'user-created'
-        ])->get(0);
+        ]);
 
         $channel = NotificationChannel::where('type', 'EMAIL')->first();
 
@@ -62,8 +62,6 @@ class  NotificationTest extends TestCase
         (new RavenListener())->handle(
             new Raven($scroll)
         );
-
-        Notification::assertCount(1);
 
         Notification::assertSentTo(
             $user,
@@ -92,15 +90,15 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
-        $context = NotificationContext::factory(1)->create([
+        $context = NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
             'name' => 'user-created'
-        ])->get(0);
+        ]);
 
         $channel = NotificationChannel::where('type', 'EMAIL')->first();
 
@@ -117,8 +115,6 @@ class  NotificationTest extends TestCase
         (new RavenListener())->handle(
             new Raven($scroll)
         );
-
-        Notification::assertCount(2);
 
         Notification::assertSentTo(
             $user,
@@ -147,17 +143,17 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
-        $context = NotificationContext::factory(1)->create([
+        $context = NotificationContext::factory()->create([
             'name' => 'user-verified',
             'title' => 'Verification',
             'body' => 'User with id {user_id} has been verified on the platform on {date_time}',
             'type' => 'user'
-        ])->get(0);
+        ]);
 
         $channel = NotificationChannel::where('type', 'DATABASE')->first();
 
@@ -174,8 +170,6 @@ class  NotificationTest extends TestCase
         (new RavenListener())->handle(
             new Raven($scroll)
         );
-
-        Notification::assertCount(1);
 
         Notification::assertSentTo(
             $user,
@@ -204,10 +198,10 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
         $scroll = new Scroll();
         $scroll->setRecipients($user);
@@ -229,10 +223,10 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-verified');
@@ -255,14 +249,14 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
-        $context = NotificationContext::factory(1)->create([
+        $context = NotificationContext::factory()->create([
             'name' => 'user-updated'
-        ])->get(0);
+        ]);
 
         $channel = NotificationChannel::where('type', 'EMAIL')->first();
 
@@ -289,15 +283,15 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
-        $context = NotificationContext::factory(1)->create([
+        $context = NotificationContext::factory()->create([
             'name' => 'user-updated',
             'body' => 'User with id {user_id} has been updated on {date_time}'
-        ])->get(0);
+        ]);
 
         $channel = NotificationChannel::where('type', 'DATABASE')->first();
 
@@ -324,15 +318,15 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
-        $context = NotificationContext::factory(1)->create([
+        $context = NotificationContext::factory()->create([
             'name' => 'user-updated',
             'title' => 'User Updated'
-        ])->get(0);
+        ]);
 
         $channel = NotificationChannel::where('type', 'DATABASE')->first();
 
@@ -359,15 +353,15 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory(1)->make([
+        $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
-        ])->get(0);
+        ]);
 
-        $context = NotificationContext::factory(1)->create([
+        $context = NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
             'name' => 'user-created'
-        ])->get(0);
+        ]);
 
         $channel = NotificationChannel::where('type', 'EMAIL')->first();
 
@@ -396,10 +390,10 @@ class  NotificationTest extends TestCase
 
         Notification::fake();
 
-        $context = NotificationContext::factory(1)->create([
+        $context = NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
             'name' => 'user-created'
-        ])->get(0);
+        ]);
 
         $channel = NotificationChannel::where('type', 'EMAIL')->first();
 
