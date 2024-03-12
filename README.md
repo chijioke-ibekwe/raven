@@ -25,9 +25,10 @@
 - [Authors](#authors)
 
 ## 🧐 About <a name = "about"></a>
-Raven is a Laravel package that handles sending notifications through multiple channels in a project, and allows you to 
-focus on more important parts of your business logic. Currently, Raven supports sending email notifications (through Sendgrid) 
-and database notifications. SMS notifications support will be integrated soon.
+In Laravel, constantly creating notification classes and repeating the same notification logic can be tiring, especially 
+for notifications-heavy projects. Raven makes sending notifications in Laravel a breeze, and allows you to focus on more 
+important parts of your business logic. Currently, Raven supports sending email notifications (via Sendgrid and 
+Amazon SES) and database notifications. SMS notifications support will be integrated soon.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -44,16 +45,67 @@ To use this package, you need the following requirements:
     composer require chijioke-ibekwe/raven
     ```
 
-3. Next, you will need to publish and run the migration files, and the config file. The following command will allow you do all of the above:
+2. Next, you will need to publish and run the migration files, and the config file. The following command will allow you do all of the above:
     ```bash
     php artisan raven:install
     ```
 
-4. The migrations will be published in your project's migrations directory `./database/migrations` while the config file
-   `raven.php`, will be published in your config directory `./config`. Don't forget to customize the config file to suit
-    your needs.
+3. The migrations will be published in your project's migrations directory `./database/migrations` while the config file
+   `raven.php`, will be published in your config directory `./config`. Content of the config file is as shown below:
+    ```php
+   <?php
 
-5. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
+    return [
+    
+        'default' => [
+            'email' => env('EMAIL_NOTIFICATION_PROVIDER', 'sendgrid'),
+            'sms' => env('SMS_NOTIFICATION_PROVIDER', 'nexmo')
+        ],
+    
+        'providers' => [
+            'sendgrid' => [
+                'key' => env('SENDGRID_API_KEY')
+            ],
+            'ses' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+                'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid'),
+                'template_directory' => env('AWS_SES_TEMPLATE_DIRECTORY', 'resources/views/emails')
+            ]
+        ],
+    
+        'customizations' => [
+            'mail' => [
+                'from' => [
+                    'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+                    'name' => env('MAIL_FROM_NAME', 'Example'),
+                ]
+            ],
+            'queue_name' => env('RAVEN_QUEUE_NAME')
+        ],
+    
+        'api' => [
+            'prefix' => 'api/v1',
+            'middleware' => 'api'
+        ]
+    
+    ];
+    ```
+   - The `default` array allows you to configure your default service providers for your notification channels. Options
+     are `sendgrid` and `ses`. (`nexmo` for SMS will be integrated soon).
+   - The `providers` array is where you supply the credentials for the service you choose to use. When using `ses`, you 
+     can provide the email template in 2 ways. 
+     - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `template_source` should be 
+       set as `sendgrid`. NB: For this to work, you need to also provide your credentials for the `sendgrid` provider. 
+     - Second option is by storing your email templates on the file system as a blade template. The `template_source` in 
+       this case should be set as `file` and the directory of the template should be provided on the `template_directory`.
+       (This option is not currently available, but will be provided soon).
+   - The `customizations` array allows you to customize your email parameters, and optionally your `queue_name` (not 
+     queue connection) for queueing your notifications. If this is not provided, the default queue will be used.
+   - The `api` array allows you to customize the provided API routes.
+
+4. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
    To do this, simply create a migration file similar to the ones below:
    - Email Notification Context
     ```php
@@ -96,7 +148,7 @@ To use this package, you need the following requirements:
     
     ```
 
-- Database Notification Context
+   - Database Notification Context
     ```php
     <?php
     
@@ -139,7 +191,7 @@ To use this package, you need the following requirements:
     
     ```
 
-- Email and Database Notification Context
+   - Email and Database Notification Context
     ```php
     <?php
     
@@ -189,25 +241,25 @@ To use this package, you need the following requirements:
     
     ```
 
-6. To send a notification at any point in your code, build a `NotificationData` object, set the relevant 
-   fields as shown below, and dispatch a `Raven`:
+5. To send a notification at any point in your code, build a `Scroll` object, set the relevant 
+   fields as shown below, and dispatch a `Raven` with the `Scroll`:
 
     ```php
             $verified_user = User::find(1);
             $document_url = "https://example.com/laravel-cheatsheet.pdf";
 
-            $data = new NotificationData();
-            $data->setContextName('user-verified');
-            $data->setRecipients([$verified_user, 'admin@raven.com']);
-            $data->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe'])
-            $data->setParams([
+            $scroll = new Scroll();
+            $scroll->setContextName('user-verified');
+            $scroll->setRecipients([$verified_user, 'admin@raven.com']);
+            $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe'])
+            $scroll->setParams([
                 'id' => $verified_user->id,
                 'name' => $verified_user->name
                 'email' => $verified_user->email
             ]);
-            $data->setAttachmentUrls($document_url)
+            $scroll->setAttachmentUrls($document_url)
     
-            Raven::dispatch($data);
+            Raven::dispatch($scroll);
     ```
     The `contextName` property is required and must match the notification context name for that notification 
     on the database.  
@@ -220,7 +272,7 @@ To use this package, you need the following requirements:
     Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
     needs to be attached to the email notification.  
 
-9. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
+6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
    notifications table in their project via the command below:
 
     ```bash
@@ -239,7 +291,7 @@ To use this package, you need the following requirements:
     ```
     The `title` and `body` properties are obtained from the notification context for the said notification on the database.
 
-10. The package takes care of the rest of the logic.
+7. The package takes care of the rest of the logic.
 
 ### API
 The following API is included in this package for ease of use:
