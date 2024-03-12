@@ -2,6 +2,7 @@
 
 namespace ChijiokeIbekwe\Raven\Notifications;
 
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
@@ -21,7 +22,10 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
     public function __construct(public readonly Scroll              $scroll,
                                 public readonly NotificationContext $notificationContext)
     {
-        //
+        $queue = config('raven.customizations.queue_name');
+        if(!is_null($queue)) {
+            $this->queue = $queue;
+        }
     }
 
     public function via(mixed $notifiable): array
@@ -38,7 +42,8 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
      */
     public function toSendgrid(mixed $notifiable): ?Mail {
 
-        $route = $notifiable->routeNotificationFor('mail');
+        $route = $notifiable instanceof AnonymousNotifiable ? $notifiable->routes[config('raven.default.email')] :
+            $notifiable->routeNotificationFor('mail');
 
         if (!$route) {
             throw new RavenInvalidDataException("Missing route for mail");
@@ -83,7 +88,8 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
      */
     public function toAmazonSes(mixed $notifiable): ?PHPMailer {
 
-        $route = $notifiable->routeNotificationFor('mail');
+        $route = $notifiable instanceof AnonymousNotifiable ? $notifiable->routes[config('raven.default.email')] :
+            $notifiable->routeNotificationFor('mail');
 
         if (!$route) {
             throw new RavenInvalidDataException("Missing route for mail");
