@@ -35,7 +35,7 @@ class RavenListener
      */
     public function handle(Raven $event): void
     {
-        $data = $event->notificationData;
+        $data = $event->scroll;
         $context_name = $data->getContextName();
 
         $context = NotificationContext::where('name', $context_name)->first();
