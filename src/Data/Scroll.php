@@ -16,22 +16,22 @@ class Scroll
     /**
      * @var array
      */
-    private array $recipients;
+    private array $recipients = [];
 
     /**
      * @var array
      */
-    private array $ccs;
+    private array $ccs = [];
 
     /**
      * @var array
      */
-    private array $params;
+    private array $params = [];
 
     /**
      * @var array
      */
-    private array $attachmentUrls;
+    private array $attachmentUrls = [];
 
     /**
      * @var bool
