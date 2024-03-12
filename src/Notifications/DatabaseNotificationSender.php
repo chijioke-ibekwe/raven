@@ -5,7 +5,7 @@ namespace ChijiokeIbekwe\Raven\Notifications;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
-use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Models\NotificationContext;
 
@@ -13,7 +13,7 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
 {
     use Queueable;
 
-    public function __construct(public readonly NotificationData    $notificationData,
+    public function __construct(public readonly Scroll              $scroll,
                                 public readonly NotificationContext $notificationContext)
     {
         //
@@ -42,14 +42,14 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
      */
     public function toDatabase(object $notifiable): array 
     {
-        $param_keys = array_keys($this->notificationData->getParams());
+        $param_keys = array_keys($this->scroll->getParams());
 
         for ($i = 0; $i < count($param_keys); $i++) {
             $old_key = $param_keys[$i];
             $param_keys[$i] = '{' . $old_key . '}';
         }
 
-        $param_values = array_values($this->notificationData->getParams());
+        $param_values = array_values($this->scroll->getParams());
 
         $body = str_replace($param_keys, $param_values, $this->notificationContext->body);
 

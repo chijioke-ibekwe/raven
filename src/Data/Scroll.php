@@ -5,7 +5,7 @@ namespace ChijiokeIbekwe\Raven\Data;
 use Illuminate\Notifications\Notifiable;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 
-class NotificationData
+class Scroll
 {
 
     /**
@@ -151,7 +151,7 @@ class NotificationData
     }
 
     /**
-     * @param mixed $attachments
+     * @param mixed $attachmentUrls
      * @return void
      */
     public function setAttachmentUrls(mixed $attachmentUrls): void

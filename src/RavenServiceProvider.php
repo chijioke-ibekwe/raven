@@ -2,6 +2,9 @@
 
 namespace ChijiokeIbekwe\Raven;
 
+use Aws\Ses\SesClient;
+use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -48,11 +51,23 @@ class RavenServiceProvider extends ServiceProvider {
         $this->registerRoutes();
 
         $this->app->singleton(SendGrid::class, function ($app) {
-            return new SendGrid(config('raven.api-key.sendgrid'));
+            return new SendGrid(config('raven.providers.sendgrid.key'));
+        });
+
+        $this->app->singleton(SesClient::class, function ($app) {
+            return new SesClient([
+                'credentials' => Arr::only(config('raven.providers.ses'), ['key', 'secret']),
+                'version' => 'latest',
+                'region' => config('raven.providers.ses.region')
+            ]);
         });
 
         Notification::extend('sendgrid', function ($app) {
             return new SendGridChannel();
+        });
+
+        Notification::extend('ses', function ($app) {
+            return new AmazonSesChannel();
         });
     }
 

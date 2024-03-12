@@ -2,7 +2,7 @@
 
 namespace ChijiokeIbekwe\Raven\Listeners;
 
-use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\Scroll;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use ChijiokeIbekwe\Raven\Events\Raven;
@@ -20,6 +20,7 @@ class RavenListener
 {
     const EMAIL_PATTERN = '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$#';
     const PHONE_PATTERN = '#^\+?[0-9\s-()]+$#';
+
     /**
      * Create the event listener.
      */
@@ -34,7 +35,7 @@ class RavenListener
      */
     public function handle(Raven $event): void
     {
-        $data = $event->notificationData;
+        $data = $event->scroll;
         $context_name = $data->getContextName();
 
         $context = NotificationContext::where('name', $context_name)->first();
@@ -44,9 +45,12 @@ class RavenListener
         $this->sendNotifications($data, $context);
     }
 
-    private function sendNotifications(NotificationData $data, NotificationContext $context)
+    /**
+     * @throws \Throwable
+     */
+    private function sendNotifications(Scroll $scroll, NotificationContext $context): void
     {
-        $factory = new ChannelSenderFactory($data, $context);
+        $factory = new ChannelSenderFactory($scroll, $context);
         $channels = $context->notification_channels;
 
         foreach($channels as $channel){
@@ -56,7 +60,7 @@ class RavenListener
 
             $channel_sender = $factory->getSender($channel_type);
 
-            $recipients = $data->getRecipients();
+            $recipients = $scroll->getRecipients();
 
             if(!$channel_sender) {
                 Log::error("Notification channel $channel_type->name is not currently supported");
@@ -65,7 +69,7 @@ class RavenListener
 
             Log::info("Sending notification for context $context->name through channel $channel_type->name");
 
-            if(!$data->getHasOnDemand()) {
+            if(!$scroll->getHasOnDemand()) {
                 Notification::send($recipients, $channel_sender);
                 continue;
             }
@@ -81,19 +85,19 @@ class RavenListener
         }
     }
 
-    private function resolveRouteWithChannelSender($recipient, $channel_sender) 
+    private function resolveRouteWithChannelSender($recipient, $channel_sender): void
     {
         $sender_class = get_class($channel_sender);
 
         switch($sender_class) {  
             case EmailNotificationSender::class:
                 if(preg_match(self::EMAIL_PATTERN, $recipient)) {
-                    Notification::route(config('raven.notification-service.email'), $recipient)->notify($channel_sender);
+                    Notification::route(config('raven.default.email'), $recipient)->notify($channel_sender);
                 };
                 return;
             case SmsNotificationSender::class:
                 if(preg_match(self::PHONE_PATTERN, $recipient)) {
-                    Notification::route(config('raven.notification-service.sms'), $recipient)->notify($channel_sender);
+                    Notification::route(config('raven.default.sms'), $recipient)->notify($channel_sender);
                 };
                 return;
             case DatabaseNotificationSender::class:

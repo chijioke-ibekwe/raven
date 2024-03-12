@@ -5,9 +5,11 @@ namespace ChijiokeIbekwe\Raven\Notifications;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
-use ChijiokeIbekwe\Raven\Data\NotificationData;
+use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Models\NotificationContext;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
 use SendGrid\Mail\Attachment;
 use SendGrid\Mail\Mail;
 use SendGrid\Mail\TypeException;
@@ -16,7 +18,7 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
 {
     use Queueable;
 
-    public function __construct(public readonly NotificationData    $notificationData,
+    public function __construct(public readonly Scroll              $scroll,
                                 public readonly NotificationContext $notificationContext)
     {
         //
@@ -24,7 +26,7 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
 
     public function via(mixed $notifiable): array
     {
-        return [config('raven.notification-service.email')];
+        return [config('raven.default.email')];
     }
 
     /**
@@ -36,28 +38,26 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
      */
     public function toSendgrid(mixed $notifiable): ?Mail {
 
-        $provider = config('raven.notification-service.email');
-
         $route = $notifiable->routeNotificationFor('mail');
 
         if (!$route) {
-            throw new RavenInvalidDataException("Missing route for $provider");
+            throw new RavenInvalidDataException("Missing route for mail");
         }
 
         $email = new Mail();
         $email->setTemplateId($this->notificationContext->email_template_id);
         $email->addTo($route);
 
-        if(!empty($this->notificationData->getCcs())){
-            $email->addCcs($this->notificationData->getCcs());
+        if(!empty($this->scroll->getCcs())){
+            $email->addCcs($this->scroll->getCcs());
         }
 
-        $substitutions = $this->notificationData->getParams();
+        $substitutions = $this->scroll->getParams();
         $email->addDynamicTemplateDatas($substitutions);
 
-        if(!empty($this->notificationData->getAttachmentUrls())) {
+        if(!empty($this->scroll->getAttachmentUrls())) {
             $attachments = [];
-            foreach ($this->notificationData->getAttachmentUrls() as $url){
+            foreach ($this->scroll->getAttachmentUrls() as $url){
                 $attachment = new Attachment();
                 $filename = basename($url);
                 $file_encoded = base64_encode(file_get_contents($url));
@@ -69,6 +69,39 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
                 $attachments[] = $attachment;
             }
             $email->addAttachments($attachments);
+        }
+
+        return $email;
+    }
+
+    /**
+     * Get the PHPMailer object for Amazon SES channel.
+     *
+     * @param mixed $notifiable
+     * @return PHPMailer|null
+     * @throws RavenInvalidDataException|TypeException|Exception
+     */
+    public function toAmazonSes(mixed $notifiable): ?PHPMailer {
+
+        $route = $notifiable->routeNotificationFor('mail');
+
+        if (!$route) {
+            throw new RavenInvalidDataException("Missing route for mail");
+        }
+
+        $email = new PHPMailer(true);
+        $email->addAddress($route);
+
+        if(!empty($this->scroll->getCcs())){
+            foreach ($this->scroll->getCcs() as $email){
+                $email->addCc($email);
+            }
+        }
+
+        if(!empty($this->scroll->getAttachmentUrls())) {
+            foreach ($this->scroll->getAttachmentUrls() as $url){
+                $email->addAttachment($url);
+            }
         }
 
         return $email;
