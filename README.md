@@ -25,10 +25,11 @@
 - [Authors](#authors)
 
 ## 🧐 About <a name = "about"></a>
-In Laravel, constantly creating notification classes and repeating the same notification logic can be tiring, especially 
-for notifications-heavy projects. Raven makes sending notifications in Laravel a breeze, and allows you to focus on more 
-important parts of your business logic. Currently, Raven supports sending email notifications (via Sendgrid and 
-Amazon SES) and database notifications. SMS notifications support will be integrated soon.
+In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely 
+heavily on notifications. Meet Raven – the solution that streamlines the process of sending notifications in Laravel, 
+allowing you to focus on more important parts of your application. Currently, Raven seamlessly handles email 
+notifications through SendGrid and Amazon SES, as well as database notifications. Stay tuned, as support for SMS 
+notifications will be integrated in the near future.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -45,7 +46,8 @@ To use this package, you need the following requirements:
     composer require chijioke-ibekwe/raven
     ```
 
-2. Next, you will need to publish and run the migration files, and the config file. The following command will allow you do all of the above:
+2. Next, you will need to publish and run the migration files, and the config file. The following command will allow you
+   do all of the above:
     ```bash
     php artisan raven:install
     ```
@@ -94,15 +96,15 @@ To use this package, you need the following requirements:
     ```
    - The `default` array allows you to configure your default service providers for your notification channels. Options
      are `sendgrid` and `ses`. (`nexmo` for SMS will be integrated soon).
-   - The `providers` array is where you supply the credentials for the service you choose to use. When using `ses`, you 
+   - The `providers` array is where you supply the credentials for the service provider you choose. When using `ses`, you 
      can provide the email template in 2 ways. 
      - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `template_source` should be 
        set as `sendgrid`. NB: For this to work, you need to also provide your credentials for the `sendgrid` provider. 
-     - Second option is by storing your email templates on the file system as a blade template. The `template_source` in 
-       this case should be set as `file` and the directory of the template should be provided on the `template_directory`.
+     - Second option is by storing your email templates on the file system as blade templates. The `template_source` in 
+       this case should be set as `file` and the directory of the templates should be provided on the `template_directory`.
        (This option is not currently available, but will be provided soon).
    - The `customizations` array allows you to customize your email parameters, and optionally your `queue_name` (not 
-     queue connection) for queueing your notifications. If this is not provided, the default queue will be used.
+     queue connection) for queueing your notifications. If a queue name is not provided, the default queue will be used.
    - The `api` array allows you to customize the provided API routes.
 
 4. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
