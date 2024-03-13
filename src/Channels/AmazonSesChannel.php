@@ -4,8 +4,8 @@ namespace ChijiokeIbekwe\Raven\Channels;
 
 use Aws\Ses\Exception\SesException;
 use Aws\Ses\SesClient;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 use Exception;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use SendGrid;
 
@@ -24,11 +24,11 @@ class AmazonSesChannel
      * Send the given notification.
      *
      * @param mixed $notifiable
-     * @param EmailNotificationSender $emailNotification
+     * @param Notification $emailNotification
      * @return void
      * @throws Exception
      */
-    public function send(mixed $notifiable, EmailNotificationSender $emailNotification): void
+    public function send(mixed $notifiable, Notification $emailNotification): void
     {
         $email = $emailNotification->toAmazonSes($notifiable);
 
@@ -43,11 +43,12 @@ class AmazonSesChannel
 
         $template_response = $this->getSendGridTemplateContent($emailNotification);
 
-        $params = $emailNotification->notificationData->getParams();
+        $params = $emailNotification->scroll->getParams();
         $clean_html = $this->cleanTemplate($template_response['html_content'], $params);
         $clean_plain = $this->cleanTemplate($template_response['plain_content'], $params);
+        $clean_subject = $this->cleanTemplate($template_response['subject'], $params);
 
-        $email->Subject = $template_response['subject'];
+        $email->Subject = $clean_subject;
         $email->Body = $clean_html;
         $email->AltBody = $clean_plain;
 
@@ -73,13 +74,13 @@ class AmazonSesChannel
     /**
      * @throws Exception
      */
-    private function getSendGridTemplateContent(EmailNotificationSender $emailNotification): array
+    private function getSendGridTemplateContent(Notification $emailNotification): array
     {
         try {
             $template_id = $emailNotification->notificationContext->email_template_id;
             $response = $this->sendGrid->client->templates()->_($template_id)->get();
 
-            if(!($response->statusCode() >= '200' && $response->statusCode() < 300)) {
+            if(!($response->statusCode() >= '200' && $response->statusCode() < '300')) {
                 throw new Exception("SendGrid server returned error response");
             }
 

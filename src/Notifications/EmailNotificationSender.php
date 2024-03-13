@@ -12,6 +12,7 @@ use ChijiokeIbekwe\Raven\Models\NotificationContext;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use SendGrid\Mail\Attachment;
+use SendGrid\Mail\Cc;
 use SendGrid\Mail\Mail;
 use SendGrid\Mail\TypeException;
 
@@ -53,8 +54,16 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
         $email->setTemplateId($this->notificationContext->email_template_id);
         $email->addTo($route);
 
-        if(!empty($this->scroll->getCcs())){
-            $email->addCcs($this->scroll->getCcs());
+        if(!empty($ccs = $this->scroll->getCcs())){
+            if(gettype(array_key_first($ccs)) !== 'string') {
+                $cc_objects = [];
+                foreach ($ccs as $cc) {
+                    $cc_objects[] = new Cc($cc);
+                }
+                $email->addCcs($cc_objects);
+            } else {
+                $email->addCcs($ccs);
+            }
         }
 
         $substitutions = $this->scroll->getParams();
@@ -99,14 +108,21 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
         $email->addAddress($route);
 
         if(!empty($this->scroll->getCcs())){
-            foreach ($this->scroll->getCcs() as $email){
-                $email->addCc($email);
+            foreach ($this->scroll->getCcs() as $key => $value){
+                gettype($key) !== 'string' ? $email->addCc($value) : $email->addCc($key, $value);
             }
         }
 
         if(!empty($this->scroll->getAttachmentUrls())) {
             foreach ($this->scroll->getAttachmentUrls() as $url){
-                $email->addAttachment($url);
+                $filename = basename($url);
+                $binary_content = file_get_contents($url);
+
+                if ($binary_content === false) {
+                    throw new Exception("Could not fetch remote content from: '$url'");
+                }
+
+                $email->AddStringAttachment($binary_content, $filename);
             }
         }
 
