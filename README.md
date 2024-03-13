@@ -263,16 +263,16 @@ To use this package, you need the following requirements:
     
             Raven::dispatch($scroll);
     ```
-    The `contextName` property is required and must match the notification context name for that notification 
-    on the database.  
-    The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
-    strings that should receive the notification.  
-    The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as   
-    key/value pairs respectively) of emails you want to CC on the email notification.     
-    The `params` property is an associative array of all the variables that exist on the notification 
-    template with their values, where the key must match the variable name on the template.  
-    Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
-    needs to be attached to the email notification.  
+    - The `contextName` property is required and must match the notification context name for that notification 
+      on the database.  
+    - The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
+      strings that should receive the notification.  
+    - The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as 
+      key/value pairs respectively) of emails you want to CC on the email notification.     
+    - The `params` property is an associative array of all the variables that exist on the notification 
+      template with their values, where the key must match the variable name on the template.  
+    - Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
+      needs to be attached to the email notification.  
 
 6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
    notifications table in their project via the command below:
