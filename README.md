@@ -11,7 +11,7 @@
 
 ---
 
-<p align="center"> Multi-channel Laravel notification sender
+<p align="center"> Multi-channel Laravel notification package
     <br> 
 </p>
 
@@ -26,9 +26,9 @@
 
 ## 🧐 About <a name = "about"></a>
 In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely 
-heavily on notifications. Meet Raven – the solution that streamlines the process of sending notifications in Laravel, 
-allowing you to focus on more important parts of your application. Currently, Raven seamlessly handles email 
-notifications through SendGrid and Amazon SES, as well as database notifications. Stay tuned, as support for SMS 
+heavily on notifications. Meet Raven – the solution that streamlines the process of sending notifications through 
+multiple channels in Laravel, allowing you to focus on your peculiar business logic. Currently, Raven seamlessly handles
+email notifications through SendGrid and Amazon SES, as well as database notifications. Stay tuned, as support for SMS 
 notifications will be integrated in the near future.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
@@ -102,13 +102,13 @@ To use this package, you need the following requirements:
        set as `sendgrid`. NB: For this to work, you need to also provide your credentials for the `sendgrid` provider. 
      - Second option is by storing your email templates on the file system as blade templates. The `template_source` in 
        this case should be set as `file` and the directory of the templates should be provided on the `template_directory`.
-       (This option is not currently available, but will be provided soon).
+       (This option is not currently available, but will be in the near future).
    - The `customizations` array allows you to customize your email parameters, and optionally your `queue_name` (not 
      queue connection) for queueing your notifications. If a queue name is not provided, the default queue will be used.
    - The `api` array allows you to customize the provided API routes.
 
 4. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
-   To do this, simply create a migration file similar to the ones below:
+   To do this, simply create and run migration files similar to the ones below:
    - Email Notification Context
     ```php
     <?php
@@ -265,10 +265,10 @@ To use this package, you need the following requirements:
     ```
     The `contextName` property is required and must match the notification context name for that notification 
     on the database.  
-    The `recipients` property is required and takes any single notifiable or an array of notifiables that should receive 
-    the notification.  
-    The `ccs` property is exclusively for email notifications and takes an associative array with a key-value pair of 
-    the emails and names of people you want to CC on the email.  
+    The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
+    strings that should receive the notification.  
+    The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as   
+    key/value pairs respectively) of emails you want to CC on the email notification.     
     The `params` property is an associative array of all the variables that exist on the notification 
     template with their values, where the key must match the variable name on the template.  
     Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
