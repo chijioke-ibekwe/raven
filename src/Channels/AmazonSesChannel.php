@@ -30,6 +30,7 @@ class AmazonSesChannel
      */
     public function send(mixed $notifiable, Notification $emailNotification): void
     {
+        $emailNotification->validateNotification();
         $email = $emailNotification->toAmazonSes($notifiable);
 
         $sender = config('raven.customizations.mail.from');

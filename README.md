@@ -335,9 +335,9 @@ The following API is included in this package for ease of use:
 ### Exceptions
 The following exceptions can be thrown by the package for the scenarios outlined below:
 1. `RavenEntityNotFoundException` `code: 404`
-   - Dispatching a Raven with a `NotificationData` object that has a `contextName` which does not exist on the database.
+   - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist on the database.
 2. `RavenInvalidDataException` `code: 422`
-   - Dispatching a Raven with a `NotificationData` object without a `contextName` or `recipient`.
+   - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `title` or `body`.
    - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()` 
@@ -346,7 +346,9 @@ The following exceptions can be thrown by the package for the scenarios outlined
 ## ⛏️ Built Using <a name = "built_using"></a>
 - [PHP](https://www.php.net/) - Language
 - [Orchestral Testbench](https://github.com/orchestral/testbench) - Library
+- [AWS PHP SDK](https://github.com/aws/aws-sdk-php) - Library
 - [Sendgrid PHP Library](https://github.com/sendgrid/sendgrid-php) - Library
+- [PHP Mailer](https://github.com/PHPMailer/PHPMailer) - Library
 
 ## 📝 TODO <a name = "todo"></a>
 - Add support for SMS notifications
