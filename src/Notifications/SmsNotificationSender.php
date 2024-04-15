@@ -15,17 +15,18 @@ class SmsNotificationSender extends Notification implements ShouldQueue, INotifi
     public function __construct(public readonly Scroll              $scroll,
                                 public readonly NotificationContext $notificationContext)
     {
-        //
+        $queue = config('raven.customizations.queue_name');
+        if(!is_null($queue)) {
+            $this->queue = $queue;
+        }
     }
 
-    public function via($notifiable): array {
-        return ['raven.default.sms'];
+    public function via(mixed $notifiable): array {
+        return [config('raven.default.sms')];
     }
 
     public function validateNotification()
     {
         // TODO: Implement validateNotification() method.
     }
-
-
 }

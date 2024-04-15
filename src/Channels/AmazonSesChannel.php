@@ -78,7 +78,7 @@ class AmazonSesChannel
     private function getSendGridTemplateContent(Notification $emailNotification): array
     {
         try {
-            $template_id = $emailNotification->notificationContext->email_template_id;
+            $template_id = $emailNotification->notificationContext->email_template;
             $response = $this->sendGrid->client->templates()->_($template_id)->get();
 
             if(!($response->statusCode() >= '200' && $response->statusCode() < '300')) {

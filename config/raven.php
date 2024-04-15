@@ -4,7 +4,7 @@ return [
 
     'default' => [
         'email' => env('EMAIL_NOTIFICATION_PROVIDER', 'sendgrid'),
-        'sms' => env('SMS_NOTIFICATION_PROVIDER', 'nexmo')
+        'sms' => env('SMS_NOTIFICATION_PROVIDER', 'vonage')
     ],
 
     'providers' => [

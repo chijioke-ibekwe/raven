@@ -10,11 +10,12 @@ class CreateNotificationContextsTable extends Migration
     {
         Schema::create('notification_contexts', function (Blueprint $table) {
             $table->id();
-            $table->string('email_template_id')->nullable();
             $table->string('name')->unique()->index();
             $table->text('description')->nullable();
             $table->string('title')->nullable();
-            $table->text('body')->nullable();
+            $table->string('email_template')->nullable();
+            $table->string('sms_template')->nullable();
+            $table->string('db_template')->nullable();
             $table->string('type')->nullable();
             $table->boolean('active')->default(true);
         });

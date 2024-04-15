@@ -48,7 +48,7 @@ class NotificationContextRouteTest extends TestCase
             'data' => [
                 [
                     'id' => 1,
-                    'email_template_id' => null,
+                    'email_template' => null,
                     'name' => 'user-verified',
                     'title' => 'Verification',
                     'body' => 'User with id {user_id} has been verified on the platform on {date_time}',

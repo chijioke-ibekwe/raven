@@ -126,7 +126,7 @@ To use this package, you need the following requirements:
             $id = DB::table('notification_contexts')->insertGetId(
                 array(
                     'name' => 'user-verified',
-                    'email_template_id' => 'd-ad34ghAwe3mQRvb29',
+                    'email_template' => 'd-ad34ghAwe3mQRvb29',
                     'description' => 'Notification to inform a user that they have been verified on the platform'
                 )
             );
@@ -210,7 +210,7 @@ To use this package, you need the following requirements:
             $id = DB::table('notification_contexts')->insertGetId(
                 array(
                     'name' => 'user-verified',
-                    'email_template_id' => 'd-ad34ghAwe3mQRvb29',
+                    'email_template' => 'd-ad34ghAwe3mQRvb29',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
                     'title' => 'You have been verified',
                     'body' => 'Hello {name}. This is to let you know that your account with email {email} has been verified',
@@ -307,7 +307,7 @@ The following API is included in this package for ease of use:
         "data": [
             {
                 "id": 1,
-                "email_template_id": "d-ad34ghAwe3mQRvb29",
+                "email_template": "d-ad34ghAwe3mQRvb29",
                 "name": "user-verified",
                 "description": "Notification to inform a user that they have been verified on the platform",
                 "title": "You have been verified",
@@ -338,7 +338,7 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist on the database.
 2. `RavenInvalidDataException` `code: 422`
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
-   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id`.
+   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `title` or `body`.
    - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()` 
      method in the model class.

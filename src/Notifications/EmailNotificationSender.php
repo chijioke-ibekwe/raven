@@ -51,7 +51,7 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
         }
 
         $email = new Mail();
-        $email->setTemplateId($this->notificationContext->email_template_id);
+        $email->setTemplateId($this->notificationContext->email_template);
         $email->addTo($route);
 
         if(!empty($ccs = $this->scroll->getCcs())){
@@ -136,7 +136,7 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
     {
         $context_name = $this->notificationContext->name;
 
-        throw_if(empty($this->notificationContext->email_template_id), RavenInvalidDataException::class,
+        throw_if(empty($this->notificationContext->email_template), RavenInvalidDataException::class,
             "Email notification context with name $context_name has no email template id");
     }
 }

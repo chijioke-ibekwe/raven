@@ -9,7 +9,7 @@ use ChijiokeIbekwe\Raven\Database\Factories\NotificationContextFactory;
 
 
 /**
- * @property string $email_template_id
+ * @property string $email_template
  * @property string $name
  * @property string $title
  * @property string $body
@@ -22,7 +22,7 @@ class NotificationContext extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'email_template_id',
+        'email_template',
         'name',
         'description',
         'title',

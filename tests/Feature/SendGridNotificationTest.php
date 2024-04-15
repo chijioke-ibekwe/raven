@@ -43,7 +43,7 @@ class  SendGridNotificationTest extends TestCase
         ]);
 
         $context = NotificationContext::factory()->create([
-            'email_template_id' => 'sendgrid-template',
+            'email_template' => 'sendgrid-template',
             'name' => 'user-created'
         ]);
 
@@ -96,7 +96,7 @@ class  SendGridNotificationTest extends TestCase
         ]);
 
         $context = NotificationContext::factory()->create([
-            'email_template_id' => 'sendgrid-template',
+            'email_template' => 'sendgrid-template',
             'name' => 'user-created'
         ]);
 
@@ -241,7 +241,7 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
-    public function test_that_exception_is_thrown_when_email_notification_context_has_no_email_template_id()
+    public function test_that_exception_is_thrown_when_email_notification_context_has_no_email_template()
     {
         $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Email notification context with name user-updated has no email template id');
@@ -359,7 +359,7 @@ class  SendGridNotificationTest extends TestCase
         ]);
 
         $context = NotificationContext::factory()->create([
-            'email_template_id' => 'sendgrid-template',
+            'email_template' => 'sendgrid-template',
             'name' => 'user-created'
         ]);
 
@@ -391,7 +391,7 @@ class  SendGridNotificationTest extends TestCase
         Notification::fake();
 
         $context = NotificationContext::factory()->create([
-            'email_template_id' => 'sendgrid-template',
+            'email_template' => 'sendgrid-template',
             'name' => 'user-created'
         ]);
 
