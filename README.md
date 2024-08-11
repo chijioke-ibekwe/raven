@@ -116,7 +116,7 @@ To use this package, you need the following requirements:
      - All placeholders in these templates should be surrounded by double curly braces e.g `{{name}}`.
      - File names of these templates must match the file names in the `email_template_filename`, `sms_template_filename` and      
        `in_app_template_filename` columns on the notification context record. 
-   - The `api` array allows you to customize the provided API routes.
+   - The `api` array allows you to customize the provided API routes with prefix and middleware group.
 
 4. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
    To do this, simply create and run migration files similar to the ones below:
