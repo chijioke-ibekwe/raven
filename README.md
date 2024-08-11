@@ -95,7 +95,7 @@ To use this package, you need the following requirements:
     ];
     ```
    - The `default` array allows you to configure your default service providers for your notification channels. Options
-     are `sendgrid` and `ses`. (`nexmo` for SMS will be integrated soon).
+     are `sendgrid` and `ses`. (`vonage` for SMS will be integrated soon).
    - The `providers` array is where you supply the credentials for the service provider you choose. When using `ses`, you 
      can provide the email template in 2 ways. 
      - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `templates_source` should be 
@@ -107,15 +107,12 @@ To use this package, you need the following requirements:
      NB: 
      - If a queue name is not provided, the default queue will be used.
      - The default templates directory is a directory called `templates` in the resources path 
-     - The templates directory set, will contain three directories within: `email` (relevant only if your template source is  
-       `filesystem` and provider is `ses`), `sms`, and `in_app`.
+     - The templates directory set, will contain three directories within: `email` (relevant only if your template source is `filesystem` and provider is `ses`), `sms`, and `in_app`.
      - The `email` directory will contain the `.html` templates for your emails. 
      - The `sms` directory will contain the `.txt` files with the contents of your sms notifications. 
-     - The `in_app` directory will contain `.json` files whose contents will be saved on the data column of the database                
-       notifications. 
+     - The `in_app` directory will contain `.json` files whose contents will be saved on the data column of the database notifications table. 
      - All placeholders in these templates should be surrounded by double curly braces e.g `{{name}}`.
-     - File names of these templates must match the file names in the `email_template_filename`, `sms_template_filename` and      
-       `in_app_template_filename` columns on the notification context record. 
+     - File names of these templates must match the file names in the `email_template_filename`, `sms_template_filename` and `in_app_template_filename` columns on the notification context record. 
    - The `api` array allows you to customize the provided API routes with prefix and middleware group.
 
 4. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
@@ -313,7 +310,7 @@ To use this package, you need the following requirements:
             $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe']);
             $scroll->setParams([
                 'id' => $verified_user->id,
-                'name' => $verified_user->name
+                'name' => $verified_user->name,
                 'email' => $verified_user->email
             ]);
             $scroll->setAttachmentUrls($document_url);

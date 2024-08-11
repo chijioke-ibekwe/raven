@@ -7,13 +7,14 @@ use ChijiokeIbekwe\Raven\Models\NotificationContext;
 
 class NotificationContextController extends Controller
 {
+    
 
     public function index(): JsonResponse {
 
         if (!auth()->check()) {
             return new JsonResponse([
                 'status' => false,
-                'msg' => 'You are not authorized to access this API'
+                'message' => 'You are not authorized to access this API'
             ], 401);
         }
 
@@ -27,7 +28,7 @@ class NotificationContextController extends Controller
 
         return new JsonResponse([
             'status' => true,
-            'msg' => 'Success',
+            'message' => 'Success',
             'data' => $contexts
         ], 200);
     }
