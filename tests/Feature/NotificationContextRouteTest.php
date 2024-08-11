@@ -30,8 +30,7 @@ class NotificationContextRouteTest extends TestCase
 
         $context = NotificationContext::factory(1)->create([
             'name' => 'user-verified',
-            'title' => 'Verification',
-            'body' => 'User with id {user_id} has been verified on the platform on {date_time}',
+            'in_app_template_filename' => 'verification.json',
             'type' => 'user'
         ])->get(0);
 
@@ -49,9 +48,10 @@ class NotificationContextRouteTest extends TestCase
                 [
                     'id' => 1,
                     'email_template_id' => null,
+                    'email_template_filename' => null,
                     'name' => 'user-verified',
-                    'title' => 'Verification',
-                    'body' => 'User with id {user_id} has been verified on the platform on {date_time}',
+                    'in_app_template_filename' => 'verification.json',
+                    'sms_template_filename' => null,
                     'type' => 'user',
                     'notification_channels' => [
                         [

@@ -23,6 +23,7 @@ class  SendGridNotificationTest extends TestCase
     public function getEnvironmentSetUp($app): void
     {
         $app['config']->set('raven.default.email', 'sendgrid');
+        $app['config']->set('raven.customizations.templates_directory', resource_path('templates'));
 
         // run the up() method (perform the migration)
         (new \CreateNotificationContextsTable)->up();
@@ -140,6 +141,18 @@ class  SendGridNotificationTest extends TestCase
      */
     public function test_that_database_notifications_are_sent_when_the_raven_listener_receives_a_database_context()
     {
+        $data = [
+            'title' => 'Verification',
+            'body' => 'User with id {{user_id}} has been verified on the platform on {{date_time}}',
+        ];
+
+        $json = json_encode($data, JSON_PRETTY_PRINT);
+
+        if (!is_dir(resource_path('templates/in_app'))) {
+            mkdir(resource_path('templates/in_app'), 0777, true);
+        }
+
+        file_put_contents(resource_path('templates/in_app/user-verified.json'), $json);
 
         Notification::fake();
 
@@ -150,8 +163,7 @@ class  SendGridNotificationTest extends TestCase
 
         $context = NotificationContext::factory()->create([
             'name' => 'user-verified',
-            'title' => 'Verification',
-            'body' => 'User with id {user_id} has been verified on the platform on {date_time}',
+            'in_app_template_filename' => 'user-verified.json',
             'type' => 'user'
         ]);
 
@@ -241,7 +253,7 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
-    public function test_that_exception_is_thrown_when_email_notification_context_has_no_email_template_id()
+    public function test_that_exception_is_thrown_when_email_notification_context_has_no_email_template()
     {
         $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Email notification context with name user-updated has no email template id');
@@ -275,10 +287,10 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
-    public function test_that_exception_is_thrown_when_database_notification_context_has_no_title()
+    public function test_that_exception_is_thrown_when_database_notification_context_has_no_filename()
     {
         $this->expectException(RavenInvalidDataException::class);
-        $this->expectExceptionMessage('Database notification context with name user-updated has no title');
+        $this->expectExceptionMessage('Database notification context with name user-updated has no template filename');
         $this->expectExceptionCode(422);
 
         Notification::fake();
@@ -289,8 +301,7 @@ class  SendGridNotificationTest extends TestCase
         ]);
 
         $context = NotificationContext::factory()->create([
-            'name' => 'user-updated',
-            'body' => 'User with id {user_id} has been updated on {date_time}'
+            'name' => 'user-updated'
         ]);
 
         $channel = NotificationChannel::where('type', 'DATABASE')->first();
@@ -310,10 +321,11 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
-    public function test_that_exception_is_thrown_when_database_notification_context_has_no_body()
+    public function test_that_exception_is_thrown_when_database_notification_context_template_file_does_not_exist()
     {
         $this->expectException(RavenInvalidDataException::class);
-        $this->expectExceptionMessage('Database notification context with name user-updated has no body');
+        $this->expectExceptionMessage('Database notification context with name user-updated has no template file ' . 
+        'in /home/chijioke-ibekwe/projects/raven/vendor/orchestra/testbench-core/laravel/resources/templates/in_app');
         $this->expectExceptionCode(422);
 
         Notification::fake();
@@ -325,7 +337,7 @@ class  SendGridNotificationTest extends TestCase
 
         $context = NotificationContext::factory()->create([
             'name' => 'user-updated',
-            'title' => 'User Updated'
+            'in_app_template_filename' => 'user-updated.json',
         ]);
 
         $channel = NotificationChannel::where('type', 'DATABASE')->first();

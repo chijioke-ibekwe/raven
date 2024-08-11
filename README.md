@@ -28,7 +28,7 @@
 In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely 
 heavily on notifications. Meet Raven – the solution that streamlines the process of sending notifications through 
 multiple channels in Laravel, allowing you to focus on your peculiar business logic. Currently, Raven seamlessly handles
-email notifications through SendGrid and Amazon SES, as well as database notifications. Stay tuned, as support for SMS 
+email notifications through SendGrid and Amazon SES, as well as database/in-app notifications. Stay tuned, as support for SMS 
 notifications will be integrated in the near future.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
@@ -61,7 +61,7 @@ To use this package, you need the following requirements:
     
         'default' => [
             'email' => env('EMAIL_NOTIFICATION_PROVIDER', 'sendgrid'),
-            'sms' => env('SMS_NOTIFICATION_PROVIDER', 'nexmo')
+            'sms' => env('SMS_NOTIFICATION_PROVIDER', 'vonage')
         ],
     
         'providers' => [
@@ -72,8 +72,7 @@ To use this package, you need the following requirements:
                 'key' => env('AWS_ACCESS_KEY_ID'),
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
                 'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-                'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid'),
-                'template_directory' => env('AWS_SES_TEMPLATE_DIRECTORY', 'resources/views/emails')
+                'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid')
             ]
         ],
     
@@ -85,6 +84,7 @@ To use this package, you need the following requirements:
                 ]
             ],
             'queue_name' => env('RAVEN_QUEUE_NAME')
+            'templates_directory' => env('TEMPLATES_DIRECTORY', resource_path('templates'))
         ],
     
         'api' => [
@@ -98,18 +98,29 @@ To use this package, you need the following requirements:
      are `sendgrid` and `ses`. (`nexmo` for SMS will be integrated soon).
    - The `providers` array is where you supply the credentials for the service provider you choose. When using `ses`, you 
      can provide the email template in 2 ways. 
-     - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `template_source` should be 
+     - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `templates_source` should be 
        set as `sendgrid`. NB: For this to work, you need to also provide your credentials for the `sendgrid` provider. 
-     - Second option is by storing your email templates on the file system as blade templates. The `template_source` in 
-       this case should be set as `file` and the directory of the templates should be provided on the `template_directory`.
-       (This option is not currently available, but will be in the near future).
-   - The `customizations` array allows you to customize your email parameters, and optionally your `queue_name` (not 
-     queue connection) for queueing your notifications. If a queue name is not provided, the default queue will be used.
-   - The `api` array allows you to customize the provided API routes.
+     - Second option is by storing your email templates on the file system as .html templates. The `templates_source` in 
+       this case should be set as `filesystem` and the directory of the templates should be provided on the `templates_directory` under `customizations`. (This option is not currently supported for emails, but will be in the near future).
+   - The `customizations` array allows you to customize your email parameters, optionally your `queue_name` (not 
+     queue connection) for queueing your notifications, and your templates directory. 
+     NB: 
+     - If a queue name is not provided, the default queue will be used.
+     - The default templates directory is a directory called `templates` in the resources path 
+     - The templates directory set, will contain three directories within: `email` (relevant only if your template source is  
+       `filesystem` and provider is `ses`), `sms`, and `in_app`.
+     - The `email` directory will contain the `.html` templates for your emails. 
+     - The `sms` directory will contain the `.txt` files with the contents of your sms notifications. 
+     - The `in_app` directory will contain `.json` files whose contents will be saved on the data column of the database                
+       notifications. 
+     - All placeholders in these templates should be surrounded by double curly braces e.g `{{name}}`.
+     - File names of these templates must match the file names in the `email_template_filename`, `sms_template_filename` and      
+       `in_app_template_filename` columns on the notification context record. 
+   - The `api` array allows you to customize the provided API routes with prefix and middleware group.
 
 4. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
    To do this, simply create and run migration files similar to the ones below:
-   - Email Notification Context
+   - Email Notification Context (when using `sendgrid` as provider or template source)
     ```php
     <?php
     
@@ -127,6 +138,47 @@ To use this package, you need the following requirements:
                 array(
                     'name' => 'user-verified',
                     'email_template_id' => 'd-ad34ghAwe3mQRvb29',
+                    'description' => 'Notification to inform a user that they have been verified on the platform'
+                )
+            );
+    
+            DB::table('notification_channel_notification_context')->insert(
+                array(
+                    'notification_channel_id' => 1, //EMAIL
+                    'notification_context_id' => $id
+                )
+            );
+        }
+    
+        /**
+         * Reverse the migrations.
+         */
+        public function down(): void
+        {
+            DB::table('notification_contexts')->where('name', 'user-verified')->delete();
+        }
+    };
+    
+    ```
+
+   - Email Notification Context (when using `ses` as provider and `filesystem` as template source)
+    ```php
+    <?php
+    
+    use Illuminate\Database\Migrations\Migration;
+    use Illuminate\Support\Facades\DB;
+    
+    return new class extends Migration
+    {
+        /**
+         * Run the migrations.
+         */
+        public function up(): void
+        {
+            $id = DB::table('notification_contexts')->insertGetId(
+                array(
+                    'name' => 'user-verified',
+                    'email_template_filename' => 'user-verified.html',
                     'description' => 'Notification to inform a user that they have been verified on the platform'
                 )
             );
@@ -168,8 +220,7 @@ To use this package, you need the following requirements:
                 array(
                     'name' => 'user-verified',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'title' => 'You have been verified',
-                    'body' => 'Hello {name}. This is to let you know that your account with email {email} has been verified',
+                    'in_app_template_filename' => 'user-verified.json',
                     'type' => 'user'
                 )
             );
@@ -192,6 +243,13 @@ To use this package, you need the following requirements:
     };
     
     ```
+    `user-verified.json`
+    ```json
+    {
+        "title": "You have been verified",
+        "body": "Hello {{name}}. This is to let you know that your account with email {{email}} has been verified",
+    }
+    ```
 
    - Email and Database Notification Context
     ```php
@@ -212,8 +270,7 @@ To use this package, you need the following requirements:
                     'name' => 'user-verified',
                     'email_template_id' => 'd-ad34ghAwe3mQRvb29',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'title' => 'You have been verified',
-                    'body' => 'Hello {name}. This is to let you know that your account with email {email} has been verified',
+                    'in_app_template_filename' => 'user-verified.json',
                     'type' => 'user'
                 )
             );
@@ -253,13 +310,13 @@ To use this package, you need the following requirements:
             $scroll = new Scroll();
             $scroll->setContextName('user-verified');
             $scroll->setRecipients([$verified_user, 'admin@raven.com']);
-            $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe'])
+            $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe']);
             $scroll->setParams([
                 'id' => $verified_user->id,
                 'name' => $verified_user->name
                 'email' => $verified_user->email
             ]);
-            $scroll->setAttachmentUrls($document_url)
+            $scroll->setAttachmentUrls($document_url);
     
             Raven::dispatch($scroll);
     ```
@@ -284,14 +341,8 @@ To use this package, you need the following requirements:
     ```bash
     php artisan migrate
     ```
-    The data column for database notifications using this package, captures the following properties:
-    ```php
-     [
-        'title' => $title,
-        'body' => $body
-     ];
-    ```
-    The `title` and `body` properties are obtained from the notification context for the said notification on the database.
+    The data column for database notifications using this package, will capture whatever key-value pairs you have in the json template for that notification. 
+    All placeholders surrounded by `{{}}` in the template will be replaced with their values passed in as params of the same name when creating the `Scroll` object.
 
 7. The package takes care of the rest of the logic.
 
@@ -308,10 +359,11 @@ The following API is included in this package for ease of use:
             {
                 "id": 1,
                 "email_template_id": "d-ad34ghAwe3mQRvb29",
+                "email_template_filename": null,
                 "name": "user-verified",
                 "description": "Notification to inform a user that they have been verified on the platform",
-                "title": "You have been verified",
-                "body": "Hello {name}. This is to let you know that your account with email {email} has been verified",
+                "sms_template_filename": null,
+                "in_app_template_filename": "user-verified.json",
                 "type": "user",
                 "active": true,
                 "notification_channels": [
@@ -328,7 +380,7 @@ The following API is included in this package for ease of use:
    ```json
    {
         "status": false,
-        "msg": "You are not authorized to access this API"
+        "message": "You are not authorized to access this API"
    }
    ```
 
@@ -338,8 +390,13 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist on the database.
 2. `RavenInvalidDataException` `code: 422`
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
-   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id`.
-   - Attempting to send a Database Notification using a `NotificationContext` that has no `title` or `body`.
+   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider or 
+     template source is `sendgrid`.
+   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_filename` when your email   
+     provider is `ses` and template source is `filesystem`.
+   - Attempting to send a Database Notification using a `NotificationContext` that has no `in_app_template_filename`.
+   - Attempting to send a Database Notification using a `NotificationContext` that has a non-existent template file that matches the 
+     `in_app_template_filename` in the in-app template directory.
    - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()` 
      method in the model class.
 

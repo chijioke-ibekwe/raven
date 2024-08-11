@@ -136,7 +136,17 @@ class EmailNotificationSender extends Notification implements ShouldQueue, INoti
     {
         $context_name = $this->notificationContext->name;
 
-        throw_if(empty($this->notificationContext->email_template_id), RavenInvalidDataException::class,
+        if(config('raven.default.email') == 'sendgrid') {
+            throw_if(empty($this->notificationContext->email_template_id), RavenInvalidDataException::class,
             "Email notification context with name $context_name has no email template id");
+        }
+
+        if(config('raven.default.email') == 'ses') {
+            throw_if(empty($this->notificationContext->email_template_id) && config('raven.providers.ses.template_source') == 'sendgrid', RavenInvalidDataException::class,
+            "Email notification context with name $context_name has no email template id");
+
+            throw_if(empty($this->notificationContext->email_template_filename) && config('raven.providers.ses.template_source') == 'filesystem', RavenInvalidDataException::class,
+            "Email notification context with name $context_name has no email template file name");
+        }
     }
 }

@@ -4,7 +4,7 @@ return [
 
     'default' => [
         'email' => env('EMAIL_NOTIFICATION_PROVIDER', 'sendgrid'),
-        'sms' => env('SMS_NOTIFICATION_PROVIDER', 'nexmo')
+        'sms' => env('SMS_NOTIFICATION_PROVIDER', 'vonage')
     ],
 
     'providers' => [
@@ -16,7 +16,6 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
             'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid'),
-            'template_directory' => env('AWS_SES_TEMPLATE_DIRECTORY', 'resources/views/emails')
         ]
     ],
 
@@ -27,7 +26,8 @@ return [
                 'name' => env('MAIL_FROM_NAME', 'Example'),
             ]
         ],
-        'queue_name' => env('RAVEN_QUEUE_NAME')
+        'queue_name' => env('RAVEN_QUEUE_NAME'),
+        'templates_directory' => env('TEMPLATES_DIRECTORY', resource_path('templates'))
     ],
 
     'api' => [
