@@ -13,6 +13,8 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
 {
     use Queueable;
 
+    const IN_APP_FOLDER = '/in_app/';
+
     public function __construct(public readonly Scroll              $scroll,
                                 public readonly NotificationContext $notificationContext)
     {
@@ -46,17 +48,16 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
 
         for ($i = 0; $i < count($param_keys); $i++) {
             $old_key = $param_keys[$i];
-            $param_keys[$i] = '{' . $old_key . '}';
+            $param_keys[$i] = '{{' . $old_key . '}}';
         }
 
         $param_values = array_values($this->scroll->getParams());
+        $template_content = file_get_contents(config('raven.customizations.templates_directory') . 
+            self::IN_APP_FOLDER . $this->notificationContext->in_app_template_filename);
 
-        $body = str_replace($param_keys, $param_values, $this->notificationContext->body);
+        $cleaned_template = str_replace($param_keys, $param_values, $template_content);
 
-        return [
-            'title' => $this->notificationContext->title,
-            'body' => $body
-        ];
+        return json_decode($cleaned_template, true);
     }
 
     /**
@@ -65,12 +66,13 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
     public function validateNotification(): void
     {
         $context_name = $this->notificationContext->name;
+        $in_app_template_directory = config('raven.customizations.templates_directory') . self::IN_APP_FOLDER;
 
-        throw_if(empty($this->notificationContext->title), RavenInvalidDataException::class,
-            "Database notification context with name $context_name has no title");
+        throw_if(empty($this->notificationContext->in_app_template_filename), RavenInvalidDataException::class,
+            "Database notification context with name $context_name has no template filename");
 
-        throw_if(empty($this->notificationContext->body), RavenInvalidDataException::class,
-            "Database notification context with name $context_name has no body");
+        throw_if(!file_exists($in_app_template_directory . $this->notificationContext->in_app_template_filename), RavenInvalidDataException::class,
+            "Database notification context with name $context_name has no template file in $in_app_template_directory");
     }
 
 }

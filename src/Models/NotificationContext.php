@@ -9,11 +9,14 @@ use ChijiokeIbekwe\Raven\Database\Factories\NotificationContextFactory;
 
 
 /**
- * @property string $email_template
  * @property string $name
- * @property string $title
- * @property string $body
+ * @property string $description
+ * @property string $email_template_id
+ * @property string $email_template_filename
+ * @property string $sms_template_filename
+ * @property string $in_app_template_filename
  * @property string $type
+ * @property string $active
  */
 class NotificationContext extends Model
 {
@@ -22,11 +25,12 @@ class NotificationContext extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'email_template',
         'name',
         'description',
-        'title',
-        'body',
+        'email_template_id',
+        'email_template_filename',
+        'sms_template_filename',
+        'in_app_template_filename',
         'type',
         'active'
     ];
