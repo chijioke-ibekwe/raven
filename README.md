@@ -243,8 +243,8 @@ To use this package, you need the following requirements:
     };
     
     ```
+    `user-verified.json`
     ```json
-    user-verified.json
     {
         "title": "You have been verified",
         "body": "Hello {{name}}. This is to let you know that your account with email {{email}} has been verified",
