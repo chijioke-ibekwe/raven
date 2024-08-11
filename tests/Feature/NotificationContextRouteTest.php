@@ -43,7 +43,7 @@ class NotificationContextRouteTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'status' => true,
-            'msg' => 'Success',
+            'message' => 'Success',
             'data' => [
                 [
                     'id' => 1,
