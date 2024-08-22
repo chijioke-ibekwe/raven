@@ -26,7 +26,7 @@
 
 ## 🧐 About <a name = "about"></a>
 In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely 
-heavily on notifications. Meet Raven – the solution that streamlines the process of sending notifications through 
+heavily on notifications. Meet Raven – the solution that simplifies the process of sending notifications through 
 multiple channels in Laravel, allowing you to focus on your peculiar business logic. Currently, Raven seamlessly handles
 email notifications through SendGrid and Amazon SES, as well as database/in-app notifications. Stay tuned, as support for SMS 
 notifications will be integrated in the near future.
