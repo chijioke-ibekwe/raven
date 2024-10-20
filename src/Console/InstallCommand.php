@@ -64,8 +64,7 @@ class InstallCommand extends Command
 
     private function migrationsExist(): bool
     {
-        return File::exists(database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php'))
-            || File::exists(database_path('migrations/2023_05_12_142924_create_notification_channels_table.php'));
+        return File::exists(database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php'));
     }
 
     private function shouldOverwriteConfig(): bool

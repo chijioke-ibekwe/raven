@@ -25,7 +25,7 @@
 - [Authors](#authors)
 
 ## 🧐 About <a name = "about"></a>
-In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely 
+In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely
 heavily on notifications. Meet Raven – the solution that simplifies the process of sending notifications through 
 multiple channels in Laravel, allowing you to focus on your peculiar business logic. Currently, Raven seamlessly handles
 email notifications through SendGrid and Amazon SES, as well as database/in-app notifications. Stay tuned, as support for SMS 
@@ -135,14 +135,8 @@ To use this package, you need the following requirements:
                 array(
                     'name' => 'user-verified',
                     'email_template_id' => 'd-ad34ghAwe3mQRvb29',
-                    'description' => 'Notification to inform a user that they have been verified on the platform'
-                )
-            );
-    
-            DB::table('notification_channel_notification_context')->insert(
-                array(
-                    'notification_channel_id' => 1, //EMAIL
-                    'notification_context_id' => $id
+                    'description' => 'Notification to inform a user that they have been verified on the platform',
+                    'channels' => ['EMAIL']
                 )
             );
         }
@@ -176,14 +170,8 @@ To use this package, you need the following requirements:
                 array(
                     'name' => 'user-verified',
                     'email_template_filename' => 'user-verified.html',
-                    'description' => 'Notification to inform a user that they have been verified on the platform'
-                )
-            );
-    
-            DB::table('notification_channel_notification_context')->insert(
-                array(
-                    'notification_channel_id' => 1, //EMAIL
-                    'notification_context_id' => $id
+                    'description' => 'Notification to inform a user that they have been verified on the platform',
+                    'channels' => ['EMAIL']
                 )
             );
         }
@@ -218,14 +206,8 @@ To use this package, you need the following requirements:
                     'name' => 'user-verified',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
                     'in_app_template_filename' => 'user-verified.json',
-                    'type' => 'user'
-                )
-            );
-    
-            DB::table('notification_channel_notification_context')->insert(
-                array(
-                    'notification_channel_id' => 2, //DATABASE
-                    'notification_context_id' => $id
+                    'type' => 'user',
+                    'channels' => ['DATABASE']
                 )
             );
         }
@@ -268,20 +250,8 @@ To use this package, you need the following requirements:
                     'email_template_id' => 'd-ad34ghAwe3mQRvb29',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
                     'in_app_template_filename' => 'user-verified.json',
-                    'type' => 'user'
-                )
-            );
-    
-            DB::table('notification_channel_notification_context')->insert(
-                array(
-                    array(
-                        'notification_channel_id' => 1, //EMAIL
-                        'notification_context_id' => $id,
-                    ),
-                    array(
-                        'notification_channel_id' => 2, //DATABASE
-                        'notification_context_id' => $id,
-                    )
+                    'type' => 'user',
+                    'channels' => ['EMAIL', 'DATABASE']
                 )
             );
         }
@@ -350,11 +320,13 @@ The following API is included in this package for ease of use:
    - Return a JSON of the format below:
    ```json
     {
-        "status": true,
-        "msg": "Success",
+        "status": "success",
+        "message": "Notification contexts retrieved successfully",
         "data": [
             {
                 "id": 1,
+                "created_at": "2024-10-18 14:25",
+                "updated_at": "2024-10-18 14:25",
                 "email_template_id": "d-ad34ghAwe3mQRvb29",
                 "email_template_filename": null,
                 "name": "user-verified",
@@ -363,11 +335,8 @@ The following API is included in this package for ease of use:
                 "in_app_template_filename": "user-verified.json",
                 "type": "user",
                 "active": true,
-                "notification_channels": [
-                    {
-                        "id": 1,
-                        "type": "EMAIL"
-                    }
+                "channels": [
+                    "EMAIL"
                 ]
             }
         ]
@@ -389,6 +358,8 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider or 
      template source is `sendgrid`.
+   - Attempting to send an Email Notification using a `NotificationContext` that has an invalid channel i.e a channel that 
+     that isn't one of "EMAIL", "DATABASE", or "SMS".
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_filename` when your email   
      provider is `ses` and template source is `filesystem`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `in_app_template_filename`.

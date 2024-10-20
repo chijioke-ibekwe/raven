@@ -13,22 +13,16 @@ class NotificationContextController extends Controller
 
         if (!auth()->check()) {
             return new JsonResponse([
-                'status' => false,
+                'status' => 'failure',
                 'message' => 'You are not authorized to access this API'
             ], 401);
         }
 
-        $contexts = NotificationContext::with('notification_channels')->get();
-
-        foreach ($contexts as $context){
-            foreach ($context->notification_channels as $channel){
-                unset($channel['pivot']);
-            }
-        }
+        $contexts = NotificationContext::all();
 
         return new JsonResponse([
-            'status' => true,
-            'message' => 'Success',
+            'status' => 'success',
+            'message' => 'Notification contexts retrieved successfully',
             'data' => $contexts
         ], 200);
     }

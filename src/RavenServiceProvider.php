@@ -34,11 +34,7 @@ class RavenServiceProvider extends ServiceProvider {
             //publish migration files
             $this->publishes([
                 __DIR__ . '/../database/migrations/create_notification_contexts_table.php.stub' =>
-                    database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php'),
-                __DIR__ . '/../database/migrations/create_notification_channels_table.php.stub' =>
-                    database_path('migrations/2023_05_12_142924_create_notification_channels_table.php'),
-                __DIR__ . '/../database/migrations/create_notification_channel_notification_context_table.php.stub' =>
-                    database_path('migrations/2023_05_12_142925_create_notification_channel_notification_context_table.php')
+                    database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php')
             ], 'raven-migrations');
 
 

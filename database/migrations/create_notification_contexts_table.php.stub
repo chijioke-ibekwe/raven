@@ -18,6 +18,8 @@ class CreateNotificationContextsTable extends Migration
             $table->string('in_app_template_filename')->nullable();
             $table->string('type')->nullable();
             $table->boolean('active')->default(true);
+            $table->json('channels');
+            $table->timestamps();
         });
     }
 

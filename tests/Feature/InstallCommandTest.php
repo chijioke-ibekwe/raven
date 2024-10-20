@@ -47,8 +47,6 @@ class  InstallCommandTest extends TestCase
         $this->assertTrue(File::exists(config_path('raven.php')));
         $this->assertNotEmpty(File::allFiles(database_path('migrations')));
         $this->assertTrue(Schema::hasTable('notification_contexts'));
-        $this->assertTrue(Schema::hasTable('notification_channels'));
-        $this->assertTrue(Schema::hasTable('notification_channel_notification_context'));
     }
 
 

@@ -47,5 +47,7 @@
         "ChijiokeIbekwe\\Raven\\RavenServiceProvider"
       ]
     }
-  }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }

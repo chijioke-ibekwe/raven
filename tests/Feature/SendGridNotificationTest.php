@@ -9,7 +9,6 @@ use ChijiokeIbekwe\Raven\Events\Raven;
 use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Listeners\RavenListener;
-use ChijiokeIbekwe\Raven\Models\NotificationChannel;
 use ChijiokeIbekwe\Raven\Models\NotificationContext;
 use ChijiokeIbekwe\Raven\Notifications\DatabaseNotificationSender;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
@@ -27,8 +26,6 @@ class  SendGridNotificationTest extends TestCase
 
         // run the up() method (perform the migration)
         (new \CreateNotificationContextsTable)->up();
-        (new \CreateNotificationChannelsTable)->up();
-        (new \CreateNotificationChannelNotificationContextTable)->up();
     }
 
     /**
@@ -45,12 +42,9 @@ class  SendGridNotificationTest extends TestCase
 
         $context = NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created'
+            'name' => 'user-created',
+            'channels' => ['EMAIL']
         ]);
-
-        $channel = NotificationChannel::where('type', 'EMAIL')->first();
-
-        $context->notification_channels()->attach($channel->id);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-created');
@@ -98,12 +92,9 @@ class  SendGridNotificationTest extends TestCase
 
         $context = NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created'
+            'name' => 'user-created',
+            'channels' => ['EMAIL']
         ]);
-
-        $channel = NotificationChannel::where('type', 'EMAIL')->first();
-
-        $context->notification_channels()->attach($channel->id);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-created');
@@ -164,12 +155,9 @@ class  SendGridNotificationTest extends TestCase
         $context = NotificationContext::factory()->create([
             'name' => 'user-verified',
             'in_app_template_filename' => 'user-verified.json',
-            'type' => 'user'
+            'type' => 'user',
+            'channels' => ['DATABASE']
         ]);
-
-        $channel = NotificationChannel::where('type', 'DATABASE')->first();
-
-        $context->notification_channels()->attach($channel->id);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-verified');
@@ -227,6 +215,9 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function test_that_exception_is_thrown_when_notification_context_name_does_not_exist_on_the_database()
     {
         $this->expectException(RavenEntityNotFoundException::class);
@@ -253,6 +244,9 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function test_that_exception_is_thrown_when_email_notification_context_has_no_email_template()
     {
         $this->expectException(RavenInvalidDataException::class);
@@ -266,13 +260,10 @@ class  SendGridNotificationTest extends TestCase
             'email' => 'john.doe@raven.com'
         ]);
 
-        $context = NotificationContext::factory()->create([
-            'name' => 'user-updated'
+        NotificationContext::factory()->create([
+            'name' => 'user-updated',
+            'channels' => ['EMAIL']
         ]);
-
-        $channel = NotificationChannel::where('type', 'EMAIL')->first();
-
-        $context->notification_channels()->attach($channel->id);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-updated');
@@ -287,6 +278,9 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function test_that_exception_is_thrown_when_database_notification_context_has_no_filename()
     {
         $this->expectException(RavenInvalidDataException::class);
@@ -300,13 +294,10 @@ class  SendGridNotificationTest extends TestCase
             'email' => 'john.doe@raven.com'
         ]);
 
-        $context = NotificationContext::factory()->create([
-            'name' => 'user-updated'
+        NotificationContext::factory()->create([
+            'name' => 'user-updated',
+            'channels' => ['DATABASE']
         ]);
-
-        $channel = NotificationChannel::where('type', 'DATABASE')->first();
-
-        $context->notification_channels()->attach($channel->id);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-updated');
@@ -321,6 +312,9 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function test_that_exception_is_thrown_when_database_notification_context_template_file_does_not_exist()
     {
         $this->expectException(RavenInvalidDataException::class);
@@ -335,14 +329,11 @@ class  SendGridNotificationTest extends TestCase
             'email' => 'john.doe@raven.com'
         ]);
 
-        $context = NotificationContext::factory()->create([
+        NotificationContext::factory()->create([
             'name' => 'user-updated',
             'in_app_template_filename' => 'user-updated.json',
+            'channels' => ['DATABASE']
         ]);
-
-        $channel = NotificationChannel::where('type', 'DATABASE')->first();
-
-        $context->notification_channels()->attach($channel->id);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-updated');
@@ -357,6 +348,9 @@ class  SendGridNotificationTest extends TestCase
         );
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function test_that_exception_is_thrown_when_recipients_are_not_provided_in_notification_data()
     {
         $this->expectException(RavenInvalidDataException::class);
@@ -365,19 +359,16 @@ class  SendGridNotificationTest extends TestCase
 
         Notification::fake();
 
-        $user = User::factory()->make([
+        User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com'
         ]);
 
-        $context = NotificationContext::factory()->create([
+        NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created'
+            'name' => 'user-created',
+            'channels' => ['EMAIL']
         ]);
-
-        $channel = NotificationChannel::where('type', 'EMAIL')->first();
-
-        $context->notification_channels()->attach($channel->id);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-created');
@@ -404,16 +395,42 @@ class  SendGridNotificationTest extends TestCase
 
         $context = NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created'
+            'name' => 'user-created',
+            'channels' => ['EMAIL']
         ]);
-
-        $channel = NotificationChannel::where('type', 'EMAIL')->first();
-
-        $context->notification_channels()->attach($channel->id);
 
         $scroll = new Scroll();
         $scroll->setContextName('user-created');
-        $scroll->setRecipients($channel);
+        $scroll->setRecipients($context);
+        $scroll->setParams([
+            'user_id' => '345',
+            'date_time' => '11-12-2023 10:51'
+        ]);
+
+        (new RavenListener())->handle(
+            new Raven($scroll)
+        );
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function test_that_exception_is_thrown_when_a_notification_context_has_an_invalid_channel()
+    {
+        $this->expectException(RavenInvalidDataException::class);
+        $this->expectExceptionMessage('Notification context has an invalid channel: em');
+
+        Notification::fake();
+
+        NotificationContext::factory()->create([
+            'email_template_id' => 'sendgrid-template',
+            'name' => 'user-created',
+            'channels' => ['em']
+        ]);
+
+        $scroll = new Scroll();
+        $scroll->setContextName('user-created');
+        $scroll->setRecipients('john.doe@raven.com');
         $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51'

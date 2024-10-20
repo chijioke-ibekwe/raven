@@ -4,7 +4,6 @@ namespace ChijiokeIbekwe\Raven\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use ChijiokeIbekwe\Raven\Database\Factories\NotificationContextFactory;
 
 
@@ -17,12 +16,11 @@ use ChijiokeIbekwe\Raven\Database\Factories\NotificationContextFactory;
  * @property string $in_app_template_filename
  * @property string $type
  * @property string $active
+ * @property array $channels
  */
 class NotificationContext extends Model
 {
     use HasFactory;
-
-    public $timestamps = false;
 
     protected $fillable = [
         'name',
@@ -32,14 +30,16 @@ class NotificationContext extends Model
         'sms_template_filename',
         'in_app_template_filename',
         'type',
-        'active'
+        'active',
+        'channels'
     ];
 
-    public function notification_channels(): BelongsToMany
-    {
-        return $this->belongsToMany(NotificationChannel::class, 'notification_channel_notification_context',
-        'notification_context_id', 'notification_channel_id');
-    }
+    protected $casts = [
+        'active' => 'boolean',
+        'channels' => 'array',
+        'created_at' => 'datetime:Y-m-d H:i',
+        'updated_at' => 'datetime:Y-m-d H:i'
+    ];
 
     protected static function newFactory(): NotificationContextFactory
     {
