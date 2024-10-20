@@ -13,8 +13,9 @@ class NotificationContextRouteTest extends TestCase
 
     public function getEnvironmentSetUp($app): void
     {
-        // run the up() method (perform the migration)
-        (new \CreateNotificationContextsTable)->up();
+        $migrations = require __DIR__.'/../../database/migrations/create_notification_contexts_table.php.stub';
+
+        $migrations->up();
     }
 
     public function test_that_authorized_users_can_successfully_fetch_all_notification_contexts ()
