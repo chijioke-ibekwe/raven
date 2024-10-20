@@ -131,12 +131,12 @@ To use this package, you need the following requirements:
          */
         public function up(): void
         {
-            $id = DB::table('notification_contexts')->insertGetId(
+            DB::table('notification_contexts')->insert(
                 array(
                     'name' => 'user-verified',
                     'email_template_id' => 'd-ad34ghAwe3mQRvb29',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'channels' => ['EMAIL']
+                    'channels' => json_encode(['EMAIL'])
                 )
             );
         }
@@ -166,12 +166,12 @@ To use this package, you need the following requirements:
          */
         public function up(): void
         {
-            $id = DB::table('notification_contexts')->insertGetId(
+            DB::table('notification_contexts')->insert(
                 array(
                     'name' => 'user-verified',
                     'email_template_filename' => 'user-verified.html',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'channels' => ['EMAIL']
+                    'channels' => json_encode(['EMAIL'])
                 )
             );
         }
@@ -201,13 +201,13 @@ To use this package, you need the following requirements:
          */
         public function up(): void
         {
-            $id = DB::table('notification_contexts')->insertGetId(
+            DB::table('notification_contexts')->insert(
                 array(
                     'name' => 'user-verified',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
                     'in_app_template_filename' => 'user-verified.json',
                     'type' => 'user',
-                    'channels' => ['DATABASE']
+                    'channels' => json_encode(['DATABASE'])
                 )
             );
         }
@@ -244,14 +244,14 @@ To use this package, you need the following requirements:
          */
         public function up(): void
         {
-            $id = DB::table('notification_contexts')->insertGetId(
+            DB::table('notification_contexts')->insert(
                 array(
                     'name' => 'user-verified',
                     'email_template_id' => 'd-ad34ghAwe3mQRvb29',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
                     'in_app_template_filename' => 'user-verified.json',
                     'type' => 'user',
-                    'channels' => ['EMAIL', 'DATABASE']
+                    'channels' => json_encode(['EMAIL', 'DATABASE'])
                 )
             );
         }
