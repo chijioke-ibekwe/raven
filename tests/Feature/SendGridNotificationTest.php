@@ -418,14 +418,14 @@ class  SendGridNotificationTest extends TestCase
     public function test_that_exception_is_thrown_when_a_notification_context_has_an_invalid_channel()
     {
         $this->expectException(RavenInvalidDataException::class);
-        $this->expectExceptionMessage('Notification context has an invalid channel: email');
+        $this->expectExceptionMessage('Notification context has an invalid channel: em');
 
         Notification::fake();
 
         NotificationContext::factory()->create([
             'email_template_id' => 'sendgrid-template',
             'name' => 'user-created',
-            'channels' => ['email']
+            'channels' => ['em']
         ]);
 
         $scroll = new Scroll();

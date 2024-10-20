@@ -56,7 +56,7 @@ class RavenListener
         $channels = $context->channels;
 
         foreach($channels as $channel){
-            $channel_type = ChannelType::tryFrom($channel);
+            $channel_type = ChannelType::tryFrom(strtoupper($channel));
 
             if(is_null($channel_type))
                 throw new RavenInvalidDataException("Notification context has an invalid channel: $channel");
