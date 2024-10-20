@@ -126,8 +126,6 @@ class  DatabaseNotificationTest extends TestCase
     public function test_that_exception_is_thrown_when_database_notification_context_template_file_does_not_exist()
     {
         $this->expectException(RavenInvalidDataException::class);
-        $this->expectExceptionMessage('Database notification context with name user-updated has no template file ' .
-            'in /home/chijioke-ibekwe/projects/raven/vendor/orchestra/testbench-core/laravel/resources/templates/in_app');
         $this->expectExceptionCode(422);
 
         Notification::fake();
