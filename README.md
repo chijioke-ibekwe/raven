@@ -1,5 +1,9 @@
 
-# <div align="center">Raven</div>
+<p align="center">
+  <a href="" rel="noopener">
+ <img width=200px height=200px src="./raven_logo.png" alt="Project logo"></a>
+</p>
+
 <div align="center">
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
@@ -226,7 +230,7 @@ To use this package, you need the following requirements:
     ```json
     {
         "title": "You have been verified",
-        "body": "Hello {{name}}. This is to let you know that your account with email {{email}} has been verified",
+        "body": "Hello {{name}}. This is to let you know that your account with email {{email}} has been verified"
     }
     ```
 
