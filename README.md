@@ -1,7 +1,7 @@
 
 <p align="center">
   <a href="" rel="noopener">
- <img width=1000px height=300px src="./raven_logo.png" alt="Raven logo"></a>
+  <img width=1000px height=300px src="./raven_logo.png" alt="Raven logo"></a>
 </p>
 
 <div align="center">
