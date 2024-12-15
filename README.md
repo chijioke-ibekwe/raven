@@ -32,8 +32,7 @@
 In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely
 heavily on notifications. Meet Raven – the solution that simplifies the process of sending notifications through 
 multiple channels in Laravel, allowing you to focus on your peculiar business logic. Currently, Raven seamlessly handles
-email notifications through SendGrid and Amazon SES, as well as database/in-app notifications. Stay tuned, as support for SMS 
-notifications will be integrated in the near future.
+email notifications through SendGrid and Amazon SES, SMS notifications through Vonage, as well as database/in-app notifications.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -77,6 +76,10 @@ To use this package, you need the following requirements:
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
                 'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
                 'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid')
+            ],
+            'vonage' => [
+                'api_key' => env('VONAGE_API_KEY'),
+                'api_secret' => env('VONAGE_API_SECRET')
             ]
         ],
     
@@ -85,6 +88,11 @@ To use this package, you need the following requirements:
                 'from' => [
                     'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
                     'name' => env('MAIL_FROM_NAME', 'Example'),
+                ]
+            ],
+            'sms' => [
+                'from' => [
+                    'name' => env('SMS_FROM_NAME', 'Example'),
                 ]
             ],
             'queue_name' => env('RAVEN_QUEUE_NAME')
@@ -99,7 +107,7 @@ To use this package, you need the following requirements:
     ];
     ```
    - The `default` array allows you to configure your default service providers for your notification channels. Options
-     are `sendgrid` and `ses`. (`vonage` for SMS will be integrated soon).
+     are `sendgrid` and `ses` for email, and `vonage` for SMS.
    - The `providers` array is where you supply the credentials for the service provider you choose. When using `ses`, you 
      can provide the email template in 2 ways. 
      - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `templates_source` should be 
@@ -191,6 +199,42 @@ To use this package, you need the following requirements:
     
     ```
 
+   - SMS Notification Context
+    ```php
+    <?php
+    
+    use Illuminate\Database\Migrations\Migration;
+    use Illuminate\Support\Facades\DB;
+    
+    return new class extends Migration
+    {
+        /**
+         * Run the migrations.
+         */
+        public function up(): void
+        {
+            DB::table('notification_contexts')->insert(
+                array(
+                    'name' => 'user-verified',
+                    'sms_template_filename' => 'user-verified.txt',
+                    'description' => 'Notification to inform a user that they have been verified on the platform',
+                    'type' => 'user',
+                    'channels' => json_encode(['SMS'])
+                )
+            );
+        }
+    
+        /**
+         * Reverse the migrations.
+         */
+        public function down(): void
+        {
+            DB::table('notification_contexts')->where('name', 'user-verified')->delete();
+        }
+    };
+    
+    ```
+
    - Database Notification Context
     ```php
     <?php
@@ -234,7 +278,7 @@ To use this package, you need the following requirements:
     }
     ```
 
-   - Email and Database Notification Context
+   - Email, SMS and Database Notification Context
     ```php
     <?php
     
@@ -253,9 +297,10 @@ To use this package, you need the following requirements:
                     'name' => 'user-verified',
                     'email_template_id' => 'd-ad34ghAwe3mQRvb29',
                     'description' => 'Notification to inform a user that they have been verified on the platform',
+                    'sms_template_filename' => 'user-verified.txt',
                     'in_app_template_filename' => 'user-verified.json',
                     'type' => 'user',
-                    'channels' => json_encode(['EMAIL', 'DATABASE'])
+                    'channels' => json_encode(['EMAIL', 'SMS', 'DATABASE'])
                 )
             );
         }
@@ -271,36 +316,55 @@ To use this package, you need the following requirements:
     
     ```
 
-5. To send a notification at any point in your code, build a `Scroll` object, set the relevant 
-   fields as shown below, and dispatch a `Raven` with the `Scroll`:
+   5. To send a notification at any point in your code, build a `Scroll` object, set the relevant 
+      fields as shown below, and dispatch a `Raven` with the `Scroll`:
 
-    ```php
-            $verified_user = User::find(1);
-            $document_url = "https://example.com/laravel-cheatsheet.pdf";
+       ```php
+               $verified_user = User::find(1);
+               $document_url = "https://example.com/laravel-cheatsheet.pdf";
 
-            $scroll = new Scroll();
-            $scroll->setContextName('user-verified');
-            $scroll->setRecipients([$verified_user, 'admin@raven.com']);
-            $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe']);
-            $scroll->setParams([
-                'id' => $verified_user->id,
-                'name' => $verified_user->name,
-                'email' => $verified_user->email
-            ]);
-            $scroll->setAttachmentUrls($document_url);
+               $scroll = new Scroll();
+               $scroll->setContextName('user-verified');
+               $scroll->setRecipients([$verified_user, 'admin@raven.com']);
+               $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe']);
+               $scroll->setParams([
+                   'id' => $verified_user->id,
+                   'name' => $verified_user->name,
+                   'email' => $verified_user->email
+               ]);
+               $scroll->setAttachmentUrls($document_url);
     
-            Raven::dispatch($scroll);
-    ```
-    - The `contextName` property is required and must match the notification context name for that notification 
-      on the database.  
-    - The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
-      strings that should receive the notification.  
-    - The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as 
-      key/value pairs respectively) of emails you want to CC on the email notification.     
-    - The `params` property is an associative array of all the variables that exist on the notification 
-      template with their values, where the key must match the variable name on the template.  
-    - Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
-      needs to be attached to the email notification.  
+               Raven::dispatch($scroll);
+       ```
+       - The `contextName` property is required and must match the notification context name for that notification 
+         on the database.  
+         - The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
+           strings that should receive the notification. For email notifications, your notifiable model is expected to have an
+           `email` field. If the field is named something different on the model e.g `email_address`, you are required to 
+           provide the `routeNotificationForMail` method on the model, in a similar manner as below: 
+           ```php
+                   use Illuminate\Notifications\Notifiable;
+                   use Illuminate\Foundation\Auth\User as Authenticatable;
+               
+                   class User extends Authenticatable
+                   {
+                       use Notifiable;
+           
+                       public function routeNotificationForMail()
+                       {
+                           return $this->email_address;
+                       }
+                   }
+           ```
+           For SMS notifications, the notifiable is required to have a similar method on the notifiable model that matches 
+           the SMS provider name. For instance, if your SMS notification provider is `vonage`, you should have a method 
+           called `routeNotificationForVonage` on the notifiable, which returns the phone number field on the model.
+       - The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as 
+         key/value pairs respectively) of emails you want to CC on the email notification.     
+       - The `params` property is an associative array of all the variables that exist on the notification 
+         template with their values, where the key must match the variable name on the template.  
+       - Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
+         needs to be attached to the email notification.  
 
 6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
    notifications table in their project via the command below:
@@ -313,7 +377,11 @@ To use this package, you need the following requirements:
     php artisan migrate
     ```
     The data column for database notifications using this package, will capture whatever key-value pairs you have in the json template for that notification. 
-    All placeholders surrounded by `{{}}` in the template will be replaced with their values passed in as params of the same name when creating the `Scroll` object.
+    All placeholders surrounded by `{{}}` in the template will be replaced with their values passed in as params of the same name when creating the `Scroll` object.  
+    NB: 
+    On the notifications table migration file, ensure that the `notifiable` column data type matches the data type for your notifiable primary key.  
+    By default, the data type is `morphs`. However, if the  primary key for your notifiable is a `uuid` or `ulid`, ensure you change the type to
+    `uuidMorphs` or `ulidMorphs` respectively.
 
 7. The package takes care of the rest of the logic.
 
@@ -367,9 +435,14 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_filename` when your email   
      provider is `ses` and template source is `filesystem`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `in_app_template_filename`.
+   - Attempting to send an SMS Notification using a `NotificationContext` that has no `sms_template_filename`.
    - Attempting to send a Database Notification using a `NotificationContext` that has a non-existent template file that matches the 
      `in_app_template_filename` in the in-app template directory.
+   - Attempting to send an SMS Notification using a `NotificationContext` that has a non-existent template file that matches the
+     `sms_template_filename` in the sms template directory.
    - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()` 
+     method in the model class.
+   - Attempting to send an SMS Notification to a notifiable that has no `phone` field or a `routeNotificationForPhone()`
      method in the model class.
 
 ## ⛏️ Built Using <a name = "built_using"></a>
