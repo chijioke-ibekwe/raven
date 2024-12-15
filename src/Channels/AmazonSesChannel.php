@@ -4,6 +4,7 @@ namespace ChijiokeIbekwe\Raven\Channels;
 
 use Aws\Ses\Exception\SesException;
 use Aws\Ses\SesClient;
+use ChijiokeIbekwe\Raven\Library\TemplateCleaner;
 use Exception;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -30,7 +31,6 @@ class AmazonSesChannel
      */
     public function send(mixed $notifiable, Notification $emailNotification): void
     {
-        $emailNotification->validateNotification();
         $email = $emailNotification->toAmazonSes($notifiable);
 
         $sender = config('raven.customizations.mail.from');
@@ -45,9 +45,9 @@ class AmazonSesChannel
         $template_response = $this->getSendGridTemplateContent($emailNotification);
 
         $params = $emailNotification->scroll->getParams();
-        $clean_html = $this->cleanTemplate($template_response['html_content'], $params);
-        $clean_plain = $this->cleanTemplate($template_response['plain_content'], $params);
-        $clean_subject = $this->cleanTemplate($template_response['subject'], $params);
+        $clean_html = TemplateCleaner::cleanText($params, $template_response['html_content']);
+        $clean_plain = TemplateCleaner::cleanText($params, $template_response['plain_content']);
+        $clean_subject = TemplateCleaner::cleanText($params, $template_response['subject']);
 
         $email->Subject = $clean_subject;
         $email->Body = $clean_html;
@@ -66,9 +66,25 @@ class AmazonSesChannel
                     'Data' => $message
                 ]
             ]);
-            Log::info($result);
+
+            $statusCode = $result['@metadata']['statusCode'];
+
+            if ($statusCode === 200) {
+                Log::info("Email with subject: $clean_subject sent successfully.", [
+                    'MessageId' => $result->get('MessageId')
+                ]);
+            } else {
+                Log::warning("Email with subject: $clean_subject not sent successfully.", [
+                    'MessageId' => $result->get('MessageId'),
+                    'StatusCode' => $statusCode,
+                    'ResponseMetadata' => $result['@metadata'],
+                ]);
+            }
+
         } catch (SesException $error) {
-            Log::error("Failed sending mail: " . $error->getAwsErrorMessage());
+            Log::error('SES error while sending email: ' . $error->getAwsErrorMessage());
+        } catch (Exception $e) {
+            Log::error('General error while sending email: ' . $e->getMessage());
         }
     }
 
@@ -101,13 +117,5 @@ class AmazonSesChannel
             Log::error("Failed sending mail: " . $e->getMessage());
             throw new Exception($e);
         }
-    }
-
-    private function cleanTemplate($template, $data)
-    {
-        foreach ($data as $key => $value) {
-            $template = str_replace('{{' . $key . '}}', $value, $template);
-        }
-        return $template;
     }
 }
