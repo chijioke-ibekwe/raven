@@ -33,7 +33,7 @@ class ChannelSenderFactory
 
         $this->sender_store = [
             'EMAIL' => $email_sender,
-            'SMS' => null,
+            'SMS' => $sms_sender,
             'DATABASE' => $database_sender,
         ];
     }

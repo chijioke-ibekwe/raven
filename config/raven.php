@@ -16,6 +16,10 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
             'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid'),
+        ],
+        'vonage' => [
+            'api_key' => env('VONAGE_API_KEY'),
+            'api_secret' => env('VONAGE_API_SECRET')
         ]
     ],
 
@@ -24,6 +28,11 @@ return [
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
                 'name' => env('MAIL_FROM_NAME', 'Example'),
+            ]
+        ],
+        'sms' => [
+            'from' => [
+                'name' => env('SMS_FROM_NAME', 'Example'),
             ]
         ],
         'queue_name' => env('RAVEN_QUEUE_NAME'),
