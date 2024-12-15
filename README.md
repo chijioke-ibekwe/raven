@@ -30,9 +30,16 @@
 
 ## 🧐 About <a name = "about"></a>
 In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely
-heavily on notifications. Meet Raven – the solution that simplifies the process of sending notifications through 
-multiple channels in Laravel, allowing you to focus on your peculiar business logic. Currently, Raven seamlessly handles
-email notifications through SendGrid and Amazon SES, SMS notifications through Vonage, as well as database/in-app notifications.
+heavily on notifications. Also, our projects could sometimes feel tightly coupled to certain notification providers  
+in such a way that switching providers would require significant code changes, and moving of resources like templates  
+from one platform to the other. These are the hassles that Raven saves you from. This solution:  
+- Simplifies sending notifications through multiple channels in Laravel.  
+- Ensures your project is loosely coupled to notification providers, allowing you to switch providers with zero code 
+  changes, when they no longer suite your needs.  
+- Allows you to seamlessly combine the best attributes of your favorite notification providers without any hassles. E.g 
+  Sendgrid dynamic template creation tool and Amazon SES servers.   
+Currently, Raven seamlessly handles email notifications through SendGrid and Amazon SES, SMS notifications through Vonage,   
+as well as database/in-app notifications. More providers are gradually being integrated.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -408,7 +415,8 @@ The following API is included in this package for ease of use:
                 "type": "user",
                 "active": true,
                 "channels": [
-                    "EMAIL"
+                    "EMAIL",
+                    "DATABASE"
                 ]
             }
         ]
@@ -442,8 +450,7 @@ The following exceptions can be thrown by the package for the scenarios outlined
      `sms_template_filename` in the sms template directory.
    - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()` 
      method in the model class.
-   - Attempting to send an SMS Notification to a notifiable that has no `phone` field or a `routeNotificationForPhone()`
-     method in the model class.
+   - Attempting to send an SMS Notification to a notifiable that has no `routeNotificationFor$Provider()` method in the model class.
 
 ## ⛏️ Built Using <a name = "built_using"></a>
 - [PHP](https://www.php.net/) - Language
@@ -451,9 +458,7 @@ The following exceptions can be thrown by the package for the scenarios outlined
 - [AWS PHP SDK](https://github.com/aws/aws-sdk-php) - Library
 - [Sendgrid PHP Library](https://github.com/sendgrid/sendgrid-php) - Library
 - [PHP Mailer](https://github.com/PHPMailer/PHPMailer) - Library
-
-## 📝 TODO <a name = "todo"></a>
-- Add support for SMS notifications
+- [Vonage](https://github.com/vonage/vonage-php-sdk-core) - Library
 
 ## ✍️ Authors <a name = "authors"></a>
 - [@chijioke-ibekwe](https://github.com/chijioke-ibekwe) - Initial work
