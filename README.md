@@ -32,8 +32,8 @@
 In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely
 heavily on notifications. Also, our projects could sometimes feel tightly coupled to certain notification providers  
 in such a way that switching providers would require significant code changes, and moving of resources like templates 
-from one platform to the other. These are the hassles that Raven saves you from. This solution:  
-- Simplifies sending diverse notification types via a single interface.  
+from one platform to the other. These are the exact hassles that Raven could save you from. Raven:  
+- Simplifies sending diverse notification types via a single interface.
 - Ensures your project is loosely coupled to notification providers, allowing you to switch providers with zero code 
   changes when they no longer suit your needs.  
 - Allows you to seamlessly combine the best attributes of your favourite notification providers without any hassles. E.g 
@@ -64,7 +64,7 @@ To use this package, you need the following requirements:
     ```
 
 3. The migrations will be published in your project's migrations directory `./database/migrations` while the config file
-   `raven.php`, will be published in your config directory `./config`. Content of the config file is as shown below:
+   `raven.php`, will be published in your config directory `./config`. The content of the config file is as shown below:
     ```php
    <?php
 
@@ -125,7 +125,7 @@ To use this package, you need the following requirements:
    - The `customizations` array allows you to customize your email parameters, optionally your `queue_name` (not 
      queue connection) for queueing your notifications, and your templates directory. 
      NB: 
-     - If a queue name is not provided, the default queue will be used.
+     - The default queue will be used if a queue name is not provided.
      - The default templates directory is a directory called `templates` in the resources path 
      - The templates directory set, will contain three directories within: `email` (relevant only if your template source is `filesystem` and provider is `ses`), `sms`, and `in_app`.
      - The `email` directory will contain the `.html` templates for your emails. 
@@ -242,7 +242,8 @@ To use this package, you need the following requirements:
     };
     
     ```
-   `user-verified.txt`
+    `user-verified.txt`
+    ```text
     "Hello {{name}}. This is to let you know that your account with email {{email}} has been verified"
     ```
 
@@ -327,7 +328,7 @@ To use this package, you need the following requirements:
     
     ```
 
-5. To send a notification at any point in your code, build a `Scroll` object, set the relevant
+6. To send a notification at any point in your code, build a `Scroll` object, set the relevant
    fields as shown below, and dispatch a `Raven` with the `Scroll`:
 
    ```php
@@ -377,7 +378,7 @@ To use this package, you need the following requirements:
    - Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
      needs to be attached to the email notification.  
 
-6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
+7. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
    notifications table in their project via the command below:
 
     ```bash
@@ -389,12 +390,12 @@ To use this package, you need the following requirements:
     ```
     The data column for database notifications using this package, will capture whatever key-value pairs you have in the json template for that notification. 
     All placeholders surrounded by `{{}}` in the template will be replaced with their values passed in as params of the same name when creating the `Scroll` object.  
-    NB: 
+    NB:  
     On the notifications table migration file, ensure that the `notifiable` column data type matches the data type for your notifiable primary key.  
     By default, the data type is `morphs`. However, if the  primary key for your notifiable is a `uuid` or `ulid`, ensure you change the type to
     `uuidMorphs` or `ulidMorphs` respectively.
 
-7. The package takes care of the rest of the logic.
+8. The package takes care of the rest of the logic.
 
 ### API
 The following API is included in this package for ease of use:
