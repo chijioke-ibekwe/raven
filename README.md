@@ -120,7 +120,7 @@ To use this package, you need the following requirements:
      can provide the email template in 2 ways. 
      - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `templates_source` should be 
        set as `sendgrid`. NB: For this to work, you need to also provide your credentials for the `sendgrid` provider. 
-     - Second option is by storing your email templates on the file system as .html templates. The `templates_source` in 
+     - Second option is by storing your email templates on the file system as `.html` templates. The `templates_source` in 
        this case should be set as `filesystem` and the directory of the templates should be provided on the `templates_directory` under `customizations`. (This option is not currently supported for emails, but will be in the near future).
    - The `customizations` array allows you to customize your email parameters, optionally your `queue_name` (not 
      queue connection) for queueing your notifications, and your templates directory. 
@@ -443,9 +443,9 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider or 
      template source is `sendgrid`.
-   - Attempting to send an Email Notification using a `NotificationContext` that has an invalid channel i.e a channel that 
+   - Attempting to send an Email Notification using a `NotificationContext` that has an invalid channel i.e a channel
      that isn't one of "EMAIL", "DATABASE", or "SMS".
-   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_filename` when your email   
+   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_filename` when your email
      provider is `ses` and template source is `filesystem`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `in_app_template_filename`.
    - Attempting to send an SMS Notification using a `NotificationContext` that has no `sms_template_filename`.
