@@ -26,7 +26,6 @@ class SendGridChannel
     public function send(mixed $notifiable, Notification $emailNotification): void
     {
         try {
-            $emailNotification->validateNotification();
             $email = $emailNotification->toSendgrid($notifiable);
             $email->setClickTracking(true, true);
             $email->setOpenTracking(true, "--sub--");

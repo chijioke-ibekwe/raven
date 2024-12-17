@@ -13,8 +13,14 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone_number',
         'password',
     ];
+
+    public function routeNotificationForVonage()
+    {
+        return $this->phone_number;
+    }
 
     protected static function newFactory(): UserFactory
     {

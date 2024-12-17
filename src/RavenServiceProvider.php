@@ -4,6 +4,7 @@ namespace ChijiokeIbekwe\Raven;
 
 use Aws\Ses\SesClient;
 use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
+use ChijiokeIbekwe\Raven\Channels\VonageChannel;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,8 @@ use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
 use ChijiokeIbekwe\Raven\Console\InstallCommand;
 use ChijiokeIbekwe\Raven\Providers\EventServiceProvider;
 use SendGrid;
+use Vonage\Client;
+use Vonage\Client\Credentials\Basic;
 
 class RavenServiceProvider extends ServiceProvider {
 
@@ -58,12 +61,20 @@ class RavenServiceProvider extends ServiceProvider {
             ]);
         });
 
+        $this->app->singleton(Client::class, function ($app) {
+            return new Client(new Basic(config('raven.providers.vonage.api_key'), config('raven.providers.vonage.api_secret')));
+        });
+
         Notification::extend('sendgrid', function ($app) {
             return new SendGridChannel();
         });
 
         Notification::extend('ses', function ($app) {
             return new AmazonSesChannel();
+        });
+
+        Notification::extend('vonage', function ($app) {
+            return new VonageChannel();
         });
     }
 

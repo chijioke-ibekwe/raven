@@ -21,7 +21,7 @@ use ChijiokeIbekwe\Raven\Services\ChannelSenderFactory;
 class RavenListener
 {
     const EMAIL_PATTERN = '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$#';
-    const PHONE_PATTERN = '#^\+?[0-9\s-()]+$#';
+    const PHONE_PATTERN = '#^\+?[0-9\s\-()]+$#';
 
     /**
      * Create the event listener.
@@ -98,12 +98,12 @@ class RavenListener
             case EmailNotificationSender::class:
                 if(preg_match(self::EMAIL_PATTERN, $recipient)) {
                     Notification::route(config('raven.default.email'), $recipient)->notify($channel_sender);
-                };
+                }
                 return;
             case SmsNotificationSender::class:
                 if(preg_match(self::PHONE_PATTERN, $recipient)) {
                     Notification::route(config('raven.default.sms'), $recipient)->notify($channel_sender);
-                };
+                }
                 return;
             case DatabaseNotificationSender::class:
                 return;

@@ -2,6 +2,7 @@
 
 namespace ChijiokeIbekwe\Raven\Notifications;
 
+use ChijiokeIbekwe\Raven\Library\TemplateCleaner;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
@@ -18,7 +19,10 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
     public function __construct(public readonly Scroll              $scroll,
                                 public readonly NotificationContext $notificationContext)
     {
-        //
+        $queue = config('raven.customizations.queue_name');
+        if(!is_null($queue)) {
+            $this->queue = $queue;
+        }
     }
 
     public function via(mixed $notifiable): array
@@ -44,18 +48,10 @@ class DatabaseNotificationSender extends Notification implements ShouldQueue, IN
      */
     public function toDatabase(object $notifiable): array 
     {
-        $param_keys = array_keys($this->scroll->getParams());
+        $template_location = config('raven.customizations.templates_directory') . self::IN_APP_FOLDER .
+            $this->notificationContext->in_app_template_filename;
 
-        for ($i = 0; $i < count($param_keys); $i++) {
-            $old_key = $param_keys[$i];
-            $param_keys[$i] = '{{' . $old_key . '}}';
-        }
-
-        $param_values = array_values($this->scroll->getParams());
-        $template_content = file_get_contents(config('raven.customizations.templates_directory') . 
-            self::IN_APP_FOLDER . $this->notificationContext->in_app_template_filename);
-
-        $cleaned_template = str_replace($param_keys, $param_values, $template_content);
+        $cleaned_template = TemplateCleaner::cleanFile($this->scroll->getParams(), $template_location);
 
         return json_decode($cleaned_template, true);
     }
