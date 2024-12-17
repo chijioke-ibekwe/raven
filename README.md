@@ -31,14 +31,15 @@
 ## 🧐 About <a name = "about"></a>
 In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely
 heavily on notifications. Also, our projects could sometimes feel tightly coupled to certain notification providers  
-in such a way that switching providers would require significant code changes, and moving of resources like templates  
+in such a way that switching providers would require significant code changes, and moving of resources like templates 
 from one platform to the other. These are the hassles that Raven saves you from. This solution:  
-- Simplifies sending notifications through multiple channels in Laravel.  
+- Simplifies sending diverse notification types via a single interface.  
 - Ensures your project is loosely coupled to notification providers, allowing you to switch providers with zero code 
-  changes, when they no longer suite your needs.  
-- Allows you to seamlessly combine the best attributes of your favorite notification providers without any hassles. E.g 
-  Sendgrid dynamic template creation tool and Amazon SES servers.   
-Currently, Raven seamlessly handles email notifications through SendGrid and Amazon SES, SMS notifications through Vonage,   
+  changes when they no longer suit your needs.  
+- Allows you to seamlessly combine the best attributes of your favourite notification providers without any hassles. E.g 
+  Sendgrid dynamic template creation tool and Amazon SES servers.
+    
+Currently, Raven seamlessly handles email notifications through SendGrid and Amazon SES, SMS notifications through Vonage, 
 as well as database/in-app notifications. More providers are gradually being integrated.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
@@ -241,6 +242,9 @@ To use this package, you need the following requirements:
     };
     
     ```
+   `user-verified.txt`
+    "Hello {{name}}. This is to let you know that your account with email {{email}} has been verified"
+    ```
 
    - Database Notification Context
     ```php
@@ -323,55 +327,55 @@ To use this package, you need the following requirements:
     
     ```
 
-   5. To send a notification at any point in your code, build a `Scroll` object, set the relevant 
-      fields as shown below, and dispatch a `Raven` with the `Scroll`:
+5. To send a notification at any point in your code, build a `Scroll` object, set the relevant
+   fields as shown below, and dispatch a `Raven` with the `Scroll`:
 
-       ```php
-               $verified_user = User::find(1);
-               $document_url = "https://example.com/laravel-cheatsheet.pdf";
+   ```php
+           $verified_user = User::find(1);
+           $document_url = "https://example.com/laravel-cheatsheet.pdf";
 
-               $scroll = new Scroll();
-               $scroll->setContextName('user-verified');
-               $scroll->setRecipients([$verified_user, 'admin@raven.com']);
-               $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe']);
-               $scroll->setParams([
-                   'id' => $verified_user->id,
-                   'name' => $verified_user->name,
-                   'email' => $verified_user->email
-               ]);
-               $scroll->setAttachmentUrls($document_url);
-    
-               Raven::dispatch($scroll);
-       ```
-       - The `contextName` property is required and must match the notification context name for that notification 
-         on the database.  
-         - The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
-           strings that should receive the notification. For email notifications, your notifiable model is expected to have an
-           `email` field. If the field is named something different on the model e.g `email_address`, you are required to 
-           provide the `routeNotificationForMail` method on the model, in a similar manner as below: 
-           ```php
-                   use Illuminate\Notifications\Notifiable;
-                   use Illuminate\Foundation\Auth\User as Authenticatable;
-               
-                   class User extends Authenticatable
-                   {
-                       use Notifiable;
-           
-                       public function routeNotificationForMail()
-                       {
-                           return $this->email_address;
-                       }
-                   }
-           ```
-           For SMS notifications, the notifiable is required to have a similar method on the notifiable model that matches 
-           the SMS provider name. For instance, if your SMS notification provider is `vonage`, you should have a method 
-           called `routeNotificationForVonage` on the notifiable, which returns the phone number field on the model.
-       - The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as 
-         key/value pairs respectively) of emails you want to CC on the email notification.     
-       - The `params` property is an associative array of all the variables that exist on the notification 
-         template with their values, where the key must match the variable name on the template.  
-       - Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
-         needs to be attached to the email notification.  
+           $scroll = new Scroll();
+           $scroll->setContextName('user-verified');
+           $scroll->setRecipients([$verified_user, 'admin@raven.com']);
+           $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe']);
+           $scroll->setParams([
+               'id' => $verified_user->id,
+               'name' => $verified_user->name,
+               'email' => $verified_user->email
+           ]);
+           $scroll->setAttachmentUrls($document_url);
+
+           Raven::dispatch($scroll);
+   ```
+   - The `contextName` property is required and must match the notification context name for that notification 
+     on the database.  
+   - The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
+     strings that should receive the notification. For email notifications, your notifiable model is expected to have an
+     `email` field. If the field is named something different on the model e.g `email_address`, you are required to 
+     provide the `routeNotificationForMail` method on the model, in a similar manner as below: 
+     ```php
+             use Illuminate\Notifications\Notifiable;
+             use Illuminate\Foundation\Auth\User as Authenticatable;
+         
+             class User extends Authenticatable
+             {
+                 use Notifiable;
+     
+                 public function routeNotificationForMail()
+                 {
+                     return $this->email_address;
+                 }
+             }
+     ```
+     For SMS notifications, the notifiable is required to have a similar method on the notifiable model that matches 
+     the SMS provider name. For instance, if your SMS notification provider is `vonage`, you should have a method 
+     called `routeNotificationForVonage` on the notifiable, which returns the phone number field on the model.
+   - The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as 
+     key/value pairs respectively) of emails you want to CC on the email notification.     
+   - The `params` property is an associative array of all the variables that exist on the notification 
+     template with their values, where the key must match the variable name on the template.  
+   - Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
+     needs to be attached to the email notification.  
 
 6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
    notifications table in their project via the command below:
