@@ -5,6 +5,7 @@ namespace ChijiokeIbekwe\Raven\Channels;
 use Aws\Ses\Exception\SesException;
 use Aws\Ses\SesClient;
 use ChijiokeIbekwe\Raven\Library\TemplateCleaner;
+use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 use Exception;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +14,7 @@ use SendGrid;
 class AmazonSesChannel
 {
     private SesClient $sesClient;
+
     private SendGrid $sendGrid;
 
     public function __construct()
@@ -24,27 +26,30 @@ class AmazonSesChannel
     /**
      * Send the given notification.
      *
-     * @param mixed $notifiable
-     * @param Notification $emailNotification
-     * @return void
      * @throws Exception
      */
     public function send(mixed $notifiable, Notification $emailNotification): void
     {
+        if (! $emailNotification instanceof EmailNotificationSender) {
+            throw new Exception('AmazonSesChannel requires an EmailNotificationSender notification');
+        }
+
         $email = $emailNotification->toAmazonSes($notifiable);
 
         $sender = config('raven.customizations.mail.from');
         $email->setFrom($sender['address'], $sender['name']);
 
         $template_source = config('raven.providers.ses.template_source');
-        if($template_source !== 'sendgrid') {
+        if ($template_source !== 'sendgrid') {
             Log::error("Template source $template_source not currently supported");
             throw new Exception("Template source $template_source not currently supported");
         }
 
-        $template_response = $this->getSendGridTemplateContent($emailNotification);
-
+        $templateId = $emailNotification->notificationContext->email_template_id;
         $params = $emailNotification->scroll->getParams();
+
+        $template_response = $this->getSendGridTemplateContent($templateId);
+
         $clean_html = TemplateCleaner::cleanText($params, $template_response['html_content']);
         $clean_plain = TemplateCleaner::cleanText($params, $template_response['plain_content']);
         $clean_subject = TemplateCleaner::cleanText($params, $template_response['subject']);
@@ -53,8 +58,8 @@ class AmazonSesChannel
         $email->Body = $clean_html;
         $email->AltBody = $clean_plain;
 
-        if (!$email->preSend()) {
-            Log::error("Failed sending mail: " . $email->ErrorInfo);
+        if (! $email->preSend()) {
+            Log::error('Failed sending mail: '.$email->ErrorInfo);
             throw new Exception($email->ErrorInfo);
         } else {
             $message = $email->getSentMIMEMessage();
@@ -63,15 +68,15 @@ class AmazonSesChannel
         try {
             $result = $this->sesClient->sendRawEmail([
                 'RawMessage' => [
-                    'Data' => $message
-                ]
+                    'Data' => $message,
+                ],
             ]);
 
             $statusCode = $result['@metadata']['statusCode'];
 
             if ($statusCode === 200) {
                 Log::info("Email with subject: $clean_subject sent successfully.", [
-                    'MessageId' => $result->get('MessageId')
+                    'MessageId' => $result->get('MessageId'),
                 ]);
             } else {
                 Log::warning("Email with subject: $clean_subject not sent successfully.", [
@@ -82,23 +87,24 @@ class AmazonSesChannel
             }
 
         } catch (SesException $error) {
-            Log::error('SES error while sending email: ' . $error->getAwsErrorMessage());
+            Log::error('SES error while sending email: '.$error->getAwsErrorMessage());
+            throw $error;
         } catch (Exception $e) {
-            Log::error('General error while sending email: ' . $e->getMessage());
+            Log::error('General error while sending email: '.$e->getMessage());
+            throw $e;
         }
     }
 
     /**
      * @throws Exception
      */
-    private function getSendGridTemplateContent(Notification $emailNotification): array
+    private function getSendGridTemplateContent(string $templateId): array
     {
         try {
-            $template_id = $emailNotification->notificationContext->email_template_id;
-            $response = $this->sendGrid->client->templates()->_($template_id)->get();
+            $response = $this->sendGrid->client->templates()->_($templateId)->get();
 
-            if(!($response->statusCode() >= '200' && $response->statusCode() < '300')) {
-                throw new Exception("SendGrid server returned error response");
+            if (! ($response->statusCode() >= '200' && $response->statusCode() < '300')) {
+                throw new Exception('SendGrid server returned error response');
             }
 
             $body_json = $response->body();
@@ -110,11 +116,11 @@ class AmazonSesChannel
             return [
                 'subject' => $subject,
                 'html_content' => $html_content,
-                'plain_content' => $plain_content
+                'plain_content' => $plain_content,
             ];
 
         } catch (Exception $e) {
-            Log::error("Failed sending mail: " . $e->getMessage());
+            Log::error('Failed sending mail: '.$e->getMessage());
             throw new Exception($e);
         }
     }
