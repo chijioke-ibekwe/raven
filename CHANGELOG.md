@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [2.0.0] — Move Notification Contexts To Config And Standardize Repository
+
 ### Breaking Changes
 - **Notification contexts moved from database to config.** `NotificationContext` is no longer an
   Eloquent model. Contexts are now defined in a publishable `config/notification-contexts.php`
