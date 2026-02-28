@@ -2,28 +2,20 @@
 
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Events\Raven;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Listeners\RavenListener;
-use ChijiokeIbekwe\Raven\Models\NotificationContext;
 use ChijiokeIbekwe\Raven\Notifications\DatabaseNotificationSender;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
+use Illuminate\Support\Facades\Notification;
 
-class  DatabaseNotificationTest extends TestCase
+class DatabaseNotificationTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function getEnvironmentSetUp($app): void
     {
         config()->set('raven.customizations.templates_directory', resource_path('templates'));
-
-        $migrations = require __DIR__.'/../../database/migrations/create_notification_contexts_table.php.stub';
-
-        $migrations->up();
     }
 
     /**
@@ -38,7 +30,7 @@ class  DatabaseNotificationTest extends TestCase
 
         $json = json_encode($data, JSON_PRETTY_PRINT);
 
-        if (!is_dir(resource_path('templates/in_app'))) {
+        if (! is_dir(resource_path('templates/in_app'))) {
             mkdir(resource_path('templates/in_app'), 0777, true);
         }
 
@@ -48,37 +40,37 @@ class  DatabaseNotificationTest extends TestCase
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        $context = NotificationContext::factory()->create([
-            'name' => 'user-verified',
+        config()->set('notification-contexts.user-verified', [
             'in_app_template_filename' => 'user-verified.json',
             'type' => 'user',
-            'channels' => ['DATABASE']
+            'channels' => ['DATABASE'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-verified');
         $scroll->setRecipients($user);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
+        (new RavenListener)->handle(
             new Raven($scroll)
         );
 
         Notification::assertSentTo(
             $user,
             DatabaseNotificationSender::class,
-            function (DatabaseNotificationSender $notification) use ($user, $scroll, $context) {
+            function (DatabaseNotificationSender $notification) use ($user, $scroll) {
                 $content = $notification->toDatabase($user);
                 $via = $notification->via($user);
 
                 return $notification->scroll === $scroll &&
-                    $notification->notificationContext->name === $context->name &&
+                    $notification->notificationContext->name === 'user-verified' &&
                     data_get($content, 'title') === 'Verification' &&
                     data_get($content, 'body') === 'User with id 345 has been verified on the platform on 11-12-2023 10:51' &&
                     $via === ['database'];
@@ -99,23 +91,23 @@ class  DatabaseNotificationTest extends TestCase
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        NotificationContext::factory()->create([
-            'name' => 'user-updated',
-            'channels' => ['DATABASE']
+        config()->set('notification-contexts.user-updated', [
+            'channels' => ['DATABASE'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
+        (new RavenListener)->handle(
             new Raven($scroll)
         );
     }
@@ -132,24 +124,24 @@ class  DatabaseNotificationTest extends TestCase
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        NotificationContext::factory()->create([
-            'name' => 'user-updated',
+        config()->set('notification-contexts.user-updated', [
             'in_app_template_filename' => 'user-updated.json',
-            'channels' => ['DATABASE']
+            'channels' => ['DATABASE'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
+        (new RavenListener)->handle(
             new Raven($scroll)
         );
     }
