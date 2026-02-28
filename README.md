@@ -6,9 +6,12 @@
 
 <div align="center">
 
-[![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![GitHub Issues](https://img.shields.io/github/issues/chijioke-ibekwe/The-Documentation-Compendium.svg)](https://github.com/chijioke-ibekwe/raven/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/chijioke-ibekwe/The-Documentation-Compendium.svg)](https://github.com/chijioke-ibekwe/raven/pulls)
+[![Tests](https://github.com/chijioke-ibekwe/raven/actions/workflows/run-tests.yml/badge.svg)](https://github.com/chijioke-ibekwe/raven/actions/workflows/run-tests.yml)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/chijioke-ibekwe/raven.svg)](https://packagist.org/packages/chijioke-ibekwe/raven)
+[![Total Downloads](https://img.shields.io/packagist/dt/chijioke-ibekwe/raven.svg)](https://packagist.org/packages/chijioke-ibekwe/raven)
+[![PHP Version](https://img.shields.io/packagist/php-v/chijioke-ibekwe/raven.svg)](https://packagist.org/packages/chijioke-ibekwe/raven)
+[![GitHub Issues](https://img.shields.io/github/issues/chijioke-ibekwe/raven.svg)](https://github.com/chijioke-ibekwe/raven/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/chijioke-ibekwe/raven.svg)](https://github.com/chijioke-ibekwe/raven/pulls)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
 
 </div>
@@ -56,14 +59,16 @@ To use this package, you need the following requirements:
     composer require chijioke-ibekwe/raven
     ```
 
-2. Next, you will need to publish and run the migration files, and the config file. The following command will allow you
-   do all of the above:
+2. Next, you will need to publish the config files. The following command will allow you do this:
     ```bash
     php artisan raven:install
     ```
 
-3. The migrations will be published in your project's migrations directory `./database/migrations` while the config file
-   `raven.php`, will be published in your config directory `./config`. The content of the config file is as shown below:
+3. Two config files will be published to your config directory `./config`:
+   - `raven.php` — the main package configuration
+   - `notification-contexts.php` — where you define your notification contexts (see step 4)
+
+   The content of `raven.php` is as shown below:
     ```php
    <?php
 
@@ -102,7 +107,7 @@ To use this package, you need the following requirements:
                     'name' => env('SMS_FROM_NAME', 'Example'),
                 ]
             ],
-            'queue_name' => env('RAVEN_QUEUE_NAME')
+            'queue_name' => env('RAVEN_QUEUE_NAME'),
             'templates_directory' => env('TEMPLATES_DIRECTORY', resource_path('templates'))
         ],
     
@@ -131,115 +136,50 @@ To use this package, you need the following requirements:
      - The `sms` directory will contain the `.txt` files with the contents of your sms notifications. 
      - The `in_app` directory will contain `.json` files whose contents will be saved on the data column of the database notifications table. 
      - All placeholders in these templates should be surrounded by double curly braces e.g `{{name}}`.
-     - File names of these templates must match the file names in the `email_template_filename`, `sms_template_filename` and `in_app_template_filename` columns on the notification context record. 
+     - File names of these templates must match the file names in the `email_template_filename`, `sms_template_filename` and `in_app_template_filename` keys in the notification context config entry.
    - The `api` array allows you to customize the provided API routes with prefix and middleware group.
 
-4. After the migrations have been run successfully, you can then proceed to add notification contexts to the database.
-   To do this, simply create and run migration files similar to the ones below:
+4. Open the published `notification-contexts.php` config file and define your notification contexts. Each context is
+   keyed by its name and contains the relevant fields for the notification type(s) it handles. Examples for each type
+   are shown below:
    - Email Notification Context (when using `sendgrid` as provider or template source)
     ```php
-    <?php
-    
-    use Illuminate\Database\Migrations\Migration;
-    use Illuminate\Support\Facades\DB;
-    
-    return new class extends Migration
-    {
-        /**
-         * Run the migrations.
-         */
-        public function up(): void
-        {
-            DB::table('notification_contexts')->insert(
-                array(
-                    'name' => 'user-verified',
-                    'email_template_id' => 'd-ad34ghAwe3mQRvb29',
-                    'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'channels' => json_encode(['EMAIL'])
-                )
-            );
-        }
-    
-        /**
-         * Reverse the migrations.
-         */
-        public function down(): void
-        {
-            DB::table('notification_contexts')->where('name', 'user-verified')->delete();
-        }
-    };
-    
+    // config/notification-contexts.php
+    return [
+        'user-verified' => [
+            'description'       => 'Notification to inform a user that they have been verified on the platform',
+            'email_template_id' => env('TEMPLATE_USER_VERIFIED', 'd-ad34ghAwe3mQRvb29'),
+            'channels'          => ['EMAIL'],
+            'active'            => true,
+        ],
+    ];
     ```
 
    - Email Notification Context (when using `ses` as provider and `filesystem` as template source)
     ```php
-    <?php
-    
-    use Illuminate\Database\Migrations\Migration;
-    use Illuminate\Support\Facades\DB;
-    
-    return new class extends Migration
-    {
-        /**
-         * Run the migrations.
-         */
-        public function up(): void
-        {
-            DB::table('notification_contexts')->insert(
-                array(
-                    'name' => 'user-verified',
-                    'email_template_filename' => 'user-verified.html',
-                    'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'channels' => json_encode(['EMAIL'])
-                )
-            );
-        }
-    
-        /**
-         * Reverse the migrations.
-         */
-        public function down(): void
-        {
-            DB::table('notification_contexts')->where('name', 'user-verified')->delete();
-        }
-    };
-    
+    // config/notification-contexts.php
+    return [
+        'user-verified' => [
+            'description'            => 'Notification to inform a user that they have been verified on the platform',
+            'email_template_filename' => 'user-verified.html',
+            'channels'               => ['EMAIL'],
+            'active'                 => true,
+        ],
+    ];
     ```
 
    - SMS Notification Context
     ```php
-    <?php
-    
-    use Illuminate\Database\Migrations\Migration;
-    use Illuminate\Support\Facades\DB;
-    
-    return new class extends Migration
-    {
-        /**
-         * Run the migrations.
-         */
-        public function up(): void
-        {
-            DB::table('notification_contexts')->insert(
-                array(
-                    'name' => 'user-verified',
-                    'sms_template_filename' => 'user-verified.txt',
-                    'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'type' => 'user',
-                    'channels' => json_encode(['SMS'])
-                )
-            );
-        }
-    
-        /**
-         * Reverse the migrations.
-         */
-        public function down(): void
-        {
-            DB::table('notification_contexts')->where('name', 'user-verified')->delete();
-        }
-    };
-    
+    // config/notification-contexts.php
+    return [
+        'user-verified' => [
+            'description'          => 'Notification to inform a user that they have been verified on the platform',
+            'sms_template_filename' => 'user-verified.txt',
+            'type'                 => 'user',
+            'channels'             => ['SMS'],
+            'active'               => true,
+        ],
+    ];
     ```
     `user-verified.txt`
     ```text
@@ -248,38 +188,16 @@ To use this package, you need the following requirements:
 
    - Database Notification Context
     ```php
-    <?php
-    
-    use Illuminate\Database\Migrations\Migration;
-    use Illuminate\Support\Facades\DB;
-    
-    return new class extends Migration
-    {
-        /**
-         * Run the migrations.
-         */
-        public function up(): void
-        {
-            DB::table('notification_contexts')->insert(
-                array(
-                    'name' => 'user-verified',
-                    'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'in_app_template_filename' => 'user-verified.json',
-                    'type' => 'user',
-                    'channels' => json_encode(['DATABASE'])
-                )
-            );
-        }
-    
-        /**
-         * Reverse the migrations.
-         */
-        public function down(): void
-        {
-            DB::table('notification_contexts')->where('name', 'user-verified')->delete();
-        }
-    };
-    
+    // config/notification-contexts.php
+    return [
+        'user-verified' => [
+            'description'              => 'Notification to inform a user that they have been verified on the platform',
+            'in_app_template_filename' => 'user-verified.json',
+            'type'                     => 'user',
+            'channels'                 => ['DATABASE'],
+            'active'                   => true,
+        ],
+    ];
     ```
     `user-verified.json`
     ```json
@@ -291,43 +209,21 @@ To use this package, you need the following requirements:
 
    - Email, SMS and Database Notification Context
     ```php
-    <?php
-    
-    use Illuminate\Database\Migrations\Migration;
-    use Illuminate\Support\Facades\DB;
-    
-    return new class extends Migration
-    {
-        /**
-         * Run the migrations.
-         */
-        public function up(): void
-        {
-            DB::table('notification_contexts')->insert(
-                array(
-                    'name' => 'user-verified',
-                    'email_template_id' => 'd-ad34ghAwe3mQRvb29',
-                    'description' => 'Notification to inform a user that they have been verified on the platform',
-                    'sms_template_filename' => 'user-verified.txt',
-                    'in_app_template_filename' => 'user-verified.json',
-                    'type' => 'user',
-                    'channels' => json_encode(['EMAIL', 'SMS', 'DATABASE'])
-                )
-            );
-        }
-    
-        /**
-         * Reverse the migrations.
-         */
-        public function down(): void
-        {
-            DB::table('notification_contexts')->where('name', 'user-verified')->delete();
-        }
-    };
-    
+    // config/notification-contexts.php
+    return [
+        'user-verified' => [
+            'description'              => 'Notification to inform a user that they have been verified on the platform',
+            'email_template_id'        => env('TEMPLATE_USER_VERIFIED', 'd-ad34ghAwe3mQRvb29'),
+            'sms_template_filename'    => 'user-verified.txt',
+            'in_app_template_filename' => 'user-verified.json',
+            'type'                     => 'user',
+            'channels'                 => ['EMAIL', 'SMS', 'DATABASE'],
+            'active'                   => true,
+        ],
+    ];
     ```
 
-6. To send a notification at any point in your code, build a `Scroll` object, set the relevant
+5. To send a notification at any point in your code, build a `Scroll` object, set the relevant
    fields as shown below, and dispatch a `Raven` with the `Scroll`:
 
    ```php
@@ -347,8 +243,8 @@ To use this package, you need the following requirements:
 
            Raven::dispatch($scroll);
    ```
-   - The `contextName` property is required and must match the notification context name for that notification 
-     on the database.  
+   - The `contextName` property is required and must match a notification context name defined in the
+     `notification-contexts.php` config file.
    - The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
      strings that should receive the notification. For email notifications, your notifiable model is expected to have an
      `email` field. If the field is named something different on the model e.g `email_address`, you are required to 
@@ -377,7 +273,7 @@ To use this package, you need the following requirements:
    - Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
      needs to be attached to the email notification.  
 
-7. To successfully send Database Notifications, it is assumed that the user of this package has already set up a 
+6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a
    notifications table in their project via the command below:
 
     ```bash
@@ -394,50 +290,12 @@ To use this package, you need the following requirements:
     By default, the data type is `morphs`. However, if the  primary key for your notifiable is a `uuid` or `ulid`, ensure you change the type to
     `uuidMorphs` or `ulidMorphs` respectively.
 
-8. The package takes care of the rest of the logic.
-
-### API
-The following API is included in this package for ease of use:
-1. `GET /api/v1/notification-contexts`
-   - Fetches all notification contexts on the database. The user of this API has to be authenticated.
-   - Return a JSON of the format below:
-   ```json
-    {
-        "status": "success",
-        "message": "Notification contexts retrieved successfully",
-        "data": [
-            {
-                "id": 1,
-                "created_at": "2024-10-18 14:25",
-                "updated_at": "2024-10-18 14:25",
-                "email_template_id": "d-ad34ghAwe3mQRvb29",
-                "email_template_filename": null,
-                "name": "user-verified",
-                "description": "Notification to inform a user that they have been verified on the platform",
-                "sms_template_filename": null,
-                "in_app_template_filename": "user-verified.json",
-                "type": "user",
-                "active": true,
-                "channels": [
-                    "EMAIL",
-                    "DATABASE"
-                ]
-            }
-        ]
-    }
-   ```
-   - When user is not authenticated, it returns the following `401` response:
-   ```json
-   {
-        "status": false,
-        "message": "You are not authorized to access this API"
-   }
-   ```
+7. The package takes care of the rest of the logic.
 
 ### Exceptions
 The following exceptions can be thrown by the package for the scenarios outlined below:
 1. `RavenEntityNotFoundException` `code: 404`
-   - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist on the database.
+   - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist in the `notification-contexts.php` config file.
 2. `RavenInvalidDataException` `code: 422`
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider or 
