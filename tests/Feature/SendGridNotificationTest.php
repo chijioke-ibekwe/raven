@@ -4,10 +4,9 @@ namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
-use ChijiokeIbekwe\Raven\Events\Raven;
 use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Listeners\RavenListener;
+use ChijiokeIbekwe\Raven\Jobs\Raven;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
@@ -48,9 +47,7 @@ class SendGridNotificationTest extends TestCase
             'booking_id' => 'JET12345',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -99,9 +96,7 @@ class SendGridNotificationTest extends TestCase
             'booking_id' => 'JET12345',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -145,9 +140,7 @@ class SendGridNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -174,9 +167,7 @@ class SendGridNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -208,9 +199,7 @@ class SendGridNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -242,9 +231,7 @@ class SendGridNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -274,9 +261,7 @@ class SendGridNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -304,9 +289,7 @@ class SendGridNotificationTest extends TestCase
             'booking_id' => 'JET12345',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
 
         Notification::assertNothingSent();
     }
@@ -335,9 +318,7 @@ class SendGridNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -363,7 +344,7 @@ class SendGridNotificationTest extends TestCase
         $scroll->setRecipients($user);
         $scroll->setParams(['booking_id' => 'JET12345']);
 
-        (new RavenListener)->handle(new Raven($scroll));
+        (new Raven($scroll))->handle();
 
         Notification::assertSentTo($user, EmailNotificationSender::class);
     }
@@ -391,7 +372,7 @@ class SendGridNotificationTest extends TestCase
         $scroll->setRecipients($user);
         $scroll->setParams(['booking_id' => 'JET12345']);
 
-        (new RavenListener)->handle(new Raven($scroll));
+        (new Raven($scroll))->handle();
 
         Notification::assertNothingSent();
     }

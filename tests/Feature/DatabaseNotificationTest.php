@@ -3,9 +3,8 @@
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use ChijiokeIbekwe\Raven\Data\Scroll;
-use ChijiokeIbekwe\Raven\Events\Raven;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Listeners\RavenListener;
+use ChijiokeIbekwe\Raven\Jobs\Raven;
 use ChijiokeIbekwe\Raven\Notifications\DatabaseNotificationSender;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
@@ -58,9 +57,7 @@ class DatabaseNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -107,9 +104,7 @@ class DatabaseNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -141,8 +136,6 @@ class DatabaseNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener)->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 }

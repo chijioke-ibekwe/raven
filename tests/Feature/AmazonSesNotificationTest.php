@@ -3,9 +3,8 @@
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use ChijiokeIbekwe\Raven\Data\Scroll;
-use ChijiokeIbekwe\Raven\Events\Raven;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Listeners\RavenListener;
+use ChijiokeIbekwe\Raven\Jobs\Raven;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
@@ -43,7 +42,7 @@ class AmazonSesNotificationTest extends TestCase
         $scroll->setRecipients($user);
         $scroll->setParams(['name' => 'John Doe']);
 
-        (new RavenListener)->handle(new Raven($scroll));
+        (new Raven($scroll))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -81,7 +80,7 @@ class AmazonSesNotificationTest extends TestCase
         $scroll->setRecipients($user);
         $scroll->setParams(['name' => 'John Doe']);
 
-        (new RavenListener)->handle(new Raven($scroll));
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -112,6 +111,6 @@ class AmazonSesNotificationTest extends TestCase
         $scroll->setRecipients($user);
         $scroll->setParams(['name' => 'John Doe']);
 
-        (new RavenListener)->handle(new Raven($scroll));
+        (new Raven($scroll))->handle();
     }
 }
