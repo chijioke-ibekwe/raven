@@ -7,7 +7,6 @@ use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
 use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
 use ChijiokeIbekwe\Raven\Channels\VonageChannel;
 use ChijiokeIbekwe\Raven\Console\InstallCommand;
-use ChijiokeIbekwe\Raven\Providers\EventServiceProvider;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
@@ -21,8 +20,6 @@ class RavenServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/raven.php', 'raven');
         $this->mergeConfigFrom(__DIR__.'/../config/notification-contexts.php', 'notification-contexts');
-
-        $this->app->register(EventServiceProvider::class);
     }
 
     public function boot(): void
