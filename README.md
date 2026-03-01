@@ -109,13 +109,7 @@ To use this package, you need the following requirements:
             ],
             'queue_name' => env('RAVEN_QUEUE_NAME'),
             'templates_directory' => env('TEMPLATES_DIRECTORY', resource_path('templates'))
-        ],
-    
-        'api' => [
-            'prefix' => 'api/v1',
-            'middleware' => 'api'
         ]
-    
     ];
     ```
    - The `default` array allows you to configure your default service providers for your notification channels. Options
@@ -137,7 +131,6 @@ To use this package, you need the following requirements:
      - The `in_app` directory will contain `.json` files whose contents will be saved on the data column of the database notifications table. 
      - All placeholders in these templates should be surrounded by double curly braces e.g `{{name}}`.
      - File names of these templates must match the file names in the `email_template_filename`, `sms_template_filename` and `in_app_template_filename` keys in the notification context config entry.
-   - The `api` array allows you to customize the provided API routes with prefix and middleware group.
 
 4. Open the published `notification-contexts.php` config file and define your notification contexts. Each context is
    keyed by its name and contains the relevant fields for the notification type(s) it handles. Examples for each type
