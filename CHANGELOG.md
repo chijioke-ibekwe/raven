@@ -38,8 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `NotificationContext` converted from an Eloquent model to a plain PHP DTO with
   `public readonly` properties — all existing callers are unaffected.
-- `RavenListener` now resolves contexts via `config("notification-contexts.$name")` instead of
-  a database query.
+- `Raven` is now a job (src/Jobs/Raven.php), not an event+listener pair. The public API is identical — callers 
+  still write Raven::dispatch($scroll).
+- All three notification senders: `EmailNotificationSender`, `SmsNotificationSender`, `DatabaseNotificationSender` — 
+  removed `ShouldQueue`, `Queueable`, and the queue code. They are now plain synchronous notifications that 
+  run inside the Raven job.
+- `Raven` now resolves contexts via `config("notification-contexts.$name")` instead of a database query.
 - `InstallCommand` now publishes the contexts config file instead of migration stubs.
 - `SendGridChannel` and `VonageChannel` now type-hint their specific sender classes
   (`EmailNotificationSender` / `SmsNotificationSender`) instead of the base `Notification` class.
@@ -52,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`GET /api/v1/notification-contexts` API endpoint** — removed. Contexts live in config
   alongside code and are not runtime data; an HTTP endpoint adds unnecessary surface area.
   `NotificationContextController`, `Controller`, and `routes/api.php` are all deleted.
+- `src/Events/Raven.php` - no longer needed. An equivalent job of the same name is now in use.
+- `src/Listeners/RavenListener.php` - no longer needed.
+- `src/Providers/EventServiceProvider.php` - no longer needed since we don't use `Raven` events anymore
 - `database/migrations/create_notification_contexts_table.php.stub` — no longer needed.
 - `database/factories/NotificationContextFactory.php` — no longer needed.
 - `RefreshDatabase` trait removed from all feature tests (no DB required for context lookups).
