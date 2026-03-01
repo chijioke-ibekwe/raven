@@ -6,23 +6,16 @@ use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Library\TemplateCleaner;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class DatabaseNotificationSender extends Notification implements INotificationSender, ShouldQueue
+class DatabaseNotificationSender extends Notification implements INotificationSender
 {
-    use Queueable;
-
     const IN_APP_FOLDER = '/in_app/';
 
     public function __construct(public readonly Scroll $scroll,
         public readonly NotificationContext $notificationContext)
     {
-        $queue = config('raven.customizations.queue_name');
-        if (! is_null($queue)) {
-            $this->queue = $queue;
-        }
+        //
     }
 
     public function via(mixed $notifiable): array

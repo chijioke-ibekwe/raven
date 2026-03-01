@@ -6,25 +6,18 @@ use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Library\TemplateCleaner;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification;
 use Vonage\SMS\Message\SMS;
 
-class SmsNotificationSender extends Notification implements INotificationSender, ShouldQueue
+class SmsNotificationSender extends Notification implements INotificationSender
 {
-    use Queueable;
-
     const SMS_FOLDER = '/sms/';
 
     public function __construct(public readonly Scroll $scroll,
         public readonly NotificationContext $notificationContext)
     {
-        $queue = config('raven.customizations.queue_name');
-        if (! is_null($queue)) {
-            $this->queue = $queue;
-        }
+        //
     }
 
     public function via(mixed $notifiable): array

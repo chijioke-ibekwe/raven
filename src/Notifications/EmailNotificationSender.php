@@ -5,8 +5,6 @@ namespace ChijiokeIbekwe\Raven\Notifications;
 use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification;
 use PHPMailer\PHPMailer\Exception;
@@ -17,17 +15,12 @@ use SendGrid\Mail\Cc;
 use SendGrid\Mail\Mail;
 use SendGrid\Mail\TypeException;
 
-class EmailNotificationSender extends Notification implements INotificationSender, ShouldQueue
+class EmailNotificationSender extends Notification implements INotificationSender
 {
-    use Queueable;
-
     public function __construct(public readonly Scroll $scroll,
         public readonly NotificationContext $notificationContext)
     {
-        $queue = config('raven.customizations.queue_name');
-        if (! is_null($queue)) {
-            $this->queue = $queue;
-        }
+        //
     }
 
     public function via(mixed $notifiable): array
