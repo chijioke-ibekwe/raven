@@ -17,13 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Laravel 9 — PHP 8.1 / 8.2
-          - php: "8.1"
-            laravel: "^9.0"
-            testbench: "^7.0"
-          - php: "8.2"
-            laravel: "^9.0"
-            testbench: "^7.0"
           # Laravel 10 — PHP 8.1 / 8.2 / 8.3
           - php: "8.1"
             laravel: "^10.0"

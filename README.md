@@ -49,8 +49,8 @@ and Twilio, as well as database/in-app notifications. More providers are gradual
 ### Prerequisites
 To use this package, you need the following requirements:
 
-1. PHP >= v8.0
-2. Laravel >= v8.0
+1. PHP >= v8.1
+2. Laravel >= v10.0
 3. Composer
 
 ## 🎈 Usage <a name="usage"></a>

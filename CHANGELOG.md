@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] — Move Notification Contexts To Config And Standardize Repository
 
 ### Breaking Changes
+- **Dropped Laravel 9 support.** Laravel 9 is EOL and all versions are blocked by Composer's
+  security audit. Minimum requirements are now PHP 8.1 and Laravel 10.
 - **Notification contexts moved from database to config.** `NotificationContext` is no longer an
   Eloquent model. Contexts are now defined in a publishable `config/notification-contexts.php`
   file and resolved at runtime with zero DB queries. Consumers must:
@@ -39,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cannot be found.
 - PHPStan / Larastan static analysis at level 5 (`phpstan.neon`).
 - Laravel Pint code-style enforcement (`pint.json` preset: `laravel`).
-- CI matrix covering PHP 8.1 / 8.2 / 8.3 against Laravel 9 / 10 / 11.
+- CI matrix covering PHP 8.1 / 8.2 / 8.3 against Laravel 10 / 11.
 - Separate `lint` and `analyse` jobs in the CI pipeline.
 - Tests for AmazonSES email notifications and direct `AmazonSesChannel` error handling.
 - Tests for `active` key defaulting to `true` when absent from a context config entry.
@@ -67,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cannot be read.
 - Provider registration in `RavenServiceProvider` refactored from conditional blocks to a
   loop-based approach for cleaner extensibility.
-- Updated `composer.json` dev dependencies: testbench `^7.0|^8.0|^9.0`, PHPUnit `^9.6|^10.5|^11.0`,
+- Updated `composer.json` dev dependencies: testbench `^8.0|^9.0`, PHPUnit `^10.5|^11.0`,
   added `laravel/pint` and `larastan/larastan`.
 - `SmsNotificationTest` now declares its namespace correctly.
 - `assertTimesSent` replaced with `assertSentTimes` for Laravel 11 compatibility.
