@@ -59,9 +59,10 @@ To use this package, you need the following requirements:
     composer require chijioke-ibekwe/raven
     ```
 
-2. Next, you will need to publish the config files. The following command will allow you do this:
+2. Next, publish the config files:
     ```bash
-    php artisan raven:install
+    php artisan vendor:publish --provider="ChijiokeIbekwe\Raven\RavenServiceProvider" --tag=raven-config
+    php artisan vendor:publish --provider="ChijiokeIbekwe\Raven\RavenServiceProvider" --tag=raven-contexts
     ```
 
 3. Two config files will be published to your config directory `./config`:

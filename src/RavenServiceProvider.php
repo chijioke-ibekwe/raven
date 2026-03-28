@@ -7,7 +7,6 @@ use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
 use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
 use ChijiokeIbekwe\Raven\Channels\TwilioChannel;
 use ChijiokeIbekwe\Raven\Channels\VonageChannel;
-use ChijiokeIbekwe\Raven\Console\InstallCommand;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
@@ -37,10 +36,6 @@ class RavenServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../config/notification-contexts.php' => config_path('notification-contexts.php'),
             ], 'raven-contexts');
-
-            $this->commands([
-                InstallCommand::class,
-            ]);
         }
 
         $this->registerProviders();

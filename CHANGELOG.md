@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.0.0] — Move Notification Contexts To Config And Standardize Repository
+## [6.0.0] — Twilio Support, Error Handling Overhaul, and Config-Based Contexts
 
 ### Breaking Changes
 - **Dropped Laravel 9 support.** Laravel 9 is EOL and all versions are blocked by Composer's
@@ -17,8 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Notification contexts moved from database to config.** `NotificationContext` is no longer an
   Eloquent model. Contexts are now defined in a publishable `config/notification-contexts.php`
   file and resolved at runtime with zero DB queries. Consumers must:
-  1. Run `php artisan vendor:publish --tag=raven-contexts` (or re-run `php artisan raven:install`)
-     to publish the new config file.
+  1. Run `php artisan vendor:publish --tag=raven-contexts` to publish the new config file.
   2. Move any existing notification context rows from the `notification_contexts` database table
      into the new config file using the array format shown in `README.md`.
   3. Drop the `notification_contexts` table if it is no longer needed.
@@ -56,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removed `ShouldQueue`, `Queueable`, and the queue code. They are now plain synchronous notifications that
   run inside the Raven job.
 - `Raven` now resolves contexts via `config("notification-contexts.$name")` instead of a database query.
-- `InstallCommand` now publishes the contexts config file instead of migration stubs.
+- Config files are now published directly via `vendor:publish` tags (`raven-config`, `raven-contexts`).
 - All channels (`SendGridChannel`, `VonageChannel`, `AmazonSesChannel`, `TwilioChannel`) now accept
   the base `Notification` type and validate with an `instanceof` guard, throwing
   `RavenDeliveryException` on mismatch.
@@ -84,14 +83,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `database/migrations/create_notification_contexts_table.php.stub` — no longer needed.
 - `database/factories/NotificationContextFactory.php` — no longer needed.
 - `RefreshDatabase` trait removed from all feature tests (no DB required for context lookups).
-- Migration-related methods removed from `InstallCommand`
-  (`handleMigrationsPublishing`, `migrationsExist`, `shouldRunMigrations`, `publishMigrations`).
+- `raven:install` Artisan command (`InstallCommand`) — config files are now published directly
+  via `php artisan vendor:publish --tag=raven-config` and `--tag=raven-contexts`.
 - `raven-migrations` vendor publish tag removed from `RavenServiceProvider`.
 - `api` block (`prefix`, `middleware`) removed from `config/raven.php` — no longer needed.
 
 ---
 
-## [1.3.0] — Amazon SES Support
+## [5.1.0] — Vonage SMS Support
+
+### Added
+- Vonage SMS channel (`VonageChannel`) and `SmsNotificationSender`.
+- `toVonage()` method on `SmsNotificationSender` returning a Vonage `SMS` message object.
+- `sms_template_filename` field on notification contexts — `.txt` files stored in the
+  `templates/sms/` directory.
+- `raven.providers.vonage` config block (`api_key`, `api_secret`).
+- `raven.customizations.sms.from.name` config key.
+- On-demand SMS routing: string phone numbers accepted as recipients alongside notifiable models.
+- `TemplateCleaner` utility for `{{placeholder}}` substitution in SMS and in-app templates.
+- `vonage/client` dependency.
+- Comprehensive SMS notification tests.
+- Project logo (`raven_logo.png`).
+
+### Fixed
+- Phone number pattern matcher for on-demand SMS routing.
+
+### Changed
+- Removed duplicate parameter validation across channels — centralized in sender classes.
+
+---
+
+## [5.0.0] — Architecture Overhaul
+
+### Breaking Changes
+- **Removed `NotificationChannel` model.** Channels are now defined directly on the
+  `NotificationContext` model, eliminating the pivot table.
+
+### Added
+- GitHub Actions CI workflow (`run-tests.yml`).
+- MIT LICENSE file.
+- `DatabaseNotificationTest` — comprehensive tests for database notifications.
+
+### Changed
+- Notification channels moved from a separate model/pivot table to a `channels` column on
+  `NotificationContext`.
+- Context channel matching is now case-insensitive.
+- Migrations converted to anonymous classes.
+
+### Removed
+- `NotificationChannel` model and `notification_channel_notification_context` pivot table.
+- `create_notification_channels_table.php.stub` migration.
+
+---
+
+## [4.0.0] — Database Notifications and Context Refactoring
+
+### Added
+- Database / in-app notification channel and `DatabaseNotificationSender`.
+- Filesystem template source for database notifications — `.json` files stored in the
+  `templates/in_app/` directory.
+- `in_app_template_filename` field on notification contexts.
+- `databaseType()` support — notification type is set to the context name.
+- `vonage/client` dependency (foundation for SMS support).
+
+### Changed
+- Notification context column names updated for consistency.
+- JSON response structure for the notification context API endpoint.
+
+---
+
+## [3.1.2] — SES Validation
+
+### Changed
+- Added notification validation in `AmazonSesChannel` before sending.
+
+---
+
+## [3.1.1] — SES and SendGrid Fixes
+
+### Fixed
+- Email attachment handling in `AmazonSesChannel`.
+- CC field logic in `SendGridChannel`.
+- Subject string cleanup when using SendGrid templates with SES.
+
+---
+
+## [3.1.0] — Queue Customization
+
+### Added
+- `raven.customizations.queue_name` config key — allows overriding the queue name for
+  notification jobs.
+
+### Fixed
+- Channel sender method signatures.
+- `Scroll` class attribute initialization.
+
+### Changed
+- `SendGridChannel` now validates the notification context before sending.
+
+---
+
+## [3.0.0] — Amazon SES Support
 
 ### Added
 - Amazon SES email channel (`AmazonSesChannel`).
@@ -101,33 +193,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `phpmailer/phpmailer` dependency for SES MIME message construction.
 - `aws/aws-sdk-php` dependency.
 - `raven.providers.ses` config block (`key`, `secret`, `region`, `template_source`).
+- PHPUnit configuration (`phpunit.xml`).
 
 ### Changed
 - `raven.default.email` now accepts `ses` in addition to `sendgrid`.
+- `NotificationData` renamed to `Scroll`.
 
 ---
 
-## [1.2.0] — Vonage SMS Support
+## [2.0.1] — SendGrid Channel Fixes
 
-### Added
-- Vonage SMS channel (`VonageChannel`) and `SmsNotificationSender`.
-- `sms_template_filename` field on notification contexts — `.txt` files stored in the
-  `templates/sms/` directory.
-- `raven.providers.vonage` config block (`api_key`, `api_secret`).
-- `raven.customizations.sms.from.name` config key.
-- On-demand SMS routing: string phone numbers accepted as recipients alongside notifiable models.
-- `TemplateCleaner` utility for `{{placeholder}}` substitution in SMS and in-app templates.
-- `vonage/client` dependency.
+### Fixed
+- SendGrid channel registration in `RavenServiceProvider`.
+- Removed stale database provider reference from config file.
 
 ---
 
-## [1.1.0] — Database / In-App Notifications
+## [2.0.0] — Initial Restructure
 
-### Added
-- Database notification channel and `DatabaseNotificationSender`.
-- `in_app_template_filename` field on notification contexts — `.json` files stored in the
-  `templates/in_app/` directory.
-- `databaseType()` support — notification type is set to the context name.
+### Changed
+- Internal restructuring and preparation for multi-provider support.
 
 ---
 
@@ -138,7 +223,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Scroll` data-transfer object for building notification payloads
   (`contextName`, `recipients`, `ccs`, `params`, `attachmentUrls`).
 - SendGrid email channel (`SendGridChannel`) and `EmailNotificationSender`.
-- `NotificationContext` — originally an Eloquent model, seeded via migration stubs.
+- `NotificationContext` — Eloquent model, seeded via migration stubs.
 - `raven:install` Artisan command for publishing config and migrations.
 - `GET /api/v1/notification-contexts` API endpoint (authentication required).
 - `RavenEntityNotFoundException` (404) and `RavenInvalidDataException` (422) exceptions.
