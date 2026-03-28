@@ -1,39 +1,34 @@
 <?php
 
+namespace ChijiokeIbekwe\Raven\Tests\Feature;
+
+use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
-use ChijiokeIbekwe\Raven\Events\Raven;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Listeners\RavenListener;
-use ChijiokeIbekwe\Raven\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Jobs\Raven;
 use ChijiokeIbekwe\Raven\Notifications\SmsNotificationSender;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
 class SmsNotificationTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function getEnvironmentSetUp($app): void
     {
         config()->set('raven.default.sms', 'vonage');
         config()->set('raven.customizations.templates_directory', resource_path('templates'));
         config()->set('raven.customizations.sms.from.name', 'Raven');
-
-        $migrations = require __DIR__.'/../../database/migrations/create_notification_contexts_table.php.stub';
-
-        $migrations->up();
     }
 
     /**
      * @throws \Throwable
      */
-    public function test_that_sms_notifications_are_sent_when_the_raven_listener_receives_an_sms_context(){
+    public function test_that_sms_notifications_are_sent_when_the_raven_listener_receives_an_sms_context()
+    {
 
         $text = 'User with name {{name}}, has been created on the platform.';
 
-        if (!is_dir(resource_path('templates/sms'))) {
+        if (! is_dir(resource_path('templates/sms'))) {
             mkdir(resource_path('templates/sms'), 0777, true);
         }
 
@@ -44,35 +39,33 @@ class SmsNotificationTest extends TestCase
         $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com',
-            'phone_number' => '+2349011112222'
+            'phone_number' => '+2349011112222',
         ]);
 
-        $context = NotificationContext::factory()->create([
+        config()->set('notification-contexts.user-created', [
             'sms_template_filename' => 'user-created.txt',
-            'name' => 'user-created',
-            'channels' => ['SMS']
+            'channels' => ['SMS'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients($user);
         $scroll->setParams([
-            'name' => $user->name
+            'name' => $user->name,
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
 
         Notification::assertSentTo(
             $user,
             SmsNotificationSender::class,
-            function (SmsNotificationSender $notification) use ($user, $scroll, $context) {
+            function (SmsNotificationSender $notification) use ($user, $scroll) {
                 $sms = $notification->toVonage($user);
                 $via = $notification->via($user);
 
                 return $notification->scroll === $scroll &&
-                    $notification->notificationContext->name === $context->name &&
+                    $notification->notificationContext->name === 'user-created' &&
                     $sms->getMessage() === 'User with name John Doe, has been created on the platform.' &&
                     $sms->getTo() === '+2349011112222' &&
                     $via === ['vonage'];
@@ -84,11 +77,12 @@ class SmsNotificationTest extends TestCase
     /**
      * @throws \Throwable
      */
-    public function test_that_sms_notifications_are_sent_when_a_phone_number_is_provided_as_part_of_the_recipients(){
+    public function test_that_sms_notifications_are_sent_when_a_phone_number_is_provided_as_part_of_the_recipients()
+    {
 
         $text = 'User with name {{name}}, has been created on the platform.';
 
-        if (!is_dir(resource_path('templates/sms'))) {
+        if (! is_dir(resource_path('templates/sms'))) {
             mkdir(resource_path('templates/sms'), 0777, true);
         }
 
@@ -99,36 +93,34 @@ class SmsNotificationTest extends TestCase
         $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com',
-            'phone_number' => '+2349011112222'
+            'phone_number' => '+2349011112222',
         ]);
 
-        $context = NotificationContext::factory()->create([
+        config()->set('notification-contexts.user-created', [
             'sms_template_filename' => 'user-created.txt',
-            'name' => 'user-created',
-            'channels' => ['SMS']
+            'channels' => ['SMS'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients([$user, '+2347092223333']);
         $scroll->setParams([
-            'name' => $user->name
+            'name' => $user->name,
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
 
         Notification::assertSentOnDemand(
             SmsNotificationSender::class,
-            function (SmsNotificationSender $notification) use ($scroll, $context) {
+            function (SmsNotificationSender $notification) use ($scroll) {
 
                 return $notification->scroll === $scroll &&
-                    $notification->notificationContext->name === $context->name;
+                    $notification->notificationContext->name === 'user-created';
             }
         );
 
-        Notification::assertTimesSent(2, SmsNotificationSender::class);
+        Notification::assertSentTimes(SmsNotificationSender::class, 2);
     }
 
     /**
@@ -145,25 +137,23 @@ class SmsNotificationTest extends TestCase
         $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com',
-            'phone_number' => '+2349011112222'
+            'phone_number' => '+2349011112222',
         ]);
 
-        NotificationContext::factory()->create([
-            'name' => 'user-updated',
-            'channels' => ['SMS']
+        config()->set('notification-contexts.user-updated', [
+            'channels' => ['SMS'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -178,26 +168,24 @@ class SmsNotificationTest extends TestCase
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        NotificationContext::factory()->create([
-            'name' => 'user-updated',
+        config()->set('notification-contexts.user-updated', [
             'sms_template_filename' => 'user-updated.txt',
-            'channels' => ['SMS']
+            'channels' => ['SMS'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -211,22 +199,22 @@ class SmsNotificationTest extends TestCase
 
         Notification::fake();
 
-        $context = NotificationContext::factory()->create([
+        config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created',
-            'channels' => ['SMS']
+            'channels' => ['SMS'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
+
+        $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients($context);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 }

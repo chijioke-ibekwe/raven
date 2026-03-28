@@ -17,7 +17,7 @@ class InstallCommand extends Command
 
         $this->handleConfigPublishing();
 
-        $this->handleMigrationsPublishing();
+        $this->handleContextsConfigPublishing();
 
         $this->info('Installed Raven');
     }
@@ -26,7 +26,7 @@ class InstallCommand extends Command
     {
         $this->info('Publishing configuration...');
 
-        if (!$this->configExists()) {
+        if (! $this->configExists()) {
             $this->publishConfiguration();
             $this->info('Published configuration');
         } else {
@@ -39,21 +39,15 @@ class InstallCommand extends Command
         }
     }
 
-    private function handleMigrationsPublishing(): void
+    private function handleContextsConfigPublishing(): void
     {
-        $this->info('Publishing migrations...');
+        $this->info('Publishing notification contexts configuration...');
 
-        if(!$this->migrationsExist()){
-            $this->publishMigrations();
-            $this->info('Published migrations');
-
-            if($this->shouldRunMigrations()){
-                $this->info('Running migrations...');
-                $this->call('migrate');
-                $this->info('Migrations ran successfully');
-            }
+        if (! $this->contextsConfigExists()) {
+            $this->publishContextsConfiguration();
+            $this->info('Published notification contexts configuration');
         } else {
-            $this->info('Migrations already exist');
+            $this->info('Notification contexts configuration already exists');
         }
     }
 
@@ -62,9 +56,9 @@ class InstallCommand extends Command
         return File::exists(config_path('raven.php'));
     }
 
-    private function migrationsExist(): bool
+    private function contextsConfigExists(): bool
     {
-        return File::exists(database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php'));
+        return File::exists(config_path('notification-contexts.php'));
     }
 
     private function shouldOverwriteConfig(): bool
@@ -75,19 +69,11 @@ class InstallCommand extends Command
         );
     }
 
-    private function shouldRunMigrations(): bool
-    {
-        return $this->confirm(
-            'Do you want to run migrations now?',
-            true
-        );
-    }
-
     private function publishConfiguration($forcePublish = false): void
     {
         $params = [
             '--provider' => "ChijiokeIbekwe\Raven\RavenServiceProvider",
-            '--tag' => "raven-config"
+            '--tag' => 'raven-config',
         ];
 
         if ($forcePublish === true) {
@@ -97,11 +83,11 @@ class InstallCommand extends Command
         $this->call('vendor:publish', $params);
     }
 
-    private function publishMigrations(): void
+    private function publishContextsConfiguration(): void
     {
         $params = [
             '--provider' => "ChijiokeIbekwe\Raven\RavenServiceProvider",
-            '--tag' => "raven-migrations"
+            '--tag' => 'raven-contexts',
         ];
 
         $this->call('vendor:publish', $params);

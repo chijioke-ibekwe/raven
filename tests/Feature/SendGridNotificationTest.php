@@ -2,74 +2,65 @@
 
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
+use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
-use ChijiokeIbekwe\Raven\Events\Raven;
 use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Listeners\RavenListener;
-use ChijiokeIbekwe\Raven\Models\NotificationContext;
+use ChijiokeIbekwe\Raven\Jobs\Raven;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
+use Illuminate\Support\Facades\Notification;
 
 class SendGridNotificationTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function getEnvironmentSetUp($app): void
     {
         config()->set('raven.default.email', 'sendgrid');
         config()->set('raven.customizations.templates_directory', resource_path('templates'));
-
-        $migrations = require __DIR__.'/../../database/migrations/create_notification_contexts_table.php.stub';
-
-        $migrations->up();
     }
 
     /**
      * @throws \Throwable
      */
-    public function test_that_email_notifications_are_sent_when_the_raven_listener_receives_an_email_context(){
+    public function test_that_email_notifications_are_sent_when_the_raven_listener_receives_an_email_context()
+    {
 
         Notification::fake();
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        $context = NotificationContext::factory()->create([
+        config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created',
-            'channels' => ['EMAIL']
+            'channels' => ['EMAIL'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients($user);
-        $scroll->setCcs(["email@raven.com" => "Jane Doe"]);
+        $scroll->setCcs(['email@raven.com' => 'Jane Doe']);
         $scroll->setParams([
-            'booking_id' => 'JET12345'
+            'booking_id' => 'JET12345',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
 
         Notification::assertSentTo(
             $user,
             EmailNotificationSender::class,
-            function (EmailNotificationSender $notification) use ($user, $scroll, $context) {
+            function (EmailNotificationSender $notification) use ($user, $scroll) {
                 $mail = $notification->toSendgrid($user);
                 $via = $notification->via($user);
 
                 return $notification->scroll === $scroll &&
-                    $notification->notificationContext->name === $context->name &&
+                    $notification->notificationContext->name === 'user-created' &&
                     $mail->getTemplateId()->getTemplateId() === 'sendgrid-template' &&
                     $mail->getDynamicTemplateDatas() === [
-                        'booking_id' => 'JET12345'
+                        'booking_id' => 'JET12345',
                     ] &&
                     $via === ['sendgrid'];
 
@@ -81,45 +72,44 @@ class SendGridNotificationTest extends TestCase
     /**
      * @throws \Throwable
      */
-    public function test_that_email_notifications_are_sent_when_the_an_email_address_is_provided_as_part_of_recipients(){
+    public function test_that_email_notifications_are_sent_when_the_an_email_address_is_provided_as_part_of_recipients()
+    {
 
         Notification::fake();
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        $context = NotificationContext::factory()->create([
+        config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created',
-            'channels' => ['EMAIL']
+            'channels' => ['EMAIL'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients([$user, 'jane.doe@raven.com']);
-        $scroll->setCcs(["email@raven.com" => "Jane Doe"]);
+        $scroll->setCcs(['email@raven.com' => 'Jane Doe']);
         $scroll->setParams([
-            'booking_id' => 'JET12345'
+            'booking_id' => 'JET12345',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
 
         Notification::assertSentTo(
             $user,
             EmailNotificationSender::class,
-            function (EmailNotificationSender $notification) use ($user, $scroll, $context) {
+            function (EmailNotificationSender $notification) use ($user, $scroll) {
                 $mail = $notification->toSendgrid($user);
                 $via = $notification->via($user);
 
                 return $notification->scroll === $scroll &&
-                    $notification->notificationContext->name === $context->name &&
+                    $notification->notificationContext->name === 'user-created' &&
                     $mail->getTemplateId()->getTemplateId() === 'sendgrid-template' &&
                     $mail->getDynamicTemplateDatas() === [
-                        'booking_id' => 'JET12345'
+                        'booking_id' => 'JET12345',
                     ] &&
                     $via === ['sendgrid'];
             }
@@ -140,19 +130,17 @@ class SendGridNotificationTest extends TestCase
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setRecipients($user);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -168,20 +156,18 @@ class SendGridNotificationTest extends TestCase
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-verified');
         $scroll->setRecipients($user);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -197,25 +183,23 @@ class SendGridNotificationTest extends TestCase
 
         $user = User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        NotificationContext::factory()->create([
-            'name' => 'user-updated',
-            'channels' => ['EMAIL']
+        config()->set('notification-contexts.user-updated', [
+            'channels' => ['EMAIL'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -231,25 +215,23 @@ class SendGridNotificationTest extends TestCase
 
         User::factory()->make([
             'name' => 'John Doe',
-            'email' => 'john.doe@raven.com'
+            'email' => 'john.doe@raven.com',
         ]);
 
-        NotificationContext::factory()->create([
+        config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created',
-            'channels' => ['EMAIL']
+            'channels' => ['EMAIL'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
     }
 
     /**
@@ -263,23 +245,53 @@ class SendGridNotificationTest extends TestCase
 
         Notification::fake();
 
-        $context = NotificationContext::factory()->create([
+        config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created',
-            'channels' => ['EMAIL']
+            'channels' => ['EMAIL'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
+
+        $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients($context);
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function test_that_notification_is_not_sent_when_notification_context_is_inactive()
+    {
+        Notification::fake();
+
+        $user = User::factory()->make([
+            'name' => 'John Doe',
+            'email' => 'john.doe@raven.com',
+        ]);
+
+        config()->set('notification-contexts.user-created', [
+            'email_template_id' => 'sendgrid-template',
+            'channels' => ['EMAIL'],
+            'active' => false,
+        ]);
+
+        $scroll = new Scroll;
+        $scroll->setContextName('user-created');
+        $scroll->setRecipients($user);
+        $scroll->setParams([
+            'booking_id' => 'JET12345',
+        ]);
+
+        (new Raven($scroll))->handle();
+
+        Notification::assertNothingSent();
     }
 
     /**
@@ -292,22 +304,76 @@ class SendGridNotificationTest extends TestCase
 
         Notification::fake();
 
-        NotificationContext::factory()->create([
+        config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'name' => 'user-created',
-            'channels' => ['em']
+            'channels' => ['em'],
+            'active' => true,
         ]);
 
-        $scroll = new Scroll();
+        $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients('john.doe@raven.com');
         $scroll->setParams([
             'user_id' => '345',
-            'date_time' => '11-12-2023 10:51'
+            'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new RavenListener())->handle(
-            new Raven($scroll)
-        );
+        (new Raven($scroll))->handle();
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function test_that_notification_is_sent_when_active_key_is_absent_from_context_config(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->make([
+            'name' => 'John Doe',
+            'email' => 'john.doe@raven.com',
+        ]);
+
+        // No 'active' key — fromConfig() should default to true
+        config()->set('notification-contexts.user-created', [
+            'email_template_id' => 'sendgrid-template',
+            'channels' => ['EMAIL'],
+        ]);
+
+        $scroll = new Scroll;
+        $scroll->setContextName('user-created');
+        $scroll->setRecipients($user);
+        $scroll->setParams(['booking_id' => 'JET12345']);
+
+        (new Raven($scroll))->handle();
+
+        Notification::assertSentTo($user, EmailNotificationSender::class);
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function test_that_no_notification_is_sent_when_context_has_empty_channels(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->make([
+            'name' => 'John Doe',
+            'email' => 'john.doe@raven.com',
+        ]);
+
+        config()->set('notification-contexts.user-created', [
+            'email_template_id' => 'sendgrid-template',
+            'channels' => [],
+            'active' => true,
+        ]);
+
+        $scroll = new Scroll;
+        $scroll->setContextName('user-created');
+        $scroll->setRecipients($user);
+        $scroll->setParams(['booking_id' => 'JET12345']);
+
+        (new Raven($scroll))->handle();
+
+        Notification::assertNothingSent();
     }
 }

@@ -4,92 +4,89 @@ namespace ChijiokeIbekwe\Raven;
 
 use Aws\Ses\SesClient;
 use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
+use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
+use ChijiokeIbekwe\Raven\Channels\TwilioChannel;
 use ChijiokeIbekwe\Raven\Channels\VonageChannel;
+use ChijiokeIbekwe\Raven\Console\InstallCommand;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
-use ChijiokeIbekwe\Raven\Console\InstallCommand;
-use ChijiokeIbekwe\Raven\Providers\EventServiceProvider;
 use SendGrid;
-use Vonage\Client;
+use Twilio\Rest\Client as TwilioClient;
+use Vonage\Client as VonageClient;
 use Vonage\Client\Credentials\Basic;
 
-class RavenServiceProvider extends ServiceProvider {
-
+class RavenServiceProvider extends ServiceProvider
+{
     public function register(): void
     {
-        $this->app->register(EventServiceProvider::class);
+        $this->mergeConfigFrom(__DIR__.'/../config/raven.php', 'raven');
+        $this->mergeConfigFrom(__DIR__.'/../config/notification-contexts.php', 'notification-contexts');
     }
 
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
 
-
-            //publish config file
+            // publish config file
             $this->publishes([
                 __DIR__.'/../config/raven.php' => config_path('raven.php'),
             ], 'raven-config');
 
-
-            //publish migration files
+            // publish notification contexts config file
             $this->publishes([
-                __DIR__ . '/../database/migrations/create_notification_contexts_table.php.stub' =>
-                    database_path('migrations/2023_05_12_142923_create_notification_contexts_table.php')
-            ], 'raven-migrations');
-
-
+                __DIR__.'/../config/notification-contexts.php' => config_path('notification-contexts.php'),
+            ], 'raven-contexts');
 
             $this->commands([
-                InstallCommand::class
+                InstallCommand::class,
             ]);
         }
 
-        $this->registerRoutes();
-
-        $this->app->singleton(SendGrid::class, function ($app) {
-            return new SendGrid(config('raven.providers.sendgrid.key'));
-        });
-
-        $this->app->singleton(SesClient::class, function ($app) {
-            return new SesClient([
-                'credentials' => Arr::only(config('raven.providers.ses'), ['key', 'secret']),
-                'version' => 'latest',
-                'region' => config('raven.providers.ses.region')
-            ]);
-        });
-
-        $this->app->singleton(Client::class, function ($app) {
-            return new Client(new Basic(config('raven.providers.vonage.api_key'), config('raven.providers.vonage.api_secret')));
-        });
-
-        Notification::extend('sendgrid', function ($app) {
-            return new SendGridChannel();
-        });
-
-        Notification::extend('ses', function ($app) {
-            return new AmazonSesChannel();
-        });
-
-        Notification::extend('vonage', function ($app) {
-            return new VonageChannel();
-        });
+        $this->registerProviders();
     }
 
-    protected function registerRoutes(): void
+    protected function registerProviders(): void
     {
-        Route::group($this->routeConfiguration(), function () {
-            $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
-        });
-    }
+        $providers = array_unique([
+            config('raven.default.email'),
+            config('raven.default.sms'),
+            config('raven.providers.ses.template_source'),
+        ]);
 
-    protected function routeConfiguration(): array
-    {
-        return [
-            'prefix' => config('raven.api.prefix'),
-            'middleware' => config('raven.api.middleware'),
-        ];
+        foreach ($providers as $provider) {
+
+            switch ($provider) {
+                case 'sendgrid':
+                    $this->app->singleton(SendGrid::class, fn ($app) => new SendGrid(config('raven.providers.sendgrid.key')));
+                    Notification::extend('sendgrid', fn ($app) => new SendGridChannel);
+                    break;
+
+                case 'ses':
+                    $this->app->singleton(SesClient::class, fn ($app) => new SesClient([
+                        'credentials' => Arr::only(config('raven.providers.ses'), ['key', 'secret']),
+                        'version' => 'latest',
+                        'region' => config('raven.providers.ses.region'),
+                    ]));
+                    Notification::extend('ses', fn ($app) => new AmazonSesChannel);
+                    break;
+
+                case 'vonage':
+                    $this->app->singleton(VonageClient::class, fn ($app) => new VonageClient(new Basic(
+                        config('raven.providers.vonage.api_key'),
+                        config('raven.providers.vonage.api_secret')
+                    )));
+                    Notification::extend('vonage', fn ($app) => new VonageChannel);
+                    break;
+
+                case 'twilio':
+                    $this->app->singleton(TwilioClient::class, fn ($app) => new TwilioClient(
+                        config('raven.providers.twilio.account_sid'),
+                        config('raven.providers.twilio.auth_token')
+                    ));
+                    Notification::extend('twilio', fn ($app) => new TwilioChannel);
+                    break;
+            }
+        }
     }
 }

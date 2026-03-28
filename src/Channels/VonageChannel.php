@@ -2,45 +2,54 @@
 
 namespace ChijiokeIbekwe\Raven\Channels;
 
-use Exception;
+use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
+use ChijiokeIbekwe\Raven\Notifications\SmsNotificationSender;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
-use Vonage\Client;
+use Throwable;
+use Vonage\Client as VonageClient;
 
 class VonageChannel
 {
-    private Client $vonage;
+    private VonageClient $vonage;
 
     public function __construct()
     {
-        $this->vonage = app(Client::class);
+        $this->vonage = app(VonageClient::class);
     }
 
     /**
      * Send the given notification.
-     *
-     * @param  mixed  $notifiable
-     * @param  Notification $smsNotification
-     * @return void
      */
     public function send(mixed $notifiable, Notification $smsNotification): void
     {
+        if (! $smsNotification instanceof SmsNotificationSender) {
+            throw new RavenDeliveryException('VonageChannel requires an SmsNotificationSender notification');
+        }
+
+        $text = $smsNotification->toVonage($notifiable);
+
         try {
-            $text = $smsNotification->toVonage($notifiable);
             $response = $this->vonage->sms()->send($text)->current();
+        } catch (Throwable $e) {
+            Log::error('Vonage API error.', [
+                'message' => $e->getMessage(),
+            ]);
+            throw new RavenDeliveryException($e->getMessage(), $e->getCode(), $e);
+        }
 
-            if($response->getStatus() === 0) {
-                Log::info("SMS delivered successfully.", [
-                    'message_id' => $response->getMessageId()
-                ]);
-            } else {
-                Log::error("SMS delivery failed with status code " . $response->getStatus(), [
-                    'message_id' => $response->getMessageId()
-                ]);
-            }
-
-        } catch (Exception $e) {
-            Log::error("SMS sending error occurred: " . $e->getMessage());
+        if ($response->getStatus() === 0) {
+            Log::info('Vonage SMS delivered successfully.', [
+                'message_id' => $response->getMessageId(),
+            ]);
+        } else {
+            Log::error('Vonage SMS delivery failed.', [
+                'status' => $response->getStatus(),
+                'message_id' => $response->getMessageId(),
+            ]);
+            throw new RavenDeliveryException(
+                'Vonage SMS delivery failed with status code '.$response->getStatus()
+            );
         }
     }
 }

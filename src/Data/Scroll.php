@@ -2,52 +2,36 @@
 
 namespace ChijiokeIbekwe\Raven\Data;
 
-use Illuminate\Notifications\Notifiable;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
+use Illuminate\Notifications\Notifiable;
 
 class Scroll
 {
-
-    /**
-     * @var string
-     */
     private string $contextName;
 
-    /**
-     * @var array
-     */
     private array $recipients = [];
 
-    /**
-     * @var array
-     */
     private array $ccs = [];
 
-    /**
-     * @var array
-     */
+    private array $bccs = [];
+
+    private ?string $replyTo = null;
+
     private array $params = [];
 
-    /**
-     * @var array
-     */
     private array $attachmentUrls = [];
 
-    /**
-     * @var bool
-     */
     private bool $hasOnDemand = false;
 
     /**
-     *
      * @throws \Throwable
      */
-    public function __construct(){
+    public function __construct()
+    {
         //
     }
 
     /**
-     * @return string
      * @throws \Throwable
      */
     public function getContextName(): string
@@ -59,7 +43,6 @@ class Scroll
     }
 
     /**
-     * @return array
      * @throws \Throwable
      */
     public function getRecipients(): array
@@ -70,58 +53,49 @@ class Scroll
         return $this->recipients;
     }
 
-    /**
-     * @return array
-     */
     public function getCcs(): array
     {
         return $this->ccs;
     }
 
-    /**
-     * @return array
-     */
+    public function getBccs(): array
+    {
+        return $this->bccs;
+    }
+
+    public function getReplyTo(): ?string
+    {
+        return $this->replyTo;
+    }
+
     public function getParams(): array
     {
         return $this->params ?? [];
     }
 
-    /**
-     * @return array
-     */
     public function getAttachmentUrls(): array
     {
         return $this->attachmentUrls ?? [];
     }
 
-    
-    /**
-     * @return bool
-     */
     public function getHasOnDemand(): bool
     {
         return $this->hasOnDemand;
     }
 
-    /**
-     * @param string $contextName
-     * @return void
-     */
     public function setContextName(string $contextName): void
     {
         $this->contextName = $contextName;
     }
 
     /**
-     * @param mixed $recipients
-     * @return void
      * @throws \Throwable
      */
     public function setRecipients(object|string|array $recipients): void
     {
-        if(is_array($recipients)){
+        if (is_array($recipients)) {
 
-            foreach ($recipients as $recipient){
+            foreach ($recipients as $recipient) {
                 $this->validateRecipient($recipient);
             }
             $this->recipients = $recipients;
@@ -132,8 +106,8 @@ class Scroll
     }
 
     /**
-     * @param array<string, string> $ccs
-     * @return void
+     * @param  array<string, string>  $ccs
+     *
      * @throws \Throwable
      */
     public function setCcs(array $ccs): void
@@ -141,22 +115,24 @@ class Scroll
         $this->ccs = $ccs;
     }
 
-    /**
-     * @param array $params
-     * @return void
-     */
+    public function setBccs(array $bccs): void
+    {
+        $this->bccs = $bccs;
+    }
+
+    public function setReplyTo(string $replyTo): void
+    {
+        $this->replyTo = $replyTo;
+    }
+
     public function setParams(array $params): void
     {
         $this->params = $params;
     }
 
-    /**
-     * @param mixed $attachmentUrls
-     * @return void
-     */
-    public function setAttachmentUrls(mixed $attachmentUrls): void
+    public function setAttachmentUrls(string|array $attachmentUrls): void
     {
-        if(is_array($attachmentUrls)){
+        if (is_array($attachmentUrls)) {
             $this->attachmentUrls = $attachmentUrls;
         } else {
             $this->attachmentUrls[] = $attachmentUrls;
@@ -168,16 +144,18 @@ class Scroll
      */
     private function validateRecipient($recipient): void
     {
-        if(is_null($recipient)) {
+        if (is_null($recipient)) {
             throw new RavenInvalidDataException('Notification recipient cannot be null');
         }
 
-        if(gettype($recipient) === 'string') {
+        if (is_string($recipient)) {
             $this->hasOnDemand = true;
+
             return;
         }
 
         $notifiable = in_array(Notifiable::class, class_uses_recursive($recipient));
-        throw_if(!$notifiable, RavenInvalidDataException::class, "Notification recipient is not a notifiable");
+        throw_if(! $notifiable, RavenInvalidDataException::class,
+            'Notification recipient is not a notifiable: add the Illuminate\Notifications\Notifiable trait to the recipient class');
     }
 }
