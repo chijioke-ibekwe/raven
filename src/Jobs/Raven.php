@@ -39,7 +39,7 @@ class Raven implements ShouldQueue
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function handle(): void
     {
@@ -63,7 +63,7 @@ class Raven implements ShouldQueue
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     private function sendNotifications(Scroll $scroll, NotificationContext $context): void
     {
