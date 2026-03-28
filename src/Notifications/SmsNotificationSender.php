@@ -5,6 +5,7 @@ namespace ChijiokeIbekwe\Raven\Notifications;
 use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
+use ChijiokeIbekwe\Raven\Exceptions\RavenTemplateNotFoundException;
 use ChijiokeIbekwe\Raven\Library\TemplateCleaner;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification;
@@ -29,6 +30,7 @@ class SmsNotificationSender extends Notification implements INotificationSender
      * Get the Vonage SMS object.
      *
      * @throws RavenInvalidDataException
+     * @throws RavenTemplateNotFoundException
      */
     public function toVonage(mixed $notifiable): ?SMS
     {
@@ -49,6 +51,39 @@ class SmsNotificationSender extends Notification implements INotificationSender
         $cleaned_template = TemplateCleaner::cleanFile($this->scroll->getParams(), $template_location);
 
         return new SMS($route, config('raven.customizations.sms.from.name'), $cleaned_template);
+    }
+
+    /**
+     * Get the Vonage SMS object.
+     *
+     * @throws RavenInvalidDataException
+     * @throws RavenTemplateNotFoundException
+     */
+    public function toTwilio(mixed $notifiable): ?array
+    {
+
+        $route = $notifiable instanceof AnonymousNotifiable ? $notifiable->routes[config('raven.default.sms')] :
+            $notifiable->routeNotificationFor('twilio');
+
+        if (! $route) {
+            $class = get_class($notifiable);
+            throw new RavenInvalidDataException(
+                "Missing route for twilio: ensure {$class}::routeNotificationForTwilio() is defined on the notifiable class"
+            );
+        }
+
+        $template_location = config('raven.customizations.templates_directory').self::SMS_FOLDER.
+            $this->notificationContext->sms_template_filename;
+
+        $cleaned_template = TemplateCleaner::cleanFile($this->scroll->getParams(), $template_location);
+
+        return [
+            $route,
+            [
+                "body" => $cleaned_template,
+                "from" => config('raven.customizations.sms.from.phone_number'),
+            ]
+        ];
     }
 
     /**

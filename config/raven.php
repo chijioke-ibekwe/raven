@@ -21,6 +21,10 @@ return [
             'api_key' => env('VONAGE_API_KEY'),
             'api_secret' => env('VONAGE_API_SECRET'),
         ],
+        'twilio' => [
+            'account_sid' => env('TWILIO_ACCOUNT_SID'),
+            'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        ],
     ],
 
     'customizations' => [
@@ -33,6 +37,7 @@ return [
         'sms' => [
             'from' => [
                 'name' => env('SMS_FROM_NAME', 'Example'),
+                'phone_number' => env('SMS_FROM_PHONE_NUMBER'),
             ],
         ],
         'queue_name' => env('RAVEN_QUEUE_NAME'),
