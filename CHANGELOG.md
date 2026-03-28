@@ -27,6 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NotificationContext::fromConfig(string $name, array $config): self` — static factory that
   constructs a `NotificationContext` DTO from a config array entry.
 - `raven-contexts` vendor publish tag for the new contexts config file.
+- Twilio SMS channel (`TwilioChannel`) — Twilio is now available as an alternative SMS provider
+  alongside Vonage. Set `SMS_NOTIFICATION_PROVIDER=twilio` to use it.
+- `toTwilio()` method on `SmsNotificationSender` for building Twilio message payloads.
+- `raven.providers.twilio` config block (`account_sid`, `auth_token`).
+- `raven.customizations.sms.from.phone_number` config key for Twilio's `from` number.
+- `twilio/sdk` dependency (`^8.11`).
+- `RavenDeliveryException` (502) — thrown by all channels on delivery failure (API errors,
+  non-success status codes, SDK exceptions). Replaces inconsistent use of generic `Exception`.
+- `RavenTemplateNotFoundException` (404) — thrown when a template file or SendGrid template
+  cannot be found.
 - PHPStan / Larastan static analysis at level 5 (`phpstan.neon`).
 - Laravel Pint code-style enforcement (`pint.json` preset: `laravel`).
 - CI matrix covering PHP 8.1 / 8.2 / 8.3 against Laravel 9 / 10 / 11.
@@ -38,15 +48,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `NotificationContext` converted from an Eloquent model to a plain PHP DTO with
   `public readonly` properties — all existing callers are unaffected.
-- `Raven` is now a job (src/Jobs/Raven.php), not an event+listener pair. The public API is identical — callers 
+- `Raven` is now a job (src/Jobs/Raven.php), not an event+listener pair. The public API is identical — callers
   still write Raven::dispatch($scroll).
-- All three notification senders: `EmailNotificationSender`, `SmsNotificationSender`, `DatabaseNotificationSender` — 
-  removed `ShouldQueue`, `Queueable`, and the queue code. They are now plain synchronous notifications that 
+- All three notification senders: `EmailNotificationSender`, `SmsNotificationSender`, `DatabaseNotificationSender` —
+  removed `ShouldQueue`, `Queueable`, and the queue code. They are now plain synchronous notifications that
   run inside the Raven job.
 - `Raven` now resolves contexts via `config("notification-contexts.$name")` instead of a database query.
 - `InstallCommand` now publishes the contexts config file instead of migration stubs.
-- `SendGridChannel` and `VonageChannel` now type-hint their specific sender classes
-  (`EmailNotificationSender` / `SmsNotificationSender`) instead of the base `Notification` class.
+- All channels (`SendGridChannel`, `VonageChannel`, `AmazonSesChannel`, `TwilioChannel`) now accept
+  the base `Notification` type and validate with an `instanceof` guard, throwing
+  `RavenDeliveryException` on mismatch.
+- All channels now catch SDK/network exceptions and wrap them in `RavenDeliveryException` with the
+  original exception preserved as `$previous` — ensuring consistent error handling for the Raven job.
+- `AmazonSesChannel`: fixed `throw new Exception($e)` bug that produced garbled error messages;
+  non-200 SES responses now throw instead of silently succeeding; status code comparison changed
+  from string to integer.
+- `TemplateCleaner::cleanFile()` now throws `RavenTemplateNotFoundException` when the template file
+  cannot be read.
+- Provider registration in `RavenServiceProvider` refactored from conditional blocks to a
+  loop-based approach for cleaner extensibility.
 - Updated `composer.json` dev dependencies: testbench `^7.0|^8.0|^9.0`, PHPUnit `^9.6|^10.5|^11.0`,
   added `laravel/pint` and `larastan/larastan`.
 - `SmsNotificationTest` now declares its namespace correctly.
