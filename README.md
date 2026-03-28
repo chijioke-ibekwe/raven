@@ -41,8 +41,8 @@ from one platform to the other. These are the exact hassles that Raven could sav
 - Allows you to seamlessly combine the best attributes of your favourite notification providers without any hassles. E.g 
   Sendgrid dynamic template creation tool and Amazon SES servers.
     
-Currently, Raven seamlessly handles email notifications through SendGrid and Amazon SES, SMS notifications through Vonage, 
-as well as database/in-app notifications. More providers are gradually being integrated.
+Currently, Raven seamlessly handles email notifications through SendGrid and Amazon SES, SMS notifications through Vonage
+and Twilio, as well as database/in-app notifications. More providers are gradually being integrated.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -92,9 +92,13 @@ To use this package, you need the following requirements:
             'vonage' => [
                 'api_key' => env('VONAGE_API_KEY'),
                 'api_secret' => env('VONAGE_API_SECRET')
+            ],
+            'twilio' => [
+                'account_sid' => env('TWILIO_ACCOUNT_SID'),
+                'auth_token' => env('TWILIO_AUTH_TOKEN')
             ]
         ],
-    
+
         'customizations' => [
             'mail' => [
                 'from' => [
@@ -105,6 +109,7 @@ To use this package, you need the following requirements:
             'sms' => [
                 'from' => [
                     'name' => env('SMS_FROM_NAME', 'Example'),
+                    'phone_number' => env('SMS_FROM_PHONE_NUMBER'),
                 ]
             ],
             'queue_name' => env('RAVEN_QUEUE_NAME'),
@@ -113,7 +118,7 @@ To use this package, you need the following requirements:
     ];
     ```
    - The `default` array allows you to configure your default service providers for your notification channels. Options
-     are `sendgrid` and `ses` for email, and `vonage` for SMS.
+     are `sendgrid` and `ses` for email, and `vonage` or `twilio` for SMS.
    - The `providers` array is where you supply the credentials for the service provider you choose. When using `ses`, you 
      can provide the email template in 2 ways. 
      - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `templates_source` should be 
@@ -256,9 +261,10 @@ To use this package, you need the following requirements:
                  }
              }
      ```
-     For SMS notifications, the notifiable is required to have a similar method on the notifiable model that matches 
-     the SMS provider name. For instance, if your SMS notification provider is `vonage`, you should have a method 
+     For SMS notifications, the notifiable is required to have a similar method on the notifiable model that matches
+     the SMS provider name. For instance, if your SMS notification provider is `vonage`, you should have a method
      called `routeNotificationForVonage` on the notifiable, which returns the phone number field on the model.
+     Similarly, if your provider is `twilio`, the method should be called `routeNotificationForTwilio`.
    - The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as 
      key/value pairs respectively) of emails you want to CC on the email notification.     
    - The `params` property is an associative array of all the variables that exist on the notification 
@@ -291,7 +297,7 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist in the `notification-contexts.php` config file.
 2. `RavenInvalidDataException` `code: 422`
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
-   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider or 
+   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider or
      template source is `sendgrid`.
    - Attempting to send an Email Notification using a `NotificationContext` that has an invalid channel i.e a channel
      that isn't one of "EMAIL", "DATABASE", or "SMS".
@@ -299,13 +305,20 @@ The following exceptions can be thrown by the package for the scenarios outlined
      provider is `ses` and template source is `filesystem`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `in_app_template_filename`.
    - Attempting to send an SMS Notification using a `NotificationContext` that has no `sms_template_filename`.
-   - Attempting to send a Database Notification using a `NotificationContext` that has a non-existent template file that matches the 
+   - Attempting to send a Database Notification using a `NotificationContext` that has a non-existent template file that matches the
      `in_app_template_filename` in the in-app template directory.
    - Attempting to send an SMS Notification using a `NotificationContext` that has a non-existent template file that matches the
      `sms_template_filename` in the sms template directory.
-   - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()` 
+   - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()`
      method in the model class.
    - Attempting to send an SMS Notification to a notifiable that has no `routeNotificationFor$Provider()` method in the model class.
+3. `RavenDeliveryException` `code: 502`
+   - A notification channel (SendGrid, Vonage, Twilio, or Amazon SES) fails to deliver a message due to an API error,
+     a non-success response status, or an SDK exception.
+4. `RavenTemplateNotFoundException` `code: 404`
+   - A template file referenced by a notification context cannot be found on the filesystem.
+   - A SendGrid template referenced by its ID cannot be fetched from the SendGrid API (when using Amazon SES with
+     SendGrid as the template source).
 
 ## ⛏️ Built Using <a name = "built_using"></a>
 - [PHP](https://www.php.net/) - Language
@@ -314,6 +327,7 @@ The following exceptions can be thrown by the package for the scenarios outlined
 - [Sendgrid PHP Library](https://github.com/sendgrid/sendgrid-php) - Library
 - [PHP Mailer](https://github.com/PHPMailer/PHPMailer) - Library
 - [Vonage](https://github.com/vonage/vonage-php-sdk-core) - Library
+- [Twilio](https://github.com/twilio/twilio-php) - Library
 
 ## ✍️ Authors <a name = "authors"></a>
 - [@chijioke-ibekwe](https://github.com/chijioke-ibekwe) - Initial work
