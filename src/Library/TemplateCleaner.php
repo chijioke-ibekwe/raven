@@ -2,11 +2,20 @@
 
 namespace ChijiokeIbekwe\Raven\Library;
 
+use ChijiokeIbekwe\Raven\Exceptions\RavenTemplateNotFoundException;
+
 class TemplateCleaner
 {
+    /**
+     * @throws RavenTemplateNotFoundException
+     */
     public static function cleanFile(array $params, string $file_location): string
     {
         $template_content = file_get_contents($file_location);
+
+        if ($template_content === false) {
+            throw new RavenTemplateNotFoundException("Template file not found in: {$file_location}");
+        }
 
         return self::cleanText($params, $template_content);
     }
