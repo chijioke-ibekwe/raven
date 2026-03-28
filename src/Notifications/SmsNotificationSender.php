@@ -80,9 +80,9 @@ class SmsNotificationSender extends Notification implements INotificationSender
         return [
             $route,
             [
-                "body" => $cleaned_template,
-                "from" => config('raven.customizations.sms.from.phone_number'),
-            ]
+                'body' => $cleaned_template,
+                'from' => config('raven.customizations.sms.from.phone_number'),
+            ],
         ];
     }
 

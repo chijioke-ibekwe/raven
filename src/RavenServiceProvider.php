@@ -12,8 +12,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
 use SendGrid;
-use Vonage\Client as VonageClient;
 use Twilio\Rest\Client as TwilioClient;
+use Vonage\Client as VonageClient;
 use Vonage\Client\Credentials\Basic;
 
 class RavenServiceProvider extends ServiceProvider
@@ -84,7 +84,7 @@ class RavenServiceProvider extends ServiceProvider
                         config('raven.providers.twilio.account_sid'),
                         config('raven.providers.twilio.auth_token')
                     ));
-                    Notification::extend('twilio', fn ($app) => new TwilioChannel());
+                    Notification::extend('twilio', fn ($app) => new TwilioChannel);
                     break;
             }
         }
