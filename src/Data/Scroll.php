@@ -70,12 +70,12 @@ class Scroll
 
     public function getParams(): array
     {
-        return $this->params ?? [];
+        return $this->params;
     }
 
     public function getAttachmentUrls(): array
     {
-        return $this->attachmentUrls ?? [];
+        return $this->attachmentUrls;
     }
 
     public function getHasOnDemand(): bool
@@ -107,8 +107,6 @@ class Scroll
 
     /**
      * @param  array<string, string>  $ccs
-     *
-     * @throws \Throwable
      */
     public function setCcs(array $ccs): void
     {
