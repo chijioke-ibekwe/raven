@@ -9,10 +9,9 @@ use ChijiokeIbekwe\Raven\Events\RavenNotificationFailed;
 use ChijiokeIbekwe\Raven\Events\RavenNotificationSent;
 use ChijiokeIbekwe\Raven\Exceptions\RavenContextNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
-use ChijiokeIbekwe\Raven\Notifications\INotificationSender;
-use ChijiokeIbekwe\Raven\Notifications\SmsNotificationSender;
-use ChijiokeIbekwe\Raven\Services\ChannelSenderFactory;
+use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
+use ChijiokeIbekwe\Raven\Notifications\RavenNotification;
+use ChijiokeIbekwe\Raven\Notifications\SmsNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -67,7 +66,6 @@ class Raven implements ShouldQueue
      */
     private function sendNotifications(Scroll $scroll, NotificationContext $context): void
     {
-        $factory = new ChannelSenderFactory($scroll, $context);
         $channels = $context->channels;
         $recipients = $scroll->getRecipients();
 
@@ -80,12 +78,13 @@ class Raven implements ShouldQueue
 
             Log::info("Processing notification for context $context->name through channel $channel_type->name");
 
-            $channel_sender = $factory->getSender($channel_type);
+            $notification = $channel_type->createNotification($scroll, $context);
+            $notification->validateNotification();
 
             Log::info("Sending notification for context $context->name through channel $channel_type->name");
 
             try {
-                $this->dispatchChannel($scroll, $recipients, $channel_sender);
+                $this->dispatchChannel($scroll, $recipients, $notification);
                 RavenNotificationSent::dispatch($scroll, $context, $channel_type->name);
             } catch (Throwable $e) {
                 RavenNotificationFailed::dispatch($scroll, $context, $channel_type->name, $e);
@@ -94,30 +93,30 @@ class Raven implements ShouldQueue
         }
     }
 
-    private function dispatchChannel(Scroll $scroll, array $recipients, INotificationSender $channel_sender): void
+    private function dispatchChannel(Scroll $scroll, array $recipients, RavenNotification $notification): void
     {
         if (! $scroll->getHasOnDemand()) {
-            Notification::send($recipients, $channel_sender);
+            Notification::send($recipients, $notification);
 
             return;
         }
 
         foreach ($recipients as $recipient) {
             if (! is_string($recipient)) {
-                Notification::send([$recipient], $channel_sender);
+                Notification::send([$recipient], $notification);
 
                 continue;
             }
 
-            $this->resolveRouteWithChannelSender($recipient, $channel_sender);
+            $this->resolveRouteWithNotification($recipient, $notification);
         }
     }
 
-    private function resolveRouteWithChannelSender(string $recipient, INotificationSender $channel_sender): void
+    private function resolveRouteWithNotification(string $recipient, RavenNotification $notification): void
     {
-        if ($channel_sender instanceof EmailNotificationSender) {
+        if ($notification instanceof EmailNotification) {
             if (preg_match(self::EMAIL_PATTERN, $recipient)) {
-                Notification::route(config('raven.default.email'), $recipient)->notify($channel_sender);
+                Notification::route(config('raven.default.email'), $recipient)->notify($notification);
             } else {
                 Log::warning("Skipping recipient: \"$recipient\" is not a valid email address.");
             }
@@ -125,9 +124,9 @@ class Raven implements ShouldQueue
             return;
         }
 
-        if ($channel_sender instanceof SmsNotificationSender) {
+        if ($notification instanceof SmsNotification) {
             if (preg_match(self::PHONE_PATTERN, $recipient)) {
-                Notification::route(config('raven.default.sms'), $recipient)->notify($channel_sender);
+                Notification::route(config('raven.default.sms'), $recipient)->notify($notification);
             } else {
                 Log::warning("Skipping recipient: \"$recipient\" is not a valid phone number.");
             }

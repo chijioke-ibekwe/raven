@@ -5,7 +5,7 @@ namespace ChijiokeIbekwe\Raven\Tests\Feature;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Jobs\Raven;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
+use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 use Illuminate\Support\Facades\Notification;
@@ -46,8 +46,8 @@ class AmazonSesNotificationTest extends TestCase
 
         Notification::assertSentTo(
             $user,
-            EmailNotificationSender::class,
-            function (EmailNotificationSender $notification) use ($user) {
+            EmailNotification::class,
+            function (EmailNotification $notification) use ($user) {
                 return $notification->notificationContext->name === 'user-verified' &&
                     $notification->via($user) === ['ses'];
             }

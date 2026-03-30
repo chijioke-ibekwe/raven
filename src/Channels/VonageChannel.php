@@ -3,7 +3,7 @@
 namespace ChijiokeIbekwe\Raven\Channels;
 
 use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
-use ChijiokeIbekwe\Raven\Notifications\SmsNotificationSender;
+use ChijiokeIbekwe\Raven\Notifications\SmsNotification;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -23,8 +23,8 @@ class VonageChannel
      */
     public function send(mixed $notifiable, Notification $smsNotification): void
     {
-        if (! $smsNotification instanceof SmsNotificationSender) {
-            throw new RavenDeliveryException('VonageChannel requires an SmsNotificationSender notification');
+        if (! $smsNotification instanceof SmsNotification) {
+            throw new RavenDeliveryException('VonageChannel requires an SmsNotification notification');
         }
 
         $text = $smsNotification->toVonage($notifiable);

@@ -3,7 +3,7 @@
 namespace ChijiokeIbekwe\Raven\Channels;
 
 use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
+use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use SendGrid;
@@ -23,8 +23,8 @@ class SendGridChannel
      */
     public function send(mixed $notifiable, Notification $emailNotification): void
     {
-        if (! $emailNotification instanceof EmailNotificationSender) {
-            throw new RavenDeliveryException('SendGridChannel requires an EmailNotificationSender notification');
+        if (! $emailNotification instanceof EmailNotification) {
+            throw new RavenDeliveryException('SendGridChannel requires an EmailNotification notification');
         }
 
         $email = $emailNotification->toSendgrid($notifiable);

@@ -7,6 +7,10 @@ use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
 use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
 use ChijiokeIbekwe\Raven\Channels\TwilioChannel;
 use ChijiokeIbekwe\Raven\Channels\VonageChannel;
+use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
+use ChijiokeIbekwe\Raven\Templates\FilesystemTemplateStrategy;
+use ChijiokeIbekwe\Raven\Templates\SendGridTemplateStrategy;
+use ChijiokeIbekwe\Raven\Templates\TemplateStrategy;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
@@ -63,6 +67,11 @@ class RavenServiceProvider extends ServiceProvider
                         'version' => 'latest',
                         'region' => config('raven.providers.ses.region'),
                     ]));
+                    $this->app->bind(TemplateStrategy::class, fn ($app) => match (config('raven.providers.ses.template_source')) {
+                        'sendgrid' => new SendGridTemplateStrategy($app->make(SendGrid::class)),
+                        'filesystem' => new FilesystemTemplateStrategy,
+                        default => throw new RavenDeliveryException('Template source '.config('raven.providers.ses.template_source').' is not supported'),
+                    });
                     Notification::extend('ses', fn ($app) => new AmazonSesChannel);
                     break;
 
