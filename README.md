@@ -294,7 +294,7 @@ To use this package, you need the following requirements:
 
 ### Exceptions
 The following exceptions can be thrown by the package for the scenarios outlined below:
-1. `RavenEntityNotFoundException` `code: 404`
+1. `RavenContextNotFoundException` `code: 404`
    - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist in the `notification-contexts.php` config file.
 2. `RavenInvalidDataException` `code: 422`
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.

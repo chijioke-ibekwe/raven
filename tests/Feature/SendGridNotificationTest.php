@@ -4,7 +4,7 @@ namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
-use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
+use ChijiokeIbekwe\Raven\Exceptions\RavenContextNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Jobs\Raven;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
@@ -148,7 +148,7 @@ class SendGridNotificationTest extends TestCase
      */
     public function test_that_exception_is_thrown_when_notification_context_name_does_not_exist_on_the_database()
     {
-        $this->expectException(RavenEntityNotFoundException::class);
+        $this->expectException(RavenContextNotFoundException::class);
         $this->expectExceptionMessage('Notification context with name user-verified does not exist');
         $this->expectExceptionCode(404);
 

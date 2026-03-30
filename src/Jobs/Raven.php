@@ -7,7 +7,7 @@ use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Events\RavenNotificationFailed;
 use ChijiokeIbekwe\Raven\Events\RavenNotificationSent;
-use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
+use ChijiokeIbekwe\Raven\Exceptions\RavenContextNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
 use ChijiokeIbekwe\Raven\Notifications\INotificationSender;
@@ -48,7 +48,7 @@ class Raven implements ShouldQueue
 
         $contextConfig = config("notification-contexts.$context_name");
 
-        throw_if(is_null($contextConfig), RavenEntityNotFoundException::class,
+        throw_if(is_null($contextConfig), RavenContextNotFoundException::class,
             "Notification context with name $context_name does not exist");
 
         $context = NotificationContext::fromConfig($context_name, $contextConfig);

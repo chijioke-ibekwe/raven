@@ -40,7 +40,7 @@ Twilio), and Database/In-App notifications through a single, config-driven inter
 - **On-demand email routing** — pass plain email strings as recipients alongside notifiable models.
 
 ### Exceptions
-- `RavenEntityNotFoundException` (404) — notification context not found in config.
+- `RavenContextNotFoundException` (404) — notification context not found in config.
 - `RavenInvalidDataException` (422) — missing or invalid data on the `Scroll` or context.
 - `RavenDeliveryException` (502) — channel delivery failure.
 - `RavenTemplateNotFoundException` (404) — template file or SendGrid template not found.
