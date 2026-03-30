@@ -5,7 +5,7 @@ namespace ChijiokeIbekwe\Raven\Tests\Feature;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Jobs\Raven;
-use ChijiokeIbekwe\Raven\Notifications\DatabaseNotificationSender;
+use ChijiokeIbekwe\Raven\Notifications\DatabaseNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 use Illuminate\Support\Facades\Notification;
@@ -61,8 +61,8 @@ class DatabaseNotificationTest extends TestCase
 
         Notification::assertSentTo(
             $user,
-            DatabaseNotificationSender::class,
-            function (DatabaseNotificationSender $notification) use ($user, $scroll) {
+            DatabaseNotification::class,
+            function (DatabaseNotification $notification) use ($user, $scroll) {
                 $content = $notification->toDatabase($user);
                 $via = $notification->via($user);
 

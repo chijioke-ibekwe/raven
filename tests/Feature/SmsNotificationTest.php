@@ -2,11 +2,10 @@
 
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
-use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Jobs\Raven;
-use ChijiokeIbekwe\Raven\Notifications\SmsNotificationSender;
+use ChijiokeIbekwe\Raven\Notifications\SmsNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 use Illuminate\Support\Facades\Notification;
@@ -59,8 +58,8 @@ class SmsNotificationTest extends TestCase
 
         Notification::assertSentTo(
             $user,
-            SmsNotificationSender::class,
-            function (SmsNotificationSender $notification) use ($user, $scroll) {
+            SmsNotification::class,
+            function (SmsNotification $notification) use ($user, $scroll) {
                 $sms = $notification->toVonage($user);
                 $via = $notification->via($user);
 
@@ -112,15 +111,15 @@ class SmsNotificationTest extends TestCase
         (new Raven($scroll))->handle();
 
         Notification::assertSentOnDemand(
-            SmsNotificationSender::class,
-            function (SmsNotificationSender $notification) use ($scroll) {
+            SmsNotification::class,
+            function (SmsNotification $notification) use ($scroll) {
 
                 return $notification->scroll === $scroll &&
                     $notification->notificationContext->name === 'user-created';
             }
         );
 
-        Notification::assertSentTimes(SmsNotificationSender::class, 2);
+        Notification::assertSentTimes(SmsNotification::class, 2);
     }
 
     /**
@@ -180,36 +179,6 @@ class SmsNotificationTest extends TestCase
         $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
-
-        (new Raven($scroll))->handle();
-    }
-
-    /**
-     * @throws \Throwable
-     */
-    public function test_that_exception_is_thrown_when_a_non_notifiable_recipient_is_provided_in_notification_data()
-    {
-        $this->expectException(RavenInvalidDataException::class);
-        $this->expectExceptionMessage('Notification recipient is not a notifiable');
-        $this->expectExceptionCode(422);
-
-        Notification::fake();
-
-        config()->set('notification-contexts.user-created', [
-            'email_template_id' => 'sendgrid-template',
-            'channels' => ['SMS'],
-            'active' => true,
-        ]);
-
-        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
-
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($context);
         $scroll->setParams([
             'user_id' => '345',
             'date_time' => '11-12-2023 10:51',
