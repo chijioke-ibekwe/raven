@@ -44,10 +44,10 @@ class RavenChannelJobTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($user);
-        $scroll->setParams(['booking_id' => 'JET12345']);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($user)
+            ->with(['booking_id' => 'JET12345']);
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
 
@@ -79,10 +79,10 @@ class RavenChannelJobTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($user);
-        $scroll->setParams(['booking_id' => 'JET12345']);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($user)
+            ->with(['booking_id' => 'JET12345']);
 
         Notification::shouldReceive('send')
             ->once()
@@ -135,10 +135,10 @@ class RavenChannelJobTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients([$user1, $user2, $user3]);
-        $scroll->setParams(['booking_id' => 'JET12345']);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to([$user1, $user2, $user3])
+            ->with(['booking_id' => 'JET12345']);
 
         $callCount = 0;
         Notification::shouldReceive('send')
@@ -192,10 +192,10 @@ class RavenChannelJobTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients([$user1, $user2]);
-        $scroll->setParams(['booking_id' => 'JET12345']);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to([$user1, $user2])
+            ->with(['booking_id' => 'JET12345']);
 
         Notification::shouldReceive('send')
             ->times(2)
@@ -231,10 +231,10 @@ class RavenChannelJobTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients('not-an-email');
-        $scroll->setParams(['booking_id' => 'JET12345']);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to('not-an-email')
+            ->with(['booking_id' => 'JET12345']);
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
 

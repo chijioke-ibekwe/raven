@@ -41,10 +41,10 @@ class AmazonSesNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-verified');
-        $scroll->setRecipients($user);
-        $scroll->setParams(['name' => 'John Doe']);
+        $scroll = Scroll::make()
+            ->for('user-verified')
+            ->to($user)
+            ->with(['name' => 'John Doe']);
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
 
@@ -81,10 +81,10 @@ class AmazonSesNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-verified');
-        $scroll->setRecipients($user);
-        $scroll->setParams(['name' => 'John Doe']);
+        $scroll = Scroll::make()
+            ->for('user-verified')
+            ->to($user)
+            ->with(['name' => 'John Doe']);
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
     }
@@ -114,10 +114,10 @@ class AmazonSesNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-verified');
-        $scroll->setRecipients($user);
-        $scroll->setParams(['name' => 'John Doe']);
+        $scroll = Scroll::make()
+            ->for('user-verified')
+            ->to($user)
+            ->with(['name' => 'John Doe']);
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
     }

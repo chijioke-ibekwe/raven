@@ -10,7 +10,6 @@ namespace ChijiokeIbekwe\Raven\Data;
  * @property string|null $email_subject
  * @property string|null $sms_template_filename
  * @property string|null $in_app_template_filename
- * @property string|null $type
  * @property bool $active
  * @property array $channels
  */
@@ -24,7 +23,6 @@ class NotificationContext
         public readonly ?string $email_subject,
         public readonly ?string $sms_template_filename,
         public readonly ?string $in_app_template_filename,
-        public readonly ?string $type,
         public readonly bool $active,
         public readonly array $channels,
     ) {}
@@ -39,7 +37,6 @@ class NotificationContext
             email_subject: $config['email_subject'] ?? null,
             sms_template_filename: $config['sms_template_filename'] ?? null,
             in_app_template_filename: $config['in_app_template_filename'] ?? null,
-            type: $config['type'] ?? null,
             active: $config['active'] ?? true,
             channels: $config['channels'] ?? [],
         );

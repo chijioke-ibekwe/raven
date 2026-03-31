@@ -21,14 +21,12 @@ class Scroll
 
     private array $attachmentUrls = [];
 
-    private bool $hasOnDemand = false;
-
     /**
-     * @throws \Throwable
+     * Create a new Scroll instance.
      */
-    public function __construct()
+    public static function make(): self
     {
-        //
+        return new self;
     }
 
     /**
@@ -78,23 +76,24 @@ class Scroll
         return $this->attachmentUrls;
     }
 
-    public function getHasOnDemand(): bool
-    {
-        return $this->hasOnDemand;
-    }
-
-    public function setContextName(string $contextName): void
+    /**
+     * Set the notification context name. Must match a key in the notification-contexts config.
+     */
+    public function for(string $contextName): self
     {
         $this->contextName = $contextName;
+
+        return $this;
     }
 
     /**
+     * Set the notification recipient(s). Accepts a notifiable, an email/phone string, or an array of either.
+     *
      * @throws \Throwable
      */
-    public function setRecipients(object|string|array $recipients): void
+    public function to(object|string|array $recipients): self
     {
         if (is_array($recipients)) {
-
             foreach ($recipients as $recipient) {
                 $this->validateRecipient($recipient);
             }
@@ -103,38 +102,70 @@ class Scroll
             $this->validateRecipient($recipients);
             $this->recipients[] = $recipients;
         }
+
+        return $this;
     }
 
     /**
-     * @param  array<string, string>  $ccs
+     * Set CC recipients for email notifications.
+     *
+     * @param  array<string, string>  $ccs  Email addresses as keys, names as values
      */
-    public function setCcs(array $ccs): void
+    public function cc(array $ccs): self
     {
         $this->ccs = $ccs;
+
+        return $this;
     }
 
-    public function setBccs(array $bccs): void
+    /**
+     * Set BCC recipients for email notifications.
+     *
+     * @param  array<string, string>  $bccs  Email addresses as keys, names as values
+     */
+    public function bcc(array $bccs): self
     {
         $this->bccs = $bccs;
+
+        return $this;
     }
 
-    public function setReplyTo(string $replyTo): void
+    /**
+     * Set the reply-to email address for email notifications.
+     */
+    public function replyTo(string $replyTo): self
     {
         $this->replyTo = $replyTo;
+
+        return $this;
     }
 
-    public function setParams(array $params): void
+    /**
+     * Set the template parameters. Keys must match the placeholder names in the template.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    public function with(array $params): self
     {
         $this->params = $params;
+
+        return $this;
     }
 
-    public function setAttachmentUrls(string|array $attachmentUrls): void
+    /**
+     * Attach files to email notifications by URL.
+     *
+     * @param  string|string[]  $attachmentUrls  Publicly accessible URL(s)
+     */
+    public function attach(string|array $attachmentUrls): self
     {
         if (is_array($attachmentUrls)) {
             $this->attachmentUrls = $attachmentUrls;
         } else {
             $this->attachmentUrls[] = $attachmentUrls;
         }
+
+        return $this;
     }
 
     /**
@@ -147,8 +178,6 @@ class Scroll
         }
 
         if (is_string($recipient)) {
-            $this->hasOnDemand = true;
-
             return;
         }
 

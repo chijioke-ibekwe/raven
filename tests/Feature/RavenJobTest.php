@@ -37,12 +37,12 @@ class RavenJobTest extends TestCase
             'email' => 'john.doe@raven.com',
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $scroll = Scroll::make()
+            ->to($user)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
 
         (new Raven($scroll))->handle();
     }
@@ -63,13 +63,13 @@ class RavenJobTest extends TestCase
             'email' => 'john.doe@raven.com',
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-verified');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-verified')
+            ->to($user)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
 
         (new Raven($scroll))->handle();
     }
@@ -91,12 +91,12 @@ class RavenJobTest extends TestCase
             'active' => true,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
 
         (new Raven($scroll))->handle();
     }
@@ -120,13 +120,13 @@ class RavenJobTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($context);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($context)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
 
         (new Raven($scroll))->handle();
     }
@@ -149,12 +149,12 @@ class RavenJobTest extends TestCase
             'active' => false,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'booking_id' => 'JET12345',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($user)
+            ->with([
+                'booking_id' => 'JET12345',
+            ]);
 
         (new Raven($scroll))->handle();
 
@@ -177,13 +177,13 @@ class RavenJobTest extends TestCase
             'active' => true,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients('john.doe@raven.com');
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to('john.doe@raven.com')
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
 
         (new Raven($scroll))->handle();
     }
@@ -205,10 +205,10 @@ class RavenJobTest extends TestCase
             'channels' => ['EMAIL'],
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($user);
-        $scroll->setParams(['booking_id' => 'JET12345']);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($user)
+            ->with(['booking_id' => 'JET12345']);
 
         (new Raven($scroll))->handle();
 
@@ -236,10 +236,10 @@ class RavenJobTest extends TestCase
             'active' => true,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($user);
-        $scroll->setParams(['booking_id' => 'JET12345']);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($user)
+            ->with(['booking_id' => 'JET12345']);
 
         (new Raven($scroll))->handle();
 
@@ -266,10 +266,10 @@ class RavenJobTest extends TestCase
             'active' => true,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($user);
-        $scroll->setParams(['booking_id' => 'JET12345']);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($user)
+            ->with(['booking_id' => 'JET12345']);
 
         (new Raven($scroll))->handle();
 

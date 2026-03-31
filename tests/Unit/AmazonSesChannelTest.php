@@ -51,8 +51,8 @@ class AmazonSesChannelTest extends TestCase
             'active' => true,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-verified');
+        $scroll = Scroll::make()
+            ->for('user-verified');
 
         $user = User::factory()->make(['email' => 'john.doe@raven.com']);
 

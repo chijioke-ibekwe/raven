@@ -41,13 +41,13 @@ class SendGridNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($user);
-        $scroll->setCcs(['email@raven.com' => 'Jane Doe']);
-        $scroll->setParams([
-            'booking_id' => 'JET12345',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($user)
+            ->cc(['email@raven.com' => 'Jane Doe'])
+            ->with([
+                'booking_id' => 'JET12345',
+            ]);
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
 
@@ -92,13 +92,13 @@ class SendGridNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients([$user, 'jane.doe@raven.com']);
-        $scroll->setCcs(['email@raven.com' => 'Jane Doe']);
-        $scroll->setParams([
-            'booking_id' => 'JET12345',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to([$user, 'jane.doe@raven.com'])
+            ->cc(['email@raven.com' => 'Jane Doe'])
+            ->with([
+                'booking_id' => 'JET12345',
+            ]);
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
 
@@ -144,13 +144,13 @@ class SendGridNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-updated');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-updated')
+            ->to($user)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
     }

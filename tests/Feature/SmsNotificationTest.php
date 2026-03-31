@@ -51,12 +51,12 @@ class SmsNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'name' => $user->name,
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to($user)
+            ->with([
+                'name' => $user->name,
+            ]);
 
         (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
 
@@ -107,12 +107,12 @@ class SmsNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-created');
-        $scroll->setRecipients([$user, '+2347092223333']);
-        $scroll->setParams([
-            'name' => $user->name,
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to([$user, '+2347092223333'])
+            ->with([
+                'name' => $user->name,
+            ]);
 
         (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
 
@@ -152,13 +152,13 @@ class SmsNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-updated');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-updated')
+            ->to($user)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
 
         (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
     }
@@ -186,13 +186,13 @@ class SmsNotificationTest extends TestCase
 
         $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-updated');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $scroll = Scroll::make()
+            ->for('user-updated')
+            ->to($user)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
 
         (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
     }

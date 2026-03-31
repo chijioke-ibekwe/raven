@@ -170,7 +170,6 @@ To use this package, you need the following requirements:
         'user-verified' => [
             'description'          => 'Notification to inform a user that they have been verified on the platform',
             'sms_template_filename' => 'user-verified.txt',
-            'type'                 => 'user',
             'channels'             => ['SMS'],
             'active'               => true,
         ],
@@ -188,7 +187,6 @@ To use this package, you need the following requirements:
         'user-verified' => [
             'description'              => 'Notification to inform a user that they have been verified on the platform',
             'in_app_template_filename' => 'user-verified.json',
-            'type'                     => 'user',
             'channels'                 => ['DATABASE'],
             'active'                   => true,
         ],
@@ -211,7 +209,6 @@ To use this package, you need the following requirements:
             'email_template_id'        => env('TEMPLATE_USER_VERIFIED', 'd-ad34ghAwe3mQRvb29'),
             'sms_template_filename'    => 'user-verified.txt',
             'in_app_template_filename' => 'user-verified.json',
-            'type'                     => 'user',
             'channels'                 => ['EMAIL', 'SMS', 'DATABASE'],
             'active'                   => true,
         ],
@@ -225,22 +222,22 @@ To use this package, you need the following requirements:
            $verified_user = User::find(1);
            $document_url = "https://example.com/laravel-cheatsheet.pdf";
 
-           $scroll = new Scroll();
-           $scroll->setContextName('user-verified');
-           $scroll->setRecipients([$verified_user, 'admin@raven.com']);
-           $scroll->setCcs(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe']);
-           $scroll->setParams([
-               'id' => $verified_user->id,
-               'name' => $verified_user->name,
-               'email' => $verified_user->email
-           ]);
-           $scroll->setAttachmentUrls($document_url);
+           $scroll = Scroll::make()
+               ->for('user-verified')
+               ->to([$verified_user, 'admin@raven.com'])
+               ->cc(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe'])
+               ->with([
+                   'id' => $verified_user->id,
+                   'name' => $verified_user->name,
+                   'email' => $verified_user->email
+               ])
+               ->attach($document_url);
 
            Raven::dispatch($scroll);
    ```
-   - The `contextName` property is required and must match a notification context name defined in the
+   - `for()` is required and must match a notification context name defined in the
      `notification-contexts.php` config file.
-   - The `recipients` property is required and takes any single notifiable/email string, or an array of notifiables/email
+   - `to()` is required and takes any single notifiable/email string, or an array of notifiables/email
      strings that should receive the notification. For email notifications, your notifiable model is expected to have an
      `email` field. If the field is named something different on the model e.g `email_address`, you are required to 
      provide the `routeNotificationForMail` method on the model, in a similar manner as below: 
@@ -262,11 +259,11 @@ To use this package, you need the following requirements:
      the SMS provider name. For instance, if your SMS notification provider is `vonage`, you should have a method
      called `routeNotificationForVonage` on the notifiable, which returns the phone number field on the model.
      Similarly, if your provider is `twilio`, the method should be called `routeNotificationForTwilio`.
-   - The `ccs` property is exclusively for email notifications and takes an array (or associative array with email/name as 
-     key/value pairs respectively) of emails you want to CC on the email notification.     
-   - The `params` property is an associative array of all the variables that exist on the notification 
-     template with their values, where the key must match the variable name on the template.  
-   - Finally, the `attachmentUrls` field takes a url or an array of urls that point to the publicly accessible resource(s) that 
+   - `cc()` is exclusively for email notifications and takes an array (or associative array with email/name as
+     key/value pairs respectively) of emails you want to CC on the email notification.
+   - `with()` takes an associative array of all the variables that exist on the notification
+     template with their values, where the key must match the variable name on the template.
+   - `attach()` takes a url or an array of urls that point to the publicly accessible resource(s) that
      needs to be attached to the email notification.  
 
 6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a
