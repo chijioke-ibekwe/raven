@@ -2,9 +2,11 @@
 
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
+use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
+use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Jobs\Raven;
+use ChijiokeIbekwe\Raven\Jobs\RavenChannelJob;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
@@ -37,12 +39,14 @@ class AmazonSesNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-verified');
         $scroll->setRecipients($user);
         $scroll->setParams(['name' => 'John Doe']);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -75,12 +79,14 @@ class AmazonSesNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-verified');
         $scroll->setRecipients($user);
         $scroll->setParams(['name' => 'John Doe']);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
     }
 
     /**
@@ -106,11 +112,13 @@ class AmazonSesNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-verified');
         $scroll->setRecipients($user);
         $scroll->setParams(['name' => 'John Doe']);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
     }
 }

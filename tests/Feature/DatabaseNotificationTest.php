@@ -2,9 +2,11 @@
 
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
+use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
+use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Jobs\Raven;
+use ChijiokeIbekwe\Raven\Jobs\RavenChannelJob;
 use ChijiokeIbekwe\Raven\Notifications\DatabaseNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
@@ -49,6 +51,8 @@ class DatabaseNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-verified');
         $scroll->setRecipients($user);
@@ -57,7 +61,7 @@ class DatabaseNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -96,6 +100,8 @@ class DatabaseNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
@@ -104,7 +110,7 @@ class DatabaseNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE))->handle();
     }
 
     /**
@@ -128,6 +134,8 @@ class DatabaseNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
@@ -136,6 +144,6 @@ class DatabaseNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE))->handle();
     }
 }

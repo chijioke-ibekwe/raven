@@ -2,9 +2,11 @@
 
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
+use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
+use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Jobs\Raven;
+use ChijiokeIbekwe\Raven\Jobs\RavenChannelJob;
 use ChijiokeIbekwe\Raven\Notifications\SmsNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
@@ -47,6 +49,8 @@ class SmsNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients($user);
@@ -54,7 +58,7 @@ class SmsNotificationTest extends TestCase
             'name' => $user->name,
         ]);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -101,6 +105,8 @@ class SmsNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-created');
         $scroll->setRecipients([$user, '+2347092223333']);
@@ -108,7 +114,7 @@ class SmsNotificationTest extends TestCase
             'name' => $user->name,
         ]);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
 
         Notification::assertSentOnDemand(
             SmsNotification::class,
@@ -144,6 +150,8 @@ class SmsNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
@@ -152,7 +160,7 @@ class SmsNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
     }
 
     /**
@@ -176,6 +184,8 @@ class SmsNotificationTest extends TestCase
             'active' => true,
         ]);
 
+        $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
+
         $scroll = new Scroll;
         $scroll->setContextName('user-updated');
         $scroll->setRecipients($user);
@@ -184,6 +194,6 @@ class SmsNotificationTest extends TestCase
             'date_time' => '11-12-2023 10:51',
         ]);
 
-        (new Raven($scroll))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
     }
 }

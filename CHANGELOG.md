@@ -27,13 +27,15 @@ Twilio), and Database/In-App notifications through a single, config-driven inter
   - On-demand routing: pass phone number strings directly as recipients.
 - **Database / in-app notifications** using Laravel's built-in notification system.
   - Template-based using `.json` files with `{{placeholder}}` substitution.
-- **Asynchronous dispatch** — `Raven::dispatch($scroll)` queues a job that resolves the
-  notification context and sends through all configured channels.
+- **Per-channel async dispatch** — `Raven::dispatch($scroll)` resolves the notification context
+  and dispatches a separate queued job per channel, so a failure in one channel does not block the
+  others.
 - **Configurable queue** — override the queue name via `raven.customizations.queue_name`.
 - **Provider abstraction** — switch providers (e.g. Vonage to Twilio) by changing an env var.
   No code changes required.
 - **Consistent error handling** — all channels throw `RavenDeliveryException` (502) on delivery
-  failure, wrapping SDK exceptions with the original as `$previous`. Template errors throw
+  failure with structured failure details (recipient + exception) accessible via `getFailures()`.
+  Delivery is attempted for every recipient before throwing. Template errors throw
   `RavenTemplateNotFoundException` (404).
 - **Observability events** — `RavenNotificationSent` and `RavenNotificationFailed` events fired
   after each channel delivery attempt.
@@ -42,7 +44,7 @@ Twilio), and Database/In-App notifications through a single, config-driven inter
 ### Exceptions
 - `RavenContextNotFoundException` (404) — notification context not found in config.
 - `RavenInvalidDataException` (422) — missing or invalid data on the `Scroll` or context.
-- `RavenDeliveryException` (502) — channel delivery failure.
+- `RavenDeliveryException` (502) — channel delivery failure, with per-recipient failure details.
 - `RavenTemplateNotFoundException` (404) — template file or SendGrid template not found.
 
 ### Requirements

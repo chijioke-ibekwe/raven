@@ -4,13 +4,14 @@ namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
 use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
+use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Exceptions\RavenContextNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Jobs\Raven;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
+use ChijiokeIbekwe\Raven\Jobs\RavenChannelJob;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Bus;
 
 class RavenJobTest extends TestCase
 {
@@ -29,7 +30,7 @@ class RavenJobTest extends TestCase
         $this->expectExceptionMessage('Notification context name is not set');
         $this->expectExceptionCode(422);
 
-        Notification::fake();
+        Bus::fake();
 
         $user = User::factory()->make([
             'name' => 'John Doe',
@@ -55,7 +56,7 @@ class RavenJobTest extends TestCase
         $this->expectExceptionMessage('Notification context with name user-verified does not exist');
         $this->expectExceptionCode(404);
 
-        Notification::fake();
+        Bus::fake();
 
         $user = User::factory()->make([
             'name' => 'John Doe',
@@ -82,7 +83,7 @@ class RavenJobTest extends TestCase
         $this->expectExceptionMessage('Notification recipient is not set');
         $this->expectExceptionCode(422);
 
-        Notification::fake();
+        Bus::fake();
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
@@ -109,7 +110,7 @@ class RavenJobTest extends TestCase
         $this->expectExceptionMessage('Notification recipient is not a notifiable');
         $this->expectExceptionCode(422);
 
-        Notification::fake();
+        Bus::fake();
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
@@ -135,7 +136,7 @@ class RavenJobTest extends TestCase
      */
     public function test_that_notification_is_not_sent_when_notification_context_is_inactive()
     {
-        Notification::fake();
+        Bus::fake();
 
         $user = User::factory()->make([
             'name' => 'John Doe',
@@ -157,7 +158,7 @@ class RavenJobTest extends TestCase
 
         (new Raven($scroll))->handle();
 
-        Notification::assertNothingSent();
+        Bus::assertNotDispatched(RavenChannelJob::class);
     }
 
     /**
@@ -168,7 +169,7 @@ class RavenJobTest extends TestCase
         $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Notification context has an invalid channel: em');
 
-        Notification::fake();
+        Bus::fake();
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
@@ -190,16 +191,15 @@ class RavenJobTest extends TestCase
     /**
      * @throws \Throwable
      */
-    public function test_that_notification_is_sent_when_active_key_is_absent_from_context_config(): void
+    public function test_that_channel_job_is_dispatched_when_active_key_is_absent_from_context_config(): void
     {
-        Notification::fake();
+        Bus::fake();
 
         $user = User::factory()->make([
             'name' => 'John Doe',
             'email' => 'john.doe@raven.com',
         ]);
 
-        // No 'active' key — fromConfig() should default to true
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
             'channels' => ['EMAIL'],
@@ -212,15 +212,18 @@ class RavenJobTest extends TestCase
 
         (new Raven($scroll))->handle();
 
-        Notification::assertSentTo($user, EmailNotification::class);
+        Bus::assertDispatched(RavenChannelJob::class, function (RavenChannelJob $job) {
+            return $job->channelType === ChannelType::EMAIL &&
+                $job->context->name === 'user-created';
+        });
     }
 
     /**
      * @throws \Throwable
      */
-    public function test_that_no_notification_is_sent_when_context_has_empty_channels(): void
+    public function test_that_no_channel_job_is_dispatched_when_context_has_empty_channels(): void
     {
-        Notification::fake();
+        Bus::fake();
 
         $user = User::factory()->make([
             'name' => 'John Doe',
@@ -240,6 +243,48 @@ class RavenJobTest extends TestCase
 
         (new Raven($scroll))->handle();
 
-        Notification::assertNothingSent();
+        Bus::assertNotDispatched(RavenChannelJob::class);
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function test_that_channel_jobs_are_dispatched_for_each_channel(): void
+    {
+        Bus::fake();
+
+        $user = User::factory()->make([
+            'name' => 'John Doe',
+            'email' => 'john.doe@raven.com',
+        ]);
+
+        config()->set('notification-contexts.user-created', [
+            'email_template_id' => 'sendgrid-template',
+            'sms_template_filename' => 'user-created.txt',
+            'in_app_template_filename' => 'user-created.json',
+            'channels' => ['EMAIL', 'SMS', 'DATABASE'],
+            'active' => true,
+        ]);
+
+        $scroll = new Scroll;
+        $scroll->setContextName('user-created');
+        $scroll->setRecipients($user);
+        $scroll->setParams(['booking_id' => 'JET12345']);
+
+        (new Raven($scroll))->handle();
+
+        Bus::assertDispatched(RavenChannelJob::class, 3);
+
+        Bus::assertDispatched(RavenChannelJob::class, function (RavenChannelJob $job) {
+            return $job->channelType === ChannelType::EMAIL;
+        });
+
+        Bus::assertDispatched(RavenChannelJob::class, function (RavenChannelJob $job) {
+            return $job->channelType === ChannelType::SMS;
+        });
+
+        Bus::assertDispatched(RavenChannelJob::class, function (RavenChannelJob $job) {
+            return $job->channelType === ChannelType::DATABASE;
+        });
     }
 }
