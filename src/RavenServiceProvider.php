@@ -7,6 +7,7 @@ use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
 use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
 use ChijiokeIbekwe\Raven\Channels\TwilioChannel;
 use ChijiokeIbekwe\Raven\Channels\VonageChannel;
+use ChijiokeIbekwe\Raven\Commands\MakeContextCommand;
 use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
 use ChijiokeIbekwe\Raven\Templates\FilesystemTemplateStrategy;
 use ChijiokeIbekwe\Raven\Templates\SendGridTemplateStrategy;
@@ -30,6 +31,8 @@ class RavenServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
+
+            $this->commands([MakeContextCommand::class]);
 
             // publish config file
             $this->publishes([
