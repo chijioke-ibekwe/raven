@@ -31,18 +31,13 @@
 - [Authors](#authors)
 
 ## 🧐 About <a name = "about"></a>
-In Laravel, crafting notification classes can often feel repetitive (and WET), especially in projects that rely
-heavily on notifications. Also, our projects could sometimes feel tightly coupled to certain notification providers  
-in such a way that switching providers would require significant code changes, and moving of resources like templates 
-from one platform to the other. These are the exact hassles that Raven could save you from. Raven:  
-- Simplifies sending diverse notification types via a single interface.
-- Ensures your project is loosely coupled to notification providers, allowing you to switch providers with zero code 
-  changes when they no longer suit your needs.  
-- Allows you to seamlessly combine the best attributes of your favourite notification providers without any hassles. E.g 
-  Sendgrid dynamic template creation tool and Amazon SES servers.
-    
-Currently, Raven seamlessly handles email notifications through SendGrid and Amazon SES, SMS notifications through Vonage
-and Twilio, as well as database/in-app notifications. More providers are gradually being integrated.
+Raven is a config-driven, multi-channel notification package for Laravel. Define your notification contexts — channels
+and templates — in a config file, and dispatch them with a single line. No notification classes to write.
+
+- **Multi-channel** — Email (SendGrid, Amazon SES), SMS (Vonage, Twilio), and database/in-app notifications through one interface.
+- **Channel isolation** — each channel is dispatched as an independent queued job, so a failure in one doesn't block the others.
+- **Provider-agnostic** — swap providers (e.g. Vonage to Twilio) by changing an env var. No code changes.
+- **Mix and match** — combine providers freely, e.g. SendGrid templates with Amazon SES delivery.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
