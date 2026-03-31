@@ -33,6 +33,7 @@ class MakeContextCommandTest extends TestCase
     public function getEnvironmentSetUp($app): void
     {
         config()->set('raven.default.email', 'sendgrid');
+        config()->set('raven.customizations.templates_directory', resource_path('templates'));
     }
 
     public function test_that_context_is_created_with_sendgrid_email_channel(): void
@@ -91,6 +92,7 @@ class MakeContextCommandTest extends TestCase
         $this->assertEquals('welcome.html', $config['welcome-email']['email_template_filename']);
         $this->assertEquals('Welcome, {{name}}!', $config['welcome-email']['email_subject']);
         $this->assertArrayNotHasKey('description', $config['welcome-email']);
+        $this->assertFileExists(resource_path('templates/email/welcome.html'));
     }
 
     public function test_that_context_is_created_with_sms_channel(): void
@@ -114,6 +116,7 @@ class MakeContextCommandTest extends TestCase
 
         $this->assertArrayHasKey('otp-sent', $config);
         $this->assertEquals('otp.txt', $config['otp-sent']['sms_template_filename']);
+        $this->assertFileExists(resource_path('templates/sms/otp.txt'));
     }
 
     public function test_that_context_is_created_with_database_channel(): void
@@ -137,6 +140,7 @@ class MakeContextCommandTest extends TestCase
 
         $this->assertArrayHasKey('task-assigned', $config);
         $this->assertEquals('task-assigned.json', $config['task-assigned']['in_app_template_filename']);
+        $this->assertFileExists(resource_path('templates/in_app/task-assigned.json'));
     }
 
     public function test_that_context_is_created_with_multiple_channels(): void
@@ -168,6 +172,28 @@ class MakeContextCommandTest extends TestCase
         $this->assertEquals('d-xyz789', $config['user-verified']['email_template_id']);
         $this->assertEquals('user-verified.txt', $config['user-verified']['sms_template_filename']);
         $this->assertEquals('user-verified.json', $config['user-verified']['in_app_template_filename']);
+        $this->assertFileExists(resource_path('templates/sms/user-verified.txt'));
+        $this->assertFileExists(resource_path('templates/in_app/user-verified.json'));
+    }
+
+    public function test_that_existing_template_files_are_not_overwritten(): void
+    {
+        $smsDir = resource_path('templates/sms');
+        if (! is_dir($smsDir)) {
+            mkdir($smsDir, 0755, true);
+        }
+        file_put_contents($smsDir.'/existing.txt', 'Hello {{name}}');
+
+        $this->artisan('raven:make-context')
+            ->expectsQuestion('Enter the context name', 'existing-template')
+            ->expectsQuestion('Enter an optional description (press Enter to skip)', '')
+            ->expectsChoice('Select channels', ['SMS'], ['EMAIL', 'SMS', 'DATABASE'])
+            ->expectsConfirmation('Should this context be active?', 'yes')
+            ->expectsQuestion('Enter the SMS template filename (e.g. user-verified.txt)', 'existing.txt')
+            ->expectsConfirmation('Do you want to save this context?', 'yes')
+            ->assertSuccessful();
+
+        $this->assertEquals('Hello {{name}}', file_get_contents($smsDir.'/existing.txt'));
     }
 
     public function test_that_command_aborts_on_declined_confirmation(): void

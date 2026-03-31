@@ -45,6 +45,7 @@ class MakeContextCommand extends Command
         }
 
         $this->writeToConfig($configPath, $name, $context);
+        $this->createTemplateFiles($context);
         $this->info("Notification context '{$name}' has been created successfully.");
 
         return self::SUCCESS;
@@ -144,6 +145,39 @@ class MakeContextCommand extends Command
 
         $this->table(['Field', 'Value'], $rows);
         $this->newLine();
+    }
+
+    private function createTemplateFiles(array $context): void
+    {
+        $templatesDir = config('raven.customizations.templates_directory', resource_path('templates'));
+
+        $templates = [
+            'email_template_filename' => 'email',
+            'sms_template_filename' => 'sms',
+            'in_app_template_filename' => 'in_app',
+        ];
+
+        foreach ($templates as $key => $subdirectory) {
+            if (empty($context[$key])) {
+                continue;
+            }
+
+            $directory = $templatesDir.DIRECTORY_SEPARATOR.$subdirectory;
+            $filePath = $directory.DIRECTORY_SEPARATOR.$context[$key];
+
+            if (file_exists($filePath)) {
+                $this->warn("Template file already exists: {$filePath}");
+
+                continue;
+            }
+
+            if (! is_dir($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            file_put_contents($filePath, '');
+            $this->line("Created template: {$filePath}");
+        }
     }
 
     private function writeToConfig(string $configPath, string $name, array $context): void
