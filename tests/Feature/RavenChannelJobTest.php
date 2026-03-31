@@ -9,7 +9,6 @@ use ChijiokeIbekwe\Raven\Events\RavenNotificationFailed;
 use ChijiokeIbekwe\Raven\Events\RavenNotificationSent;
 use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
 use ChijiokeIbekwe\Raven\Jobs\RavenChannelJob;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 use Illuminate\Support\Facades\Event;
