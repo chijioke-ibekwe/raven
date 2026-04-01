@@ -35,7 +35,7 @@ class AmazonSesNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-verified', [
             'email_template_id' => 'ses-sendgrid-template',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -75,7 +75,7 @@ class AmazonSesNotificationTest extends TestCase
         ]);
 
         config()->set('notification-contexts.user-verified', [
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -108,7 +108,7 @@ class AmazonSesNotificationTest extends TestCase
         ]);
 
         config()->set('notification-contexts.user-verified', [
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 

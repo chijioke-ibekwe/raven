@@ -35,7 +35,7 @@ class SendGridNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -86,7 +86,7 @@ class SendGridNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -138,7 +138,7 @@ class SendGridNotificationTest extends TestCase
         ]);
 
         config()->set('notification-contexts.user-updated', [
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 

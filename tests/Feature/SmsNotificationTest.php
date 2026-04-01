@@ -45,7 +45,7 @@ class SmsNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'sms_template_filename' => 'user-created.txt',
-            'channels' => ['SMS'],
+            'channels' => ['sms'],
             'active' => true,
         ]);
 
@@ -101,7 +101,7 @@ class SmsNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'sms_template_filename' => 'user-created.txt',
-            'channels' => ['SMS'],
+            'channels' => ['sms'],
             'active' => true,
         ]);
 
@@ -146,7 +146,7 @@ class SmsNotificationTest extends TestCase
         ]);
 
         config()->set('notification-contexts.user-updated', [
-            'channels' => ['SMS'],
+            'channels' => ['sms'],
             'active' => true,
         ]);
 
@@ -180,7 +180,7 @@ class SmsNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-updated', [
             'sms_template_filename' => 'user-updated.txt',
-            'channels' => ['SMS'],
+            'channels' => ['sms'],
             'active' => true,
         ]);
 

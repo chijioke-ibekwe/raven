@@ -3,7 +3,7 @@
 return [
     // 'example-notification' => [
     //     'description'              => 'An example notification',
-    //     'channels'                 => ['EMAIL', 'SMS', 'DATABASE'],
+    //     'channels'                 => ['email', 'sms', 'database'],
     //     'active'                   => true,
     //     'email_template_id'        => env('TEMPLATE_EXAMPLE'),
     //     'email_template_filename'  => null,

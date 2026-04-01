@@ -46,7 +46,7 @@ class DatabaseNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-verified', [
             'in_app_template_filename' => 'user-verified.json',
-            'channels' => ['DATABASE'],
+            'channels' => ['database'],
             'active' => true,
         ]);
 
@@ -95,7 +95,7 @@ class DatabaseNotificationTest extends TestCase
         ]);
 
         config()->set('notification-contexts.user-updated', [
-            'channels' => ['DATABASE'],
+            'channels' => ['database'],
             'active' => true,
         ]);
 
@@ -129,7 +129,7 @@ class DatabaseNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-updated', [
             'in_app_template_filename' => 'user-updated.json',
-            'channels' => ['DATABASE'],
+            'channels' => ['database'],
             'active' => true,
         ]);
 

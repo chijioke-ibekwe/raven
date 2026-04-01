@@ -33,7 +33,7 @@ class AmazonSesChannel
 
         $email = $emailNotification->toAmazonSes($notifiable);
 
-        $sender = config('raven.customizations.mail.from');
+        $sender = config('raven.customizations.email.from');
         $email->setFrom($sender['address'], $sender['name']);
 
         $params = $emailNotification->scroll->getParams();

@@ -40,14 +40,14 @@ class AmazonSesChannelTest extends TestCase
         $this->expectExceptionMessage('Template source invalid is not supported');
 
         config()->set('raven.providers.ses.template_source', 'invalid');
-        config()->set('raven.customizations.mail.from.address', 'hello@example.com');
-        config()->set('raven.customizations.mail.from.name', 'Example');
+        config()->set('raven.customizations.email.from.address', 'hello@example.com');
+        config()->set('raven.customizations.email.from.name', 'Example');
 
         $this->app->instance(SesClient::class, Mockery::mock(SesClient::class));
 
         $context = NotificationContext::fromConfig('user-verified', [
             'email_template_filename' => 'user-verified.html',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 

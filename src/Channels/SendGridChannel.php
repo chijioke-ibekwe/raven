@@ -30,7 +30,7 @@ class SendGridChannel
         $email = $emailNotification->toSendgrid($notifiable);
         $email->setClickTracking(true, true);
         $email->setOpenTracking(true, '--sub--');
-        $sender = config('raven.customizations.mail.from');
+        $sender = config('raven.customizations.email.from');
         $email->setFrom($sender['address'], $sender['name']);
 
         try {
