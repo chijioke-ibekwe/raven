@@ -34,6 +34,8 @@ class MakeContextCommand extends Command
             ...$this->askForEmailFields($channels),
             ...$this->askForSmsFields($channels),
             ...$this->askForDatabaseFields($channels),
+            'encrypted' => $this->confirm('Should queue payloads be encrypted?', false) ?: null,
+            ...$this->askForQueueFields($channels),
         ], fn ($value) => ! is_null($value));
 
         $this->displaySummary($name, $context);
@@ -78,14 +80,14 @@ class MakeContextCommand extends Command
     {
         return multiselect(
             label: 'Select channels',
-            options: ['EMAIL', 'SMS', 'DATABASE'],
+            options: ['email', 'sms', 'database'],
             required: 'You must select at least one channel.',
         );
     }
 
     private function askForEmailFields(array $channels): array
     {
-        if (! in_array('EMAIL', $channels)) {
+        if (! in_array('email', $channels)) {
             return [];
         }
 
@@ -106,7 +108,7 @@ class MakeContextCommand extends Command
 
     private function askForSmsFields(array $channels): array
     {
-        if (! in_array('SMS', $channels)) {
+        if (! in_array('sms', $channels)) {
             return [];
         }
 
@@ -117,13 +119,38 @@ class MakeContextCommand extends Command
 
     private function askForDatabaseFields(array $channels): array
     {
-        if (! in_array('DATABASE', $channels)) {
+        if (! in_array('database', $channels)) {
             return [];
         }
 
         return [
             'in_app_template_filename' => $this->ask('Enter the in-app template filename (e.g. user-verified.json)'),
         ];
+    }
+
+    private function askForQueueFields(array $channels): array
+    {
+        if (! $this->confirm('Do you want to configure per-channel queue routing?', false)) {
+            return [];
+        }
+
+        $queue = [];
+
+        foreach ($channels as $channel) {
+            $queueName = $this->ask("Enter the queue name for '{$channel}' (press Enter to skip)");
+            $connection = $this->ask("Enter the queue connection for '{$channel}' (press Enter to skip)");
+
+            $channelConfig = array_filter([
+                'queue' => $queueName ?: null,
+                'connection' => $connection ?: null,
+            ]);
+
+            if (! empty($channelConfig)) {
+                $queue[$channel] = $channelConfig;
+            }
+        }
+
+        return ! empty($queue) ? ['queue' => $queue] : [];
     }
 
     private function displaySummary(string $name, array $context): void
@@ -134,6 +161,21 @@ class MakeContextCommand extends Command
         $rows = [['name', $name]];
 
         foreach ($context as $key => $value) {
+            if ($key === 'queue' && is_array($value)) {
+                foreach ($value as $channel => $config) {
+                    $parts = [];
+                    if (isset($config['queue'])) {
+                        $parts[] = "queue: {$config['queue']}";
+                    }
+                    if (isset($config['connection'])) {
+                        $parts[] = "connection: {$config['connection']}";
+                    }
+                    $rows[] = ["queue.{$channel}", implode(', ', $parts)];
+                }
+
+                continue;
+            }
+
             if (is_array($value)) {
                 $value = implode(', ', $value);
             } elseif (is_bool($value)) {
@@ -196,6 +238,20 @@ class MakeContextCommand extends Command
             $lines[] = "    '{$name}' => [";
 
             foreach ($config as $key => $value) {
+                if ($key === 'queue' && is_array($value)) {
+                    $lines[] = "        'queue' => [";
+                    foreach ($value as $channel => $channelConfig) {
+                        $items = [];
+                        foreach ($channelConfig as $k => $v) {
+                            $items[] = "'{$k}' => '{$v}'";
+                        }
+                        $lines[] = "            '{$channel}' => [".implode(', ', $items).'],';
+                    }
+                    $lines[] = '        ],';
+
+                    continue;
+                }
+
                 $lines[] = "        '{$key}' => {$this->exportValue($value)},";
             }
 
