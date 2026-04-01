@@ -30,7 +30,16 @@ Twilio), and Database/In-App notifications through a single, config-driven inter
 - **Per-channel async dispatch** — `Raven::dispatch($scroll)` resolves the notification context
   and dispatches a separate queued job per channel, so a failure in one channel does not block the
   others.
-- **Configurable queue** — override the queue name via `raven.customizations.queue_name`.
+- **Configurable queue** — override the queue name and connection globally via
+  `raven.customizations.queue_name` and `raven.customizations.queue_connection`, or per-channel
+  on individual notification contexts via the `queue` config key.
+- **Dispatch control via Scroll** — fine-grained control over how notifications are dispatched:
+  - `channels()` — override the context's channel list at dispatch time.
+  - `sync()` — run notifications synchronously, bypassing the queue.
+  - `delay()` — delay processing with a single value or per-channel delays.
+  - `afterCommit()` / `beforeCommit()` — control dispatch timing relative to database transactions.
+- **Encrypted queue payloads** — set `encrypted` to `true` on a notification context to encrypt
+  job payloads at rest using Laravel's `ShouldBeEncrypted` interface.
 - **Provider abstraction** — switch providers (e.g. Vonage to Twilio) by changing an env var.
   No code changes required.
 - **Consistent error handling** — all channels throw `RavenDeliveryException` (502) on delivery

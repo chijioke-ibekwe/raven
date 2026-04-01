@@ -96,7 +96,7 @@ To use this package, you need the following requirements:
         ],
 
         'customizations' => [
-            'mail' => [
+            'email' => [
                 'from' => [
                     'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
                     'name' => env('MAIL_FROM_NAME', 'Example'),
@@ -109,6 +109,7 @@ To use this package, you need the following requirements:
                 ]
             ],
             'queue_name' => env('RAVEN_QUEUE_NAME'),
+            'queue_connection' => env('RAVEN_QUEUE_CONNECTION'),
             'templates_directory' => env('TEMPLATES_DIRECTORY', resource_path('templates'))
         ]
     ];
@@ -121,10 +122,10 @@ To use this package, you need the following requirements:
        set as `sendgrid`. NB: For this to work, you need to also provide your credentials for the `sendgrid` provider. 
      - Second option is by storing your email templates on the file system as `.html` templates. The `templates_source` in
        this case should be set as `filesystem` and the directory of the templates should be provided on the `templates_directory` under `customizations`. When using this option, the `email_subject` field must be provided in the notification context, and the `email_template_filename` must point to a valid `.html` file in the `email` subdirectory of your templates directory.
-   - The `customizations` array allows you to customize your email parameters, optionally your `queue_name` (not 
-     queue connection) for queueing your notifications, and your templates directory. 
-     NB: 
-     - The default queue will be used if a queue name is not provided.
+   - The `customizations` array allows you to customize your email parameters, queue settings, and templates directory.
+     - `queue_name` — sets the default queue name for all Raven notifications. The Laravel default queue is used if not provided.
+     - `queue_connection` — sets the default queue connection for all Raven notifications. The Laravel default connection is used if not provided.
+     - These global queue settings act as fallbacks. Per-channel queue routing can be configured on individual notification contexts (see step 4).
      - The default templates directory is a directory called `templates` in the resources path 
      - The templates directory set, will contain three directories within: `email` (relevant only if your template source is `filesystem` and provider is `ses`), `sms`, and `in_app`.
      - The `email` directory will contain the `.html` templates for your emails. 
@@ -143,7 +144,7 @@ To use this package, you need the following requirements:
         'user-verified' => [
             'description'       => 'Notification to inform a user that they have been verified on the platform',
             'email_template_id' => env('TEMPLATE_USER_VERIFIED', 'd-ad34ghAwe3mQRvb29'),
-            'channels'          => ['EMAIL'],
+            'channels'          => ['email'],
             'active'            => true,
         ],
     ];
@@ -157,7 +158,7 @@ To use this package, you need the following requirements:
             'description'             => 'Notification to inform a user that they have been verified on the platform',
             'email_template_filename' => 'user-verified.html',
             'email_subject'           => 'Welcome, {{name}}! Your account has been verified',
-            'channels'                => ['EMAIL'],
+            'channels'                => ['email'],
             'active'                  => true,
         ],
     ];
@@ -170,7 +171,7 @@ To use this package, you need the following requirements:
         'user-verified' => [
             'description'          => 'Notification to inform a user that they have been verified on the platform',
             'sms_template_filename' => 'user-verified.txt',
-            'channels'             => ['SMS'],
+            'channels'             => ['sms'],
             'active'               => true,
         ],
     ];
@@ -187,7 +188,7 @@ To use this package, you need the following requirements:
         'user-verified' => [
             'description'              => 'Notification to inform a user that they have been verified on the platform',
             'in_app_template_filename' => 'user-verified.json',
-            'channels'                 => ['DATABASE'],
+            'channels'                 => ['database'],
             'active'                   => true,
         ],
     ];
@@ -209,11 +210,33 @@ To use this package, you need the following requirements:
             'email_template_id'        => env('TEMPLATE_USER_VERIFIED', 'd-ad34ghAwe3mQRvb29'),
             'sms_template_filename'    => 'user-verified.txt',
             'in_app_template_filename' => 'user-verified.json',
-            'channels'                 => ['EMAIL', 'SMS', 'DATABASE'],
+            'channels'                 => ['email', 'sms', 'database'],
             'active'                   => true,
         ],
     ];
     ```
+
+   - Context with per-channel queue routing and encrypted payloads
+    ```php
+    // config/notification-contexts.php
+    return [
+        'password-reset' => [
+            'description'             => 'Password reset OTP notification',
+            'email_template_filename' => 'password-reset.html',
+            'email_subject'           => 'Reset your password',
+            'sms_template_filename'   => 'password-reset.txt',
+            'channels'                => ['email', 'sms'],
+            'active'                  => true,
+            'encrypted'               => true,
+            'queue'                   => [
+                'email' => ['queue' => 'critical', 'connection' => 'sqs'],
+                'sms'   => ['queue' => 'critical'],
+            ],
+        ],
+    ];
+    ```
+     - `encrypted` — when `true`, queue payloads are encrypted at rest using Laravel's `ShouldBeEncrypted` interface. Defaults to `false`.
+     - `queue` — an optional associative array for per-channel queue routing. Each key is a lowercase channel name (`email`, `sms`, `database`) mapping to an array with optional `queue` and `connection` keys. Channels not listed fall back to the global `queue_name`/`queue_connection` in `raven.php`, then to Laravel defaults.
 
 5. To send a notification at any point in your code, build a `Scroll` object, set the relevant
    fields as shown below, and dispatch a `Raven` with the `Scroll`:
@@ -264,7 +287,74 @@ To use this package, you need the following requirements:
    - `with()` takes an associative array of all the variables that exist on the notification
      template with their values, where the key must match the variable name on the template.
    - `attach()` takes a url or an array of urls that point to the publicly accessible resource(s) that
-     needs to be attached to the email notification.  
+     needs to be attached to the email notification.
+
+### Dispatch Options
+
+   The `Scroll` object supports several methods for controlling dispatch behavior:
+
+   **Channel override** — send only specific channels, ignoring the context's channel list:
+   ```php
+   $scroll = Scroll::make()
+       ->for('user-verified')
+       ->to($user)
+       ->channels(['email'])  // only send email, even if context defines sms and database too
+       ->with(['name' => $user->name]);
+
+   Raven::dispatch($scroll);
+   ```
+
+   **Sync dispatch** — run the notification synchronously in the current process, bypassing the queue. Useful for critical notifications like password resets or OTPs:
+   ```php
+   $scroll = Scroll::make()
+       ->for('password-reset')
+       ->to($user)
+       ->sync()
+       ->with(['otp' => $otp]);
+
+   Raven::dispatch($scroll);
+   ```
+
+   **Delayed dispatch** — delay notification processing. Pass a single value for all channels, or an associative array for per-channel delays:
+   ```php
+   // Delay all channels by 60 seconds
+   $scroll = Scroll::make()
+       ->for('order-confirmed')
+       ->to($user)
+       ->delay(60)
+       ->with(['order_id' => $order->id]);
+
+   // Per-channel delay: email in 30 minutes, SMS immediately
+   $scroll = Scroll::make()
+       ->for('order-confirmed')
+       ->to($user)
+       ->delay([
+           'email' => now()->addMinutes(30),
+           'sms'   => 0,
+       ])
+       ->with(['order_id' => $order->id]);
+
+   Raven::dispatch($scroll);
+   ```
+
+   **After commit** — dispatch to the queue only after the current database transaction commits. This prevents queue workers from processing a notification before the related database changes are visible:
+   ```php
+   DB::transaction(function () use ($user) {
+       $user->update(['verified' => true]);
+
+       $scroll = Scroll::make()
+           ->for('user-verified')
+           ->to($user)
+           ->afterCommit()
+           ->with(['name' => $user->name]);
+
+       Raven::dispatch($scroll);
+   });
+   ```
+
+   You can also use `beforeCommit()` to explicitly dispatch immediately, overriding a queue connection that has `after_commit` set to `true` by default.
+
+   > **Note:** `sync()` takes precedence — when set, `delay()`, `afterCommit()`, and `beforeCommit()` are ignored since the job runs inline without touching the queue.
 
 6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a
    notifications table in their project via the command below:
