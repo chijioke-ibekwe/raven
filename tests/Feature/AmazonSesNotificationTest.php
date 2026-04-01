@@ -17,8 +17,28 @@ class AmazonSesNotificationTest extends TestCase
     public function getEnvironmentSetUp($app): void
     {
         config()->set('raven.default.email', 'ses');
-        config()->set('raven.providers.ses.template_source', 'sendgrid');
         config()->set('raven.customizations.templates_directory', resource_path('templates'));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $emailDir = resource_path('templates/email');
+        if (! is_dir($emailDir)) {
+            mkdir($emailDir, 0755, true);
+        }
+        file_put_contents($emailDir.'/user-verified.html', '<p>Hello {{name}}</p>');
+    }
+
+    protected function tearDown(): void
+    {
+        $templateFile = resource_path('templates/email/user-verified.html');
+        if (file_exists($templateFile)) {
+            unlink($templateFile);
+        }
+
+        parent::tearDown();
     }
 
     /**
@@ -34,7 +54,8 @@ class AmazonSesNotificationTest extends TestCase
         ]);
 
         config()->set('notification-contexts.user-verified', [
-            'email_template_id' => 'ses-sendgrid-template',
+            'email_template_filename' => 'user-verified.html',
+            'email_subject' => 'You have been verified',
             'channels' => ['email'],
             'active' => true,
         ]);
@@ -61,44 +82,11 @@ class AmazonSesNotificationTest extends TestCase
     /**
      * @throws \Throwable
      */
-    public function test_that_exception_is_thrown_when_ses_context_with_sendgrid_source_has_no_email_template_id(): void
-    {
-        $this->expectException(RavenInvalidDataException::class);
-        $this->expectExceptionMessage('Email notification context with name user-verified has no email template id');
-        $this->expectExceptionCode(422);
-
-        Notification::fake();
-
-        $user = User::factory()->make([
-            'name' => 'John Doe',
-            'email' => 'john.doe@raven.com',
-        ]);
-
-        config()->set('notification-contexts.user-verified', [
-            'channels' => ['email'],
-            'active' => true,
-        ]);
-
-        $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
-
-        $scroll = Scroll::make()
-            ->for('user-verified')
-            ->to($user)
-            ->with(['name' => 'John Doe']);
-
-        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
-    }
-
-    /**
-     * @throws \Throwable
-     */
-    public function test_that_exception_is_thrown_when_ses_context_with_filesystem_source_has_no_email_template_filename(): void
+    public function test_that_exception_is_thrown_when_ses_context_has_no_email_template_filename(): void
     {
         $this->expectException(RavenInvalidDataException::class);
         $this->expectExceptionMessage('Email notification context with name user-verified has no email template file name');
         $this->expectExceptionCode(422);
-
-        config()->set('raven.providers.ses.template_source', 'filesystem');
 
         Notification::fake();
 

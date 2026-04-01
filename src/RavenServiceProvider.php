@@ -8,9 +8,7 @@ use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
 use ChijiokeIbekwe\Raven\Channels\TwilioChannel;
 use ChijiokeIbekwe\Raven\Channels\VonageChannel;
 use ChijiokeIbekwe\Raven\Commands\MakeContextCommand;
-use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
 use ChijiokeIbekwe\Raven\Templates\FilesystemTemplateStrategy;
-use ChijiokeIbekwe\Raven\Templates\SendGridTemplateStrategy;
 use ChijiokeIbekwe\Raven\Templates\TemplateStrategy;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
@@ -53,7 +51,6 @@ class RavenServiceProvider extends ServiceProvider
         $providers = array_unique([
             config('raven.default.email'),
             config('raven.default.sms'),
-            config('raven.providers.ses.template_source'),
         ]);
 
         foreach ($providers as $provider) {
@@ -70,11 +67,7 @@ class RavenServiceProvider extends ServiceProvider
                         'version' => 'latest',
                         'region' => config('raven.providers.ses.region'),
                     ]));
-                    $this->app->bind(TemplateStrategy::class, fn ($app) => match (config('raven.providers.ses.template_source')) {
-                        'sendgrid' => new SendGridTemplateStrategy($app->make(SendGrid::class)),
-                        'filesystem' => new FilesystemTemplateStrategy,
-                        default => throw new RavenDeliveryException('Template source '.config('raven.providers.ses.template_source').' is not supported'),
-                    });
+                    $this->app->bind(TemplateStrategy::class, fn () => new FilesystemTemplateStrategy);
                     Notification::extend('ses', fn ($app) => new AmazonSesChannel);
                     break;
 

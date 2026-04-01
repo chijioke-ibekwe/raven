@@ -20,7 +20,7 @@ Twilio), and Database/In-App notifications through a single, config-driven inter
   whether it is active. No database tables required.
 - **Email notifications** via SendGrid or Amazon SES.
   - SendGrid: dynamic templates referenced by template ID.
-  - Amazon SES: raw email via SES with template content sourced from SendGrid or the filesystem.
+  - Amazon SES: raw email via SES with filesystem-based `.html` templates.
   - CC, BCC, reply-to, and file attachment support.
 - **SMS notifications** via Vonage or Twilio.
   - Template-based messages using `.txt` files with `{{placeholder}}` substitution.

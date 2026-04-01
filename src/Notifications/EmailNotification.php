@@ -173,21 +173,16 @@ class EmailNotification extends Notification implements RavenNotification
         }
 
         if (config('raven.default.email') == 'ses') {
-            throw_if(empty($this->notificationContext->email_template_id) && config('raven.providers.ses.template_source') == 'sendgrid', RavenInvalidDataException::class,
-                "Email notification context with name $context_name has no email template id");
+            $email_template_directory = config('raven.customizations.templates_directory').self::EMAIL_FOLDER;
 
-            if (config('raven.providers.ses.template_source') == 'filesystem') {
-                $email_template_directory = config('raven.customizations.templates_directory').self::EMAIL_FOLDER;
+            throw_if(empty($this->notificationContext->email_template_filename), RavenInvalidDataException::class,
+                "Email notification context with name $context_name has no email template file name");
 
-                throw_if(empty($this->notificationContext->email_template_filename), RavenInvalidDataException::class,
-                    "Email notification context with name $context_name has no email template file name");
+            throw_if(! file_exists($email_template_directory.$this->notificationContext->email_template_filename), RavenTemplateNotFoundException::class,
+                "Email notification context with name $context_name has no template file in $email_template_directory");
 
-                throw_if(! file_exists($email_template_directory.$this->notificationContext->email_template_filename), RavenTemplateNotFoundException::class,
-                    "Email notification context with name $context_name has no template file in $email_template_directory");
-
-                throw_if(empty($this->notificationContext->email_subject), RavenInvalidDataException::class,
-                    "Email notification context with name $context_name has no email subject");
-            }
+            throw_if(empty($this->notificationContext->email_subject), RavenInvalidDataException::class,
+                "Email notification context with name $context_name has no email subject");
         }
     }
 }

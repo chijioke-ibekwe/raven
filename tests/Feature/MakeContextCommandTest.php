@@ -66,10 +66,9 @@ class MakeContextCommandTest extends TestCase
         $this->assertEquals('d-abc123', $config['order-confirmed']['email_template_id']);
     }
 
-    public function test_that_context_is_created_with_ses_filesystem_email_channel(): void
+    public function test_that_context_is_created_with_ses_email_channel(): void
     {
         config()->set('raven.default.email', 'ses');
-        config()->set('raven.providers.ses.template_source', 'filesystem');
 
         $this->artisan('raven:make-context')
             ->expectsQuestion('Enter the context name', 'welcome-email')

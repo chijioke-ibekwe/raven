@@ -37,7 +37,6 @@ and templates — in a config file, and dispatch them with a single line. No not
 - **Multi-channel** — Email (SendGrid, Amazon SES), SMS (Vonage, Twilio), and database/in-app notifications through one interface.
 - **Channel isolation** — each channel is dispatched as an independent queued job, so a failure in one doesn't block the others.
 - **Provider-agnostic** — swap providers (e.g. Vonage to Twilio) by changing an env var. No code changes.
-- **Mix and match** — combine providers freely, e.g. SendGrid templates with Amazon SES delivery.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -82,8 +81,7 @@ To use this package, you need the following requirements:
             'ses' => [
                 'key' => env('AWS_ACCESS_KEY_ID'),
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
-                'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-                'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid')
+                'region' => env('AWS_DEFAULT_REGION', 'us-east-1')
             ],
             'vonage' => [
                 'api_key' => env('VONAGE_API_KEY'),
@@ -116,18 +114,16 @@ To use this package, you need the following requirements:
     ```
    - The `default` array allows you to configure your default service providers for your notification channels. Options
      are `sendgrid` and `ses` for email, and `vonage` or `twilio` for SMS.
-   - The `providers` array is where you supply the credentials for the service provider you choose. When using `ses`, you 
-     can provide the email template in 2 ways. 
-     - First is by hosting your email template on `sendgrid`. If this is your preferred option, the `templates_source` should be 
-       set as `sendgrid`. NB: For this to work, you need to also provide your credentials for the `sendgrid` provider. 
-     - Second option is by storing your email templates on the file system as `.html` templates. The `templates_source` in
-       this case should be set as `filesystem` and the directory of the templates should be provided on the `templates_directory` under `customizations`. When using this option, the `email_subject` field must be provided in the notification context, and the `email_template_filename` must point to a valid `.html` file in the `email` subdirectory of your templates directory.
+   - The `providers` array is where you supply the credentials for the service provider you choose. When using `ses`,
+     email templates are stored on the filesystem as `.html` files. The `email_subject` field must be provided in the
+     notification context, and `email_template_filename` must point to a valid `.html` file in the `email` subdirectory
+     of your templates directory.
    - The `customizations` array allows you to customize your email parameters, queue settings, and templates directory.
      - `queue_name` — sets the default queue name for all Raven notifications. The Laravel default queue is used if not provided.
      - `queue_connection` — sets the default queue connection for all Raven notifications. The Laravel default connection is used if not provided.
      - These global queue settings act as fallbacks. Per-channel queue routing can be configured on individual notification contexts (see step 4).
      - The default templates directory is a directory called `templates` in the resources path 
-     - The templates directory set, will contain three directories within: `email` (relevant only if your template source is `filesystem` and provider is `ses`), `sms`, and `in_app`.
+     - The templates directory set, will contain three directories within: `email` (relevant when using the `ses` email provider), `sms`, and `in_app`.
      - The `email` directory will contain the `.html` templates for your emails. 
      - The `sms` directory will contain the `.txt` files with the contents of your sms notifications. 
      - The `in_app` directory will contain `.json` files whose contents will be saved on the data column of the database notifications table. 
@@ -137,7 +133,7 @@ To use this package, you need the following requirements:
 4. Open the published `notification-contexts.php` config file and define your notification contexts. Each context is
    keyed by its name and contains the relevant fields for the notification type(s) it handles. Examples for each type
    are shown below:
-   - Email Notification Context (when using `sendgrid` as provider or template source)
+   - Email Notification Context (when using `sendgrid` as provider)
     ```php
     // config/notification-contexts.php
     return [
@@ -150,7 +146,7 @@ To use this package, you need the following requirements:
     ];
     ```
 
-   - Email Notification Context (when using `ses` as provider and `filesystem` as template source)
+   - Email Notification Context (when using `ses` as provider)
     ```php
     // config/notification-contexts.php
     return [
@@ -402,8 +398,6 @@ The following exceptions can be thrown by the package for the scenarios outlined
      via `getFailures()`.
 4. `RavenTemplateNotFoundException` `code: 404`
    - A template file referenced by a notification context cannot be found on the filesystem.
-   - A SendGrid template referenced by its ID cannot be fetched from the SendGrid API (when using Amazon SES with
-     SendGrid as the template source).
 
 ## ⛏️ Built Using <a name = "built_using"></a>
 - [PHP](https://www.php.net/) - Language

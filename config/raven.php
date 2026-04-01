@@ -15,7 +15,6 @@ return [
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-            'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid'),
         ],
         'vonage' => [
             'api_key' => env('VONAGE_API_KEY'),

@@ -4,22 +4,16 @@ namespace ChijiokeIbekwe\Raven\Tests\Unit;
 
 use Aws\Ses\SesClient;
 use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
-use ChijiokeIbekwe\Raven\Data\NotificationContext;
-use ChijiokeIbekwe\Raven\Data\Scroll;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
-use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 use Exception;
 use Illuminate\Notifications\Notification;
 use Mockery;
-use SendGrid;
 
 class AmazonSesChannelTest extends TestCase
 {
     public function getEnvironmentSetUp($app): void
     {
         config()->set('raven.default.email', 'ses');
-        config()->set('raven.providers.ses.template_source', 'sendgrid');
     }
 
     public function test_that_exception_is_thrown_when_a_non_email_notification_sender_is_passed(): void
@@ -28,35 +22,8 @@ class AmazonSesChannelTest extends TestCase
         $this->expectExceptionMessage('AmazonSesChannel requires an EmailNotification notification');
 
         $this->app->instance(SesClient::class, Mockery::mock(SesClient::class));
-        $this->app->instance(SendGrid::class, Mockery::mock(SendGrid::class));
 
         $channel = new AmazonSesChannel;
         $channel->send(null, Mockery::mock(Notification::class));
-    }
-
-    public function test_that_exception_is_thrown_when_template_source_is_not_supported(): void
-    {
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Template source invalid is not supported');
-
-        config()->set('raven.providers.ses.template_source', 'invalid');
-        config()->set('raven.customizations.email.from.address', 'hello@example.com');
-        config()->set('raven.customizations.email.from.name', 'Example');
-
-        $this->app->instance(SesClient::class, Mockery::mock(SesClient::class));
-
-        $context = NotificationContext::fromConfig('user-verified', [
-            'email_template_filename' => 'user-verified.html',
-            'channels' => ['email'],
-            'active' => true,
-        ]);
-
-        $scroll = Scroll::make()
-            ->for('user-verified');
-
-        $user = User::factory()->make(['email' => 'john.doe@raven.com']);
-
-        $channel = new AmazonSesChannel;
-        $channel->send($user, new EmailNotification($scroll, $context));
     }
 }

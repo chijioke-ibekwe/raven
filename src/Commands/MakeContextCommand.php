@@ -92,9 +92,8 @@ class MakeContextCommand extends Command
         }
 
         $provider = config('raven.default.email', 'sendgrid');
-        $templateSource = config('raven.providers.ses.template_source', 'sendgrid');
 
-        if ($provider === 'ses' && $templateSource === 'filesystem') {
+        if ($provider === 'ses') {
             return [
                 'email_template_filename' => $this->ask('Enter the email template filename (e.g. user-verified.html)'),
                 'email_subject' => $this->ask('Enter the email subject (supports {{placeholder}} syntax)'),
