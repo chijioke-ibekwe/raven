@@ -38,7 +38,7 @@ class RavenChannelJobTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -73,7 +73,7 @@ class RavenChannelJobTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -129,7 +129,7 @@ class RavenChannelJobTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -186,7 +186,7 @@ class RavenChannelJobTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -225,7 +225,7 @@ class RavenChannelJobTest extends TestCase
 
         config()->set('notification-contexts.user-created', [
             'email_template_id' => 'sendgrid-template',
-            'channels' => ['EMAIL'],
+            'channels' => ['email'],
             'active' => true,
         ]);
 
@@ -239,5 +239,106 @@ class RavenChannelJobTest extends TestCase
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
 
         Event::assertDispatched(RavenNotificationSent::class);
+    }
+
+    public function test_that_per_channel_queue_config_is_applied(): void
+    {
+        config()->set('notification-contexts.user-created', [
+            'email_template_id' => 'sendgrid-template',
+            'channels' => ['email'],
+            'active' => true,
+            'queue' => [
+                'email' => ['queue' => 'critical', 'connection' => 'sqs'],
+            ],
+        ]);
+
+        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
+
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to('john.doe@raven.com')
+            ->with(['booking_id' => 'JET12345']);
+
+        $job = new RavenChannelJob($scroll, $context, ChannelType::EMAIL);
+
+        $this->assertEquals('critical', $job->queue);
+        $this->assertEquals('sqs', $job->connection);
+    }
+
+    public function test_that_global_fallback_is_used_when_context_has_no_queue_config(): void
+    {
+        config()->set('raven.customizations.queue_name', 'notifications');
+        config()->set('raven.customizations.queue_connection', 'redis');
+
+        config()->set('notification-contexts.user-created', [
+            'email_template_id' => 'sendgrid-template',
+            'channels' => ['email'],
+            'active' => true,
+        ]);
+
+        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
+
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to('john.doe@raven.com')
+            ->with(['booking_id' => 'JET12345']);
+
+        $job = new RavenChannelJob($scroll, $context, ChannelType::EMAIL);
+
+        $this->assertEquals('notifications', $job->queue);
+        $this->assertEquals('redis', $job->connection);
+    }
+
+    public function test_that_partial_queue_config_falls_back_to_global_for_unconfigured_channels(): void
+    {
+        config()->set('raven.customizations.queue_name', 'default-queue');
+        config()->set('raven.customizations.queue_connection', 'redis');
+
+        config()->set('notification-contexts.user-created', [
+            'email_template_id' => 'sendgrid-template',
+            'sms_template_filename' => 'user-created.txt',
+            'channels' => ['email', 'sms'],
+            'active' => true,
+            'queue' => [
+                'email' => ['queue' => 'critical', 'connection' => 'sqs'],
+            ],
+        ]);
+
+        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
+
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to('john.doe@raven.com')
+            ->with(['booking_id' => 'JET12345']);
+
+        $emailJob = new RavenChannelJob($scroll, $context, ChannelType::EMAIL);
+        $this->assertEquals('critical', $emailJob->queue);
+        $this->assertEquals('sqs', $emailJob->connection);
+
+        $smsJob = new RavenChannelJob($scroll, $context, ChannelType::SMS);
+        $this->assertEquals('default-queue', $smsJob->queue);
+        $this->assertEquals('redis', $smsJob->connection);
+    }
+
+    public function test_that_existing_queue_name_config_still_works_as_fallback(): void
+    {
+        config()->set('raven.customizations.queue_name', 'legacy-queue');
+
+        config()->set('notification-contexts.user-created', [
+            'email_template_id' => 'sendgrid-template',
+            'channels' => ['email'],
+            'active' => true,
+        ]);
+
+        $context = NotificationContext::fromConfig('user-created', config('notification-contexts.user-created'));
+
+        $scroll = Scroll::make()
+            ->for('user-created')
+            ->to('john.doe@raven.com')
+            ->with(['booking_id' => 'JET12345']);
+
+        $job = new RavenChannelJob($scroll, $context, ChannelType::EMAIL);
+
+        $this->assertEquals('legacy-queue', $job->queue);
     }
 }

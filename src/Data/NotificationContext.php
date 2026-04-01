@@ -12,6 +12,8 @@ namespace ChijiokeIbekwe\Raven\Data;
  * @property string|null $in_app_template_filename
  * @property bool $active
  * @property array $channels
+ * @property array $queue
+ * @property bool $encrypted
  */
 class NotificationContext
 {
@@ -25,6 +27,8 @@ class NotificationContext
         public readonly ?string $in_app_template_filename,
         public readonly bool $active,
         public readonly array $channels,
+        public readonly array $queue,
+        public readonly bool $encrypted,
     ) {}
 
     public static function fromConfig(string $name, array $config): self
@@ -39,6 +43,8 @@ class NotificationContext
             in_app_template_filename: $config['in_app_template_filename'] ?? null,
             active: $config['active'] ?? true,
             channels: $config['channels'] ?? [],
+            queue: $config['queue'] ?? [],
+            encrypted: $config['encrypted'] ?? false,
         );
     }
 }

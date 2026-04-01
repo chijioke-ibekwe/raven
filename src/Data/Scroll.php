@@ -3,6 +3,8 @@
 namespace ChijiokeIbekwe\Raven\Data;
 
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
+use DateInterval;
+use DateTimeInterface;
 use Illuminate\Notifications\Notifiable;
 
 class Scroll
@@ -20,6 +22,14 @@ class Scroll
     private array $params = [];
 
     private array $attachmentUrls = [];
+
+    private ?array $channels = null;
+
+    private bool $sync = false;
+
+    private ?bool $afterCommit = null;
+
+    private DateTimeInterface|DateInterval|int|array|null $delay = null;
 
     /**
      * Create a new Scroll instance.
@@ -74,6 +84,26 @@ class Scroll
     public function getAttachmentUrls(): array
     {
         return $this->attachmentUrls;
+    }
+
+    public function getChannels(): ?array
+    {
+        return $this->channels;
+    }
+
+    public function isSync(): bool
+    {
+        return $this->sync;
+    }
+
+    public function getAfterCommit(): ?bool
+    {
+        return $this->afterCommit;
+    }
+
+    public function getDelay(): DateTimeInterface|DateInterval|int|array|null
+    {
+        return $this->delay;
     }
 
     /**
@@ -164,6 +194,61 @@ class Scroll
         } else {
             $this->attachmentUrls[] = $attachmentUrls;
         }
+
+        return $this;
+    }
+
+    /**
+     * Override the channels defined on the notification context.
+     *
+     * @param  string[]  $channels  Channel names (e.g. ['email', 'sms'])
+     */
+    public function channels(array $channels): self
+    {
+        $this->channels = $channels;
+
+        return $this;
+    }
+
+    /**
+     * Dispatch the notification synchronously, bypassing the queue.
+     */
+    public function sync(): self
+    {
+        $this->sync = true;
+
+        return $this;
+    }
+
+    /**
+     * Dispatch the notification to the queue only after the current database transaction commits.
+     */
+    public function afterCommit(): self
+    {
+        $this->afterCommit = true;
+
+        return $this;
+    }
+
+    /**
+     * Dispatch the notification to the queue immediately, even if a database transaction is in progress.
+     */
+    public function beforeCommit(): self
+    {
+        $this->afterCommit = false;
+
+        return $this;
+    }
+
+    /**
+     * Set a delay before the notification is processed. Pass a single value for all channels,
+     * or an associative array to set per-channel delays (keys are lowercase channel names).
+     *
+     * @param  DateTimeInterface|DateInterval|int|array  $delay  Seconds, interval, datetime, or per-channel array
+     */
+    public function delay(DateTimeInterface|DateInterval|int|array $delay): self
+    {
+        $this->delay = $delay;
 
         return $this;
     }

@@ -7,6 +7,8 @@ use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Exceptions\RavenContextNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
+use DateInterval;
+use DateTimeInterface;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -46,7 +48,7 @@ class Raven
      */
     private function dispatchChannelJobs(Scroll $scroll, NotificationContext $context): void
     {
-        $channels = $context->channels;
+        $channels = $scroll->getChannels() ?? $context->channels;
 
         $scroll->getRecipients();
 
@@ -59,7 +61,38 @@ class Raven
 
             Log::info("Dispatching channel job for context $context->name through channel $channel_type->name");
 
-            RavenChannelJob::dispatch($scroll, $context, $channel_type);
+            $jobClass = $context->encrypted
+                ? EncryptedRavenChannelJob::class
+                : RavenChannelJob::class;
+
+            if ($scroll->isSync()) {
+                $jobClass::dispatchSync($scroll, $context, $channel_type);
+            } else {
+                $pendingDispatch = $jobClass::dispatch($scroll, $context, $channel_type);
+
+                if (! is_null($scroll->getAfterCommit())) {
+                    $scroll->getAfterCommit()
+                        ? $pendingDispatch->afterCommit()
+                        : $pendingDispatch->beforeCommit();
+                }
+
+                $delay = $this->resolveDelay($scroll, $channel_type);
+
+                if ($delay) {
+                    $pendingDispatch->delay($delay);
+                }
+            }
         }
+    }
+
+    private function resolveDelay(Scroll $scroll, ChannelType $channelType): DateTimeInterface|DateInterval|int|null
+    {
+        $delay = $scroll->getDelay();
+
+        if (is_array($delay)) {
+            return $delay[strtolower($channelType->name)] ?? null;
+        }
+
+        return $delay;
     }
 }

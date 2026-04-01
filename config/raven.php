@@ -28,7 +28,7 @@ return [
     ],
 
     'customizations' => [
-        'mail' => [
+        'email' => [
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
                 'name' => env('MAIL_FROM_NAME', 'Example'),
@@ -41,6 +41,7 @@ return [
             ],
         ],
         'queue_name' => env('RAVEN_QUEUE_NAME'),
+        'queue_connection' => env('RAVEN_QUEUE_CONNECTION'),
         'templates_directory' => env('TEMPLATES_DIRECTORY', resource_path('templates')),
     ],
 

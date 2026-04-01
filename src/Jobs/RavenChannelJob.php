@@ -36,9 +36,21 @@ class RavenChannelJob implements ShouldQueue
         public readonly NotificationContext $context,
         public readonly ChannelType $channelType,
     ) {
-        $queue = config('raven.customizations.queue_name');
-        if (! is_null($queue)) {
+        $channelKey = strtolower($this->channelType->name);
+        $channelQueue = $context->queue[$channelKey] ?? [];
+
+        $queue = $channelQueue['queue']
+            ?? config('raven.customizations.queue_name');
+
+        $connection = $channelQueue['connection']
+            ?? config('raven.customizations.queue_connection');
+
+        if ($queue) {
             $this->onQueue($queue);
+        }
+
+        if ($connection) {
+            $this->onConnection($connection);
         }
     }
 
