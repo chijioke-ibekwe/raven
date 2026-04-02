@@ -7,9 +7,7 @@ use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Events\RavenNotificationFailed;
 use ChijiokeIbekwe\Raven\Events\RavenNotificationSent;
-use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
-use ChijiokeIbekwe\Raven\Notifications\RavenNotification;
 use ChijiokeIbekwe\Raven\Notifications\SmsNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,6 +33,7 @@ class RavenChannelJob implements ShouldQueue
         public readonly Scroll $scroll,
         public readonly NotificationContext $context,
         public readonly ChannelType $channelType,
+        public readonly mixed $recipient,
     ) {
         $channelKey = strtolower($this->channelType->name);
         $channelQueue = $context->queue[$channelKey] ?? [];
@@ -67,7 +66,7 @@ class RavenChannelJob implements ShouldQueue
         Log::info("Sending notification for context {$this->context->name} through channel {$this->channelType->name}");
 
         try {
-            $this->sendToRecipients($notification);
+            $this->sendToRecipient($notification);
             RavenNotificationSent::dispatch($this->scroll, $this->context, $this->channelType->name);
         } catch (Throwable $e) {
             RavenNotificationFailed::dispatch($this->scroll, $this->context, $this->channelType->name, $e);
@@ -75,45 +74,18 @@ class RavenChannelJob implements ShouldQueue
         }
     }
 
-    /**
-     * @throws RavenDeliveryException
-     */
-    private function sendToRecipients(RavenNotification $notification): void
+    private function sendToRecipient(mixed $notification): void
     {
-        $recipients = $this->scroll->getRecipients();
-        $failures = [];
-
-        foreach ($recipients as $recipient) {
-            try {
-                $this->sendToRecipient($recipient, $notification);
-            } catch (Throwable $e) {
-                Log::error("Failed to send {$this->channelType->name} notification to recipient: {$e->getMessage()}");
-                $failures[] = ['recipient' => $recipient, 'exception' => $e];
-            }
-        }
-
-        if (! empty($failures)) {
-            $total = count($recipients);
-            $failed = count($failures);
-            throw RavenDeliveryException::fromFailures(
-                "Failed to deliver {$this->channelType->name} notification for context {$this->context->name} to {$failed} of {$total} recipients",
-                $failures
-            );
-        }
-    }
-
-    private function sendToRecipient(mixed $recipient, RavenNotification $notification): void
-    {
-        if (! is_string($recipient)) {
-            Notification::send([$recipient], $notification);
+        if (! is_string($this->recipient)) {
+            Notification::send([$this->recipient], $notification);
 
             return;
         }
 
-        $this->resolveRouteWithNotification($recipient, $notification);
+        $this->resolveRouteWithNotification($this->recipient, $notification);
     }
 
-    private function resolveRouteWithNotification(string $recipient, RavenNotification $notification): void
+    private function resolveRouteWithNotification(string $recipient, mixed $notification): void
     {
         if ($notification instanceof EmailNotification) {
             if (preg_match(self::EMAIL_PATTERN, $recipient)) {

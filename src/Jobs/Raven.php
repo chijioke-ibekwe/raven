@@ -49,8 +49,11 @@ class Raven
     private function dispatchChannelJobs(Scroll $scroll, NotificationContext $context): void
     {
         $channels = $scroll->getChannels() ?? $context->channels;
+        $recipients = $scroll->getRecipients();
 
-        $scroll->getRecipients();
+        $jobClass = $context->encrypted
+            ? EncryptedRavenChannelJob::class
+            : RavenChannelJob::class;
 
         foreach ($channels as $channel) {
             $channel_type = ChannelType::tryFrom(strtoupper($channel));
@@ -59,27 +62,25 @@ class Raven
                 throw new RavenInvalidDataException("Notification context has an invalid channel: $channel");
             }
 
-            Log::info("Dispatching channel job for context $context->name through channel $channel_type->name");
+            foreach ($recipients as $recipient) {
+                Log::info("Dispatching channel job for context $context->name through channel $channel_type->name");
 
-            $jobClass = $context->encrypted
-                ? EncryptedRavenChannelJob::class
-                : RavenChannelJob::class;
+                if ($scroll->isSync()) {
+                    $jobClass::dispatchSync($scroll, $context, $channel_type, $recipient);
+                } else {
+                    $pendingDispatch = $jobClass::dispatch($scroll, $context, $channel_type, $recipient);
 
-            if ($scroll->isSync()) {
-                $jobClass::dispatchSync($scroll, $context, $channel_type);
-            } else {
-                $pendingDispatch = $jobClass::dispatch($scroll, $context, $channel_type);
+                    if (! is_null($scroll->getAfterCommit())) {
+                        $scroll->getAfterCommit()
+                            ? $pendingDispatch->afterCommit()
+                            : $pendingDispatch->beforeCommit();
+                    }
 
-                if (! is_null($scroll->getAfterCommit())) {
-                    $scroll->getAfterCommit()
-                        ? $pendingDispatch->afterCommit()
-                        : $pendingDispatch->beforeCommit();
-                }
+                    $delay = $this->resolveDelay($scroll, $channel_type);
 
-                $delay = $this->resolveDelay($scroll, $channel_type);
-
-                if ($delay) {
-                    $pendingDispatch->delay($delay);
+                    if ($delay) {
+                        $pendingDispatch->delay($delay);
+                    }
                 }
             }
         }
