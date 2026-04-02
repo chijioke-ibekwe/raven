@@ -130,7 +130,27 @@ To use this package, you need the following requirements:
      - All placeholders in these templates should be surrounded by double curly braces e.g `{{name}}`.
      - File names of these templates must match the file names in the `email_template_filename`, `sms_template_filename` and `in_app_template_filename` keys in the notification context config entry.
 
-4. Open the published `notification-contexts.php` config file and define your notification contexts. Each context is
+4. You can create notification contexts either interactively via the artisan command, or manually in the config file.
+
+   **Option A — Using the artisan command (recommended)**
+
+   Run the following command and follow the interactive prompts:
+   ```bash
+   php artisan raven:make-context
+   ```
+   The command will walk you through:
+   - Choosing a context name
+   - Adding an optional description
+   - Selecting channels (email, sms, database)
+   - Configuring template fields based on your selected channels and email provider
+   - Optionally enabling payload encryption and per-channel queue routing
+
+   Once confirmed, the context entry is appended to `notification-contexts.php` and any referenced template files are
+   created in the appropriate subdirectories of your templates directory.
+
+   **Option B — Manual configuration**
+
+   Open the published `notification-contexts.php` config file and define your notification contexts. Each context is
    keyed by its name and contains the relevant fields for the notification type(s) it handles. Examples for each type
    are shown below:
    - Email Notification Context (when using `sendgrid` as provider)
