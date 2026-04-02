@@ -35,8 +35,12 @@ Raven is a config-driven, multi-channel notification package for Laravel. Define
 and templates — in a config file, and dispatch them with a single line. No notification classes to write.
 
 - **Multi-channel** — Email (SendGrid, Amazon SES), SMS (Vonage, Twilio), and database/in-app notifications through one interface.
-- **Channel isolation** — each channel is dispatched as an independent queued job, so a failure in one doesn't block the others.
+- **Channel isolation** — each recipient on each channel is dispatched as an independent queued job, so a failure in one doesn't block the others.
 - **Provider-agnostic** — swap providers (e.g. Vonage to Twilio) by changing an env var. No code changes.
+- **Dispatch control** — sync, delayed, and after-commit dispatch modes via the Scroll API.
+- **Encrypted payloads** — optionally encrypt queued notification payloads at rest.
+- **Observability** — `RavenNotificationSent` and `RavenNotificationFailed` events fired after each delivery attempt, per recipient.
+- **Artisan scaffolding** — `php artisan raven:make-context` to interactively generate notification contexts and template files.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -44,7 +48,7 @@ and templates — in a config file, and dispatch them with a single line. No not
 To use this package, you need the following requirements:
 
 1. PHP >= v8.1
-2. Laravel >= v10.0
+2. Laravel >= v10.0 (v10, v11, v12, v13)
 3. Composer
 
 ## 🎈 Usage <a name="usage"></a>
@@ -265,6 +269,8 @@ To use this package, you need the following requirements:
                ->for('user-verified')
                ->to([$verified_user, 'admin@raven.com'])
                ->cc(['john.doe@raven.com' => 'John Doe', 'jane.doe@raven.com' => 'Jane Doe'])
+               ->bcc(['audits@raven.com' => 'Audit Team'])
+               ->replyTo('support@raven.com')
                ->with([
                    'id' => $verified_user->id,
                    'name' => $verified_user->name,
@@ -300,6 +306,10 @@ To use this package, you need the following requirements:
      Similarly, if your provider is `twilio`, the method should be called `routeNotificationForTwilio`.
    - `cc()` is exclusively for email notifications and takes an array (or associative array with email/name as
      key/value pairs respectively) of emails you want to CC on the email notification.
+   - `bcc()` is exclusively for email notifications and takes an associative array (email as key, name as value)
+     of emails you want to BCC on the email notification.
+   - `replyTo()` is exclusively for email notifications and takes an email address string to set as the reply-to
+     address on the email notification.
    - `with()` takes an associative array of all the variables that exist on the notification
      template with their values, where the key must match the variable name on the template.
    - `attach()` takes a url or an array of urls that point to the publicly accessible resource(s) that
@@ -371,6 +381,31 @@ To use this package, you need the following requirements:
    You can also use `beforeCommit()` to explicitly dispatch immediately, overriding a queue connection that has `after_commit` set to `true` by default.
 
    > **Note:** `sync()` takes precedence — when set, `delay()`, `afterCommit()`, and `beforeCommit()` are ignored since the job runs inline without touching the queue.
+
+### Events
+
+   Raven fires events after each per-recipient delivery attempt, allowing you to log outcomes, trigger side effects, or build dashboards.
+
+   | Event | Fired when | Properties |
+   |-------|-----------|------------|
+   | `RavenNotificationSent` | A channel delivery succeeds | `$scroll`, `$context`, `$channel`, `$recipient` |
+   | `RavenNotificationFailed` | A channel delivery throws | `$scroll`, `$context`, `$channel`, `$recipient`, `$exception` |
+
+   Register listeners in your `EventServiceProvider` (or, from Laravel 11+, in your application's `AppServiceProvider`):
+   ```php
+   use ChijiokeIbekwe\Raven\Events\RavenNotificationSent;
+   use ChijiokeIbekwe\Raven\Events\RavenNotificationFailed;
+
+   // In EventServiceProvider::$listen
+   protected $listen = [
+       RavenNotificationSent::class => [
+           \App\Listeners\LogNotificationSuccess::class,
+       ],
+       RavenNotificationFailed::class => [
+           \App\Listeners\LogNotificationFailure::class,
+       ],
+   ];
+   ```
 
 6. To successfully send Database Notifications, it is assumed that the user of this package has already set up a
    notifications table in their project via the command below:
