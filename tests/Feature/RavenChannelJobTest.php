@@ -128,9 +128,7 @@ class RavenChannelJobTest extends TestCase
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, 'not-an-email'))->handle();
 
-        Event::assertDispatched(RavenNotificationSent::class, function (RavenNotificationSent $event) {
-            return $event->recipient === 'not-an-email';
-        });
+        Event::assertNotDispatched(RavenNotificationSent::class);
     }
 
     public function test_that_per_channel_queue_config_is_applied(): void
