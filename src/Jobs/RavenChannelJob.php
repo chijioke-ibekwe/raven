@@ -67,9 +67,9 @@ class RavenChannelJob implements ShouldQueue
 
         try {
             $this->sendToRecipient($notification);
-            RavenNotificationSent::dispatch($this->scroll, $this->context, $this->channelType->name);
+            RavenNotificationSent::dispatch($this->scroll, $this->context, $this->channelType->name, $this->recipient);
         } catch (Throwable $e) {
-            RavenNotificationFailed::dispatch($this->scroll, $this->context, $this->channelType->name, $e);
+            RavenNotificationFailed::dispatch($this->scroll, $this->context, $this->channelType->name, $this->recipient, $e);
             throw $e;
         }
     }
