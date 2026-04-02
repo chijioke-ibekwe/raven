@@ -31,6 +31,8 @@ class Scroll
 
     private DateTimeInterface|DateInterval|int|array|null $delay = null;
 
+    private function __construct() {}
+
     /**
      * Create a new Scroll instance.
      */
