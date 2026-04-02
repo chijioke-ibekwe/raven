@@ -16,6 +16,7 @@ class RavenNotificationFailed
         public readonly Scroll $scroll,
         public readonly NotificationContext $context,
         public readonly string $channel,
+        public readonly mixed $recipient,
         public readonly Throwable $exception,
     ) {
         //

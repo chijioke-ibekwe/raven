@@ -50,9 +50,10 @@ class RavenChannelJobTest extends TestCase
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
 
-        Event::assertDispatched(RavenNotificationSent::class, function (RavenNotificationSent $event) {
+        Event::assertDispatched(RavenNotificationSent::class, function (RavenNotificationSent $event) use ($user) {
             return $event->channel === 'EMAIL' &&
-                $event->context->name === 'user-created';
+                $event->context->name === 'user-created' &&
+                $event->recipient === $user;
         });
 
         Event::assertNotDispatched(RavenNotificationFailed::class);
@@ -94,9 +95,10 @@ class RavenChannelJobTest extends TestCase
             $this->assertEquals('SendGrid API error', $e->getMessage());
         }
 
-        Event::assertDispatched(RavenNotificationFailed::class, function (RavenNotificationFailed $event) {
+        Event::assertDispatched(RavenNotificationFailed::class, function (RavenNotificationFailed $event) use ($user) {
             return $event->channel === 'EMAIL' &&
                 $event->context->name === 'user-created' &&
+                $event->recipient === $user &&
                 $event->exception instanceof RavenDeliveryException;
         });
 
@@ -126,7 +128,7 @@ class RavenChannelJobTest extends TestCase
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, 'not-an-email'))->handle();
 
-        Event::assertDispatched(RavenNotificationSent::class);
+        Event::assertNotDispatched(RavenNotificationSent::class);
     }
 
     public function test_that_per_channel_queue_config_is_applied(): void

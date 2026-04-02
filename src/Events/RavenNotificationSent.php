@@ -15,6 +15,7 @@ class RavenNotificationSent
         public readonly Scroll $scroll,
         public readonly NotificationContext $context,
         public readonly string $channel,
+        public readonly mixed $recipient,
     ) {
         //
     }
