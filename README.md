@@ -388,8 +388,8 @@ To use this package, you need the following requirements:
 
    | Event | Fired when | Properties |
    |-------|-----------|------------|
-   | `RavenNotificationSent` | A channel delivery succeeds | `$scroll`, `$context`, `$channel`, `$recipient` |
-   | `RavenNotificationFailed` | A channel delivery throws | `$scroll`, `$context`, `$channel`, `$recipient`, `$exception` |
+   | `RavenNotificationSent` | A notification is successfully delivered to a recipient | `$scroll`, `$context`, `$channel`, `$recipient` |
+   | `RavenNotificationFailed` | A notification delivery fails for a recipient | `$scroll`, `$context`, `$channel`, `$recipient`, `$exception` |
 
    Register listeners in your `EventServiceProvider` (or, from Laravel 11+, in your application's `AppServiceProvider`):
    ```php
@@ -432,12 +432,11 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist in the `notification-contexts.php` config file.
 2. `RavenInvalidDataException` `code: 422`
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
-   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider or
-     template source is `sendgrid`.
+   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider is `sendgrid`.
    - Attempting to send an Email Notification using a `NotificationContext` that has an invalid channel i.e a channel
      that isn't one of "EMAIL", "DATABASE", or "SMS".
    - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_filename` or `email_subject`
-     when your email provider is `ses` and template source is `filesystem`.
+     when your email provider is `ses`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `in_app_template_filename`.
    - Attempting to send an SMS Notification using a `NotificationContext` that has no `sms_template_filename`.
    - Attempting to send a Database Notification using a `NotificationContext` that has a non-existent template file that matches the
