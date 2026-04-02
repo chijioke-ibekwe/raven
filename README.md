@@ -394,8 +394,8 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Attempting to send an SMS Notification to a notifiable that has no `routeNotificationFor$Provider()` method in the model class.
 3. `RavenDeliveryException` `code: 502`
    - A notification channel (SendGrid, Vonage, Twilio, or Amazon SES) fails to deliver a message due to an API error,
-     a non-success response status, or an SDK exception. The exception carries per-recipient failure details accessible
-     via `getFailures()`.
+     a non-success response status, or an SDK exception. Each recipient is dispatched as a separate queued job, so
+     failures are isolated per recipient.
 4. `RavenTemplateNotFoundException` `code: 404`
    - A template file referenced by a notification context cannot be found on the filesystem.
 

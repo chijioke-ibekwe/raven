@@ -43,9 +43,8 @@ Twilio), and Database/In-App notifications through a single, config-driven inter
 - **Provider abstraction** — switch providers (e.g. Vonage to Twilio) by changing an env var.
   No code changes required.
 - **Consistent error handling** — all channels throw `RavenDeliveryException` (502) on delivery
-  failure with structured failure details (recipient + exception) accessible via `getFailures()`.
-  Delivery is attempted for every recipient before throwing. Template errors throw
-  `RavenTemplateNotFoundException` (404).
+  failure. Each recipient is dispatched as a separate queued job, so failures are isolated per
+  recipient. Template errors throw `RavenTemplateNotFoundException` (404).
 - **Observability events** — `RavenNotificationSent` and `RavenNotificationFailed` events fired
   after each channel delivery attempt.
 - **On-demand email routing** — pass plain email strings as recipients alongside notifiable models.
@@ -53,7 +52,7 @@ Twilio), and Database/In-App notifications through a single, config-driven inter
 ### Exceptions
 - `RavenContextNotFoundException` (404) — notification context not found in config.
 - `RavenInvalidDataException` (422) — missing or invalid data on the `Scroll` or context.
-- `RavenDeliveryException` (502) — channel delivery failure, with per-recipient failure details.
+- `RavenDeliveryException` (502) — channel delivery failure (isolated per recipient).
 - `RavenTemplateNotFoundException` (404) — template file or SendGrid template not found.
 
 ### Requirements

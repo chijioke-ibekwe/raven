@@ -702,7 +702,7 @@ class RavenJobTest extends TestCase
             ->to('john.doe@raven.com')
             ->with(['booking_id' => 'JET12345']);
 
-        $job = new EncryptedRavenChannelJob($scroll, $context, ChannelType::EMAIL);
+        $job = new EncryptedRavenChannelJob($scroll, $context, ChannelType::EMAIL, 'john.doe@raven.com');
 
         $this->assertEquals('secure', $job->queue);
         $this->assertEquals('sqs', $job->connection);

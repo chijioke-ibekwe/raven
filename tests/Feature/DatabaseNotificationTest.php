@@ -60,7 +60,7 @@ class DatabaseNotificationTest extends TestCase
                 'date_time' => '11-12-2023 10:51',
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE, $user))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -109,7 +109,7 @@ class DatabaseNotificationTest extends TestCase
                 'date_time' => '11-12-2023 10:51',
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE, $user))->handle();
     }
 
     /**
@@ -143,6 +143,6 @@ class DatabaseNotificationTest extends TestCase
                 'date_time' => '11-12-2023 10:51',
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE, $user))->handle();
     }
 }

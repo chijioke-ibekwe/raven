@@ -58,7 +58,7 @@ class SmsNotificationTest extends TestCase
                 'name' => $user->name,
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS, $user))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -114,9 +114,11 @@ class SmsNotificationTest extends TestCase
                 'name' => $user->name,
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS, $user))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS, '+2347092223333'))->handle();
 
-        Notification::assertSentOnDemand(
+        Notification::assertSentTo(
+            $user,
             SmsNotification::class,
             function (SmsNotification $notification) use ($scroll) {
 
@@ -124,6 +126,8 @@ class SmsNotificationTest extends TestCase
                     $notification->notificationContext->name === 'user-created';
             }
         );
+
+        Notification::assertSentOnDemand(SmsNotification::class);
 
         Notification::assertSentTimes(SmsNotification::class, 2);
     }
@@ -160,7 +164,7 @@ class SmsNotificationTest extends TestCase
                 'date_time' => '11-12-2023 10:51',
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS, $user))->handle();
     }
 
     /**
@@ -194,6 +198,6 @@ class SmsNotificationTest extends TestCase
                 'date_time' => '11-12-2023 10:51',
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::SMS))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::SMS, $user))->handle();
     }
 }

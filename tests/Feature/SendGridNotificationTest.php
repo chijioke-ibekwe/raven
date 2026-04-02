@@ -49,7 +49,7 @@ class SendGridNotificationTest extends TestCase
                 'booking_id' => 'JET12345',
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -100,7 +100,8 @@ class SendGridNotificationTest extends TestCase
                 'booking_id' => 'JET12345',
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, 'jane.doe@raven.com'))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -118,6 +119,8 @@ class SendGridNotificationTest extends TestCase
                     $via === ['sendgrid'];
             }
         );
+
+        Notification::assertSentOnDemand(EmailNotification::class);
 
     }
 
@@ -152,6 +155,6 @@ class SendGridNotificationTest extends TestCase
                 'date_time' => '11-12-2023 10:51',
             ]);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
     }
 }

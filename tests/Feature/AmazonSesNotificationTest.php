@@ -67,7 +67,7 @@ class AmazonSesNotificationTest extends TestCase
             ->to($user)
             ->with(['name' => 'John Doe']);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
 
         Notification::assertSentTo(
             $user,
@@ -107,6 +107,6 @@ class AmazonSesNotificationTest extends TestCase
             ->to($user)
             ->with(['name' => 'John Doe']);
 
-        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL))->handle();
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
     }
 }
