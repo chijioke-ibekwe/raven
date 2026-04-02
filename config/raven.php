@@ -15,7 +15,6 @@ return [
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-            'template_source' => env('AWS_SES_TEMPLATE_SOURCE', 'sendgrid'),
         ],
         'vonage' => [
             'api_key' => env('VONAGE_API_KEY'),
@@ -28,7 +27,7 @@ return [
     ],
 
     'customizations' => [
-        'mail' => [
+        'email' => [
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
                 'name' => env('MAIL_FROM_NAME', 'Example'),
@@ -41,6 +40,7 @@ return [
             ],
         ],
         'queue_name' => env('RAVEN_QUEUE_NAME'),
+        'queue_connection' => env('RAVEN_QUEUE_CONNECTION'),
         'templates_directory' => env('TEMPLATES_DIRECTORY', resource_path('templates')),
     ],
 

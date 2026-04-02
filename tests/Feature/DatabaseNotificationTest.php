@@ -2,10 +2,12 @@
 
 namespace ChijiokeIbekwe\Raven\Tests\Feature;
 
+use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
+use ChijiokeIbekwe\Raven\Enums\ChannelType;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Jobs\Raven;
-use ChijiokeIbekwe\Raven\Notifications\DatabaseNotificationSender;
+use ChijiokeIbekwe\Raven\Jobs\RavenChannelJob;
+use ChijiokeIbekwe\Raven\Notifications\DatabaseNotification;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use ChijiokeIbekwe\Raven\Tests\Utilities\User;
 use Illuminate\Support\Facades\Notification;
@@ -44,25 +46,26 @@ class DatabaseNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-verified', [
             'in_app_template_filename' => 'user-verified.json',
-            'type' => 'user',
-            'channels' => ['DATABASE'],
+            'channels' => ['database'],
             'active' => true,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-verified');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $context = NotificationContext::fromConfig('user-verified', config('notification-contexts.user-verified'));
 
-        (new Raven($scroll))->handle();
+        $scroll = Scroll::make()
+            ->for('user-verified')
+            ->to($user)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
+
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE, $user))->handle();
 
         Notification::assertSentTo(
             $user,
-            DatabaseNotificationSender::class,
-            function (DatabaseNotificationSender $notification) use ($user, $scroll) {
+            DatabaseNotification::class,
+            function (DatabaseNotification $notification) use ($user, $scroll) {
                 $content = $notification->toDatabase($user);
                 $via = $notification->via($user);
 
@@ -92,19 +95,21 @@ class DatabaseNotificationTest extends TestCase
         ]);
 
         config()->set('notification-contexts.user-updated', [
-            'channels' => ['DATABASE'],
+            'channels' => ['database'],
             'active' => true,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-updated');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
 
-        (new Raven($scroll))->handle();
+        $scroll = Scroll::make()
+            ->for('user-updated')
+            ->to($user)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
+
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE, $user))->handle();
     }
 
     /**
@@ -124,18 +129,20 @@ class DatabaseNotificationTest extends TestCase
 
         config()->set('notification-contexts.user-updated', [
             'in_app_template_filename' => 'user-updated.json',
-            'channels' => ['DATABASE'],
+            'channels' => ['database'],
             'active' => true,
         ]);
 
-        $scroll = new Scroll;
-        $scroll->setContextName('user-updated');
-        $scroll->setRecipients($user);
-        $scroll->setParams([
-            'user_id' => '345',
-            'date_time' => '11-12-2023 10:51',
-        ]);
+        $context = NotificationContext::fromConfig('user-updated', config('notification-contexts.user-updated'));
 
-        (new Raven($scroll))->handle();
+        $scroll = Scroll::make()
+            ->for('user-updated')
+            ->to($user)
+            ->with([
+                'user_id' => '345',
+                'date_time' => '11-12-2023 10:51',
+            ]);
+
+        (new RavenChannelJob($scroll, $context, ChannelType::DATABASE, $user))->handle();
     }
 }

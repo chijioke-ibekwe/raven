@@ -2,7 +2,7 @@
 
 namespace ChijiokeIbekwe\Raven\Notifications;
 
-interface INotificationSender
+interface RavenNotification
 {
     public function validateNotification();
 }

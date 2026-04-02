@@ -7,11 +7,13 @@ namespace ChijiokeIbekwe\Raven\Data;
  * @property string|null $description
  * @property string|null $email_template_id
  * @property string|null $email_template_filename
+ * @property string|null $email_subject
  * @property string|null $sms_template_filename
  * @property string|null $in_app_template_filename
- * @property string|null $type
  * @property bool $active
  * @property array $channels
+ * @property array $queue
+ * @property bool $encrypted
  */
 class NotificationContext
 {
@@ -20,11 +22,13 @@ class NotificationContext
         public readonly ?string $description,
         public readonly ?string $email_template_id,
         public readonly ?string $email_template_filename,
+        public readonly ?string $email_subject,
         public readonly ?string $sms_template_filename,
         public readonly ?string $in_app_template_filename,
-        public readonly ?string $type,
         public readonly bool $active,
         public readonly array $channels,
+        public readonly array $queue,
+        public readonly bool $encrypted,
     ) {}
 
     public static function fromConfig(string $name, array $config): self
@@ -34,11 +38,13 @@ class NotificationContext
             description: $config['description'] ?? null,
             email_template_id: $config['email_template_id'] ?? null,
             email_template_filename: $config['email_template_filename'] ?? null,
+            email_subject: $config['email_subject'] ?? null,
             sms_template_filename: $config['sms_template_filename'] ?? null,
             in_app_template_filename: $config['in_app_template_filename'] ?? null,
-            type: $config['type'] ?? null,
             active: $config['active'] ?? true,
             channels: $config['channels'] ?? [],
+            queue: $config['queue'] ?? [],
+            encrypted: $config['encrypted'] ?? false,
         );
     }
 }

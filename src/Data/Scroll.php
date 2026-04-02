@@ -3,6 +3,8 @@
 namespace ChijiokeIbekwe\Raven\Data;
 
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
+use DateInterval;
+use DateTimeInterface;
 use Illuminate\Notifications\Notifiable;
 
 class Scroll
@@ -21,14 +23,20 @@ class Scroll
 
     private array $attachmentUrls = [];
 
-    private bool $hasOnDemand = false;
+    private ?array $channels = null;
+
+    private bool $sync = false;
+
+    private ?bool $afterCommit = null;
+
+    private DateTimeInterface|DateInterval|int|array|null $delay = null;
 
     /**
-     * @throws \Throwable
+     * Create a new Scroll instance.
      */
-    public function __construct()
+    public static function make(): self
     {
-        //
+        return new self;
     }
 
     /**
@@ -70,31 +78,52 @@ class Scroll
 
     public function getParams(): array
     {
-        return $this->params ?? [];
+        return $this->params;
     }
 
     public function getAttachmentUrls(): array
     {
-        return $this->attachmentUrls ?? [];
+        return $this->attachmentUrls;
     }
 
-    public function getHasOnDemand(): bool
+    public function getChannels(): ?array
     {
-        return $this->hasOnDemand;
+        return $this->channels;
     }
 
-    public function setContextName(string $contextName): void
+    public function isSync(): bool
     {
-        $this->contextName = $contextName;
+        return $this->sync;
+    }
+
+    public function getAfterCommit(): ?bool
+    {
+        return $this->afterCommit;
+    }
+
+    public function getDelay(): DateTimeInterface|DateInterval|int|array|null
+    {
+        return $this->delay;
     }
 
     /**
+     * Set the notification context name. Must match a key in the notification-contexts config.
+     */
+    public function for(string $contextName): self
+    {
+        $this->contextName = $contextName;
+
+        return $this;
+    }
+
+    /**
+     * Set the notification recipient(s). Accepts a notifiable, an email/phone string, or an array of either.
+     *
      * @throws \Throwable
      */
-    public function setRecipients(object|string|array $recipients): void
+    public function to(object|string|array $recipients): self
     {
         if (is_array($recipients)) {
-
             foreach ($recipients as $recipient) {
                 $this->validateRecipient($recipient);
             }
@@ -103,40 +132,125 @@ class Scroll
             $this->validateRecipient($recipients);
             $this->recipients[] = $recipients;
         }
+
+        return $this;
     }
 
     /**
-     * @param  array<string, string>  $ccs
+     * Set CC recipients for email notifications.
      *
-     * @throws \Throwable
+     * @param  array<string, string>  $ccs  Email addresses as keys, names as values
      */
-    public function setCcs(array $ccs): void
+    public function cc(array $ccs): self
     {
         $this->ccs = $ccs;
+
+        return $this;
     }
 
-    public function setBccs(array $bccs): void
+    /**
+     * Set BCC recipients for email notifications.
+     *
+     * @param  array<string, string>  $bccs  Email addresses as keys, names as values
+     */
+    public function bcc(array $bccs): self
     {
         $this->bccs = $bccs;
+
+        return $this;
     }
 
-    public function setReplyTo(string $replyTo): void
+    /**
+     * Set the reply-to email address for email notifications.
+     */
+    public function replyTo(string $replyTo): self
     {
         $this->replyTo = $replyTo;
+
+        return $this;
     }
 
-    public function setParams(array $params): void
+    /**
+     * Set the template parameters. Keys must match the placeholder names in the template.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    public function with(array $params): self
     {
         $this->params = $params;
+
+        return $this;
     }
 
-    public function setAttachmentUrls(string|array $attachmentUrls): void
+    /**
+     * Attach files to email notifications by URL.
+     *
+     * @param  string|string[]  $attachmentUrls  Publicly accessible URL(s)
+     */
+    public function attach(string|array $attachmentUrls): self
     {
         if (is_array($attachmentUrls)) {
             $this->attachmentUrls = $attachmentUrls;
         } else {
             $this->attachmentUrls[] = $attachmentUrls;
         }
+
+        return $this;
+    }
+
+    /**
+     * Override the channels defined on the notification context.
+     *
+     * @param  string[]  $channels  Channel names (e.g. ['email', 'sms'])
+     */
+    public function channels(array $channels): self
+    {
+        $this->channels = $channels;
+
+        return $this;
+    }
+
+    /**
+     * Dispatch the notification synchronously, bypassing the queue.
+     */
+    public function sync(): self
+    {
+        $this->sync = true;
+
+        return $this;
+    }
+
+    /**
+     * Dispatch the notification to the queue only after the current database transaction commits.
+     */
+    public function afterCommit(): self
+    {
+        $this->afterCommit = true;
+
+        return $this;
+    }
+
+    /**
+     * Dispatch the notification to the queue immediately, even if a database transaction is in progress.
+     */
+    public function beforeCommit(): self
+    {
+        $this->afterCommit = false;
+
+        return $this;
+    }
+
+    /**
+     * Set a delay before the notification is processed. Pass a single value for all channels,
+     * or an associative array to set per-channel delays (keys are lowercase channel names).
+     *
+     * @param  DateTimeInterface|DateInterval|int|array  $delay  Seconds, interval, datetime, or per-channel array
+     */
+    public function delay(DateTimeInterface|DateInterval|int|array $delay): self
+    {
+        $this->delay = $delay;
+
+        return $this;
     }
 
     /**
@@ -149,8 +263,6 @@ class Scroll
         }
 
         if (is_string($recipient)) {
-            $this->hasOnDemand = true;
-
             return;
         }
 

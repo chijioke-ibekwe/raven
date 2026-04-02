@@ -5,38 +5,19 @@ namespace ChijiokeIbekwe\Raven\Jobs;
 use ChijiokeIbekwe\Raven\Data\NotificationContext;
 use ChijiokeIbekwe\Raven\Data\Scroll;
 use ChijiokeIbekwe\Raven\Enums\ChannelType;
-use ChijiokeIbekwe\Raven\Events\RavenNotificationFailed;
-use ChijiokeIbekwe\Raven\Events\RavenNotificationSent;
-use ChijiokeIbekwe\Raven\Exceptions\RavenEntityNotFoundException;
+use ChijiokeIbekwe\Raven\Exceptions\RavenContextNotFoundException;
 use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
-use ChijiokeIbekwe\Raven\Notifications\EmailNotificationSender;
-use ChijiokeIbekwe\Raven\Notifications\INotificationSender;
-use ChijiokeIbekwe\Raven\Notifications\SmsNotificationSender;
-use ChijiokeIbekwe\Raven\Services\ChannelSenderFactory;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use DateInterval;
+use DateTimeInterface;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Throwable;
 
-class Raven implements ShouldQueue
+class Raven
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
 
-    const EMAIL_PATTERN = '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$#';
-
-    const PHONE_PATTERN = '#^\+?[0-9\s\-()]+$#';
-
-    public function __construct(public readonly Scroll $scroll)
-    {
-        $queue = config('raven.customizations.queue_name');
-        if (! is_null($queue)) {
-            $this->onQueue($queue);
-        }
-    }
+    public function __construct(public readonly Scroll $scroll) {}
 
     /**
      * @throws Throwable
@@ -48,7 +29,7 @@ class Raven implements ShouldQueue
 
         $contextConfig = config("notification-contexts.$context_name");
 
-        throw_if(is_null($contextConfig), RavenEntityNotFoundException::class,
+        throw_if(is_null($contextConfig), RavenContextNotFoundException::class,
             "Notification context with name $context_name does not exist");
 
         $context = NotificationContext::fromConfig($context_name, $contextConfig);
@@ -59,17 +40,20 @@ class Raven implements ShouldQueue
             return;
         }
 
-        $this->sendNotifications($scroll, $context);
+        $this->dispatchChannelJobs($scroll, $context);
     }
 
     /**
-     * @throws Throwable
+     * @throws RavenInvalidDataException
      */
-    private function sendNotifications(Scroll $scroll, NotificationContext $context): void
+    private function dispatchChannelJobs(Scroll $scroll, NotificationContext $context): void
     {
-        $factory = new ChannelSenderFactory($scroll, $context);
-        $channels = $context->channels;
+        $channels = $scroll->getChannels() ?? $context->channels;
         $recipients = $scroll->getRecipients();
+
+        $jobClass = $context->encrypted
+            ? EncryptedRavenChannelJob::class
+            : RavenChannelJob::class;
 
         foreach ($channels as $channel) {
             $channel_type = ChannelType::tryFrom(strtoupper($channel));
@@ -78,61 +62,38 @@ class Raven implements ShouldQueue
                 throw new RavenInvalidDataException("Notification context has an invalid channel: $channel");
             }
 
-            Log::info("Processing notification for context $context->name through channel $channel_type->name");
+            foreach ($recipients as $recipient) {
+                Log::info("Dispatching channel job for context $context->name through channel $channel_type->name");
 
-            $channel_sender = $factory->getSender($channel_type);
+                if ($scroll->isSync()) {
+                    $jobClass::dispatchSync($scroll, $context, $channel_type, $recipient);
+                } else {
+                    $pendingDispatch = $jobClass::dispatch($scroll, $context, $channel_type, $recipient);
 
-            Log::info("Sending notification for context $context->name through channel $channel_type->name");
+                    if (! is_null($scroll->getAfterCommit())) {
+                        $scroll->getAfterCommit()
+                            ? $pendingDispatch->afterCommit()
+                            : $pendingDispatch->beforeCommit();
+                    }
 
-            try {
-                $this->dispatchChannel($scroll, $recipients, $channel_sender);
-                RavenNotificationSent::dispatch($scroll, $context, $channel_type->name);
-            } catch (Throwable $e) {
-                RavenNotificationFailed::dispatch($scroll, $context, $channel_type->name, $e);
-                throw $e;
+                    $delay = $this->resolveDelay($scroll, $channel_type);
+
+                    if ($delay) {
+                        $pendingDispatch->delay($delay);
+                    }
+                }
             }
         }
     }
 
-    private function dispatchChannel(Scroll $scroll, array $recipients, INotificationSender $channel_sender): void
+    private function resolveDelay(Scroll $scroll, ChannelType $channelType): DateTimeInterface|DateInterval|int|null
     {
-        if (! $scroll->getHasOnDemand()) {
-            Notification::send($recipients, $channel_sender);
+        $delay = $scroll->getDelay();
 
-            return;
+        if (is_array($delay)) {
+            return $delay[strtolower($channelType->name)] ?? null;
         }
 
-        foreach ($recipients as $recipient) {
-            if (! is_string($recipient)) {
-                Notification::send([$recipient], $channel_sender);
-
-                continue;
-            }
-
-            $this->resolveRouteWithChannelSender($recipient, $channel_sender);
-        }
-    }
-
-    private function resolveRouteWithChannelSender(string $recipient, INotificationSender $channel_sender): void
-    {
-        if ($channel_sender instanceof EmailNotificationSender) {
-            if (preg_match(self::EMAIL_PATTERN, $recipient)) {
-                Notification::route(config('raven.default.email'), $recipient)->notify($channel_sender);
-            } else {
-                Log::warning("Skipping recipient: \"$recipient\" is not a valid email address.");
-            }
-
-            return;
-        }
-
-        if ($channel_sender instanceof SmsNotificationSender) {
-            if (preg_match(self::PHONE_PATTERN, $recipient)) {
-                Notification::route(config('raven.default.sms'), $recipient)->notify($channel_sender);
-            } else {
-                Log::warning("Skipping recipient: \"$recipient\" is not a valid phone number.");
-            }
-
-            return;
-        }
+        return $delay;
     }
 }

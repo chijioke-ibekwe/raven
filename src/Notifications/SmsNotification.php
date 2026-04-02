@@ -11,7 +11,7 @@ use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification;
 use Vonage\SMS\Message\SMS;
 
-class SmsNotificationSender extends Notification implements INotificationSender
+class SmsNotification extends Notification implements RavenNotification
 {
     const SMS_FOLDER = '/sms/';
 
@@ -54,7 +54,7 @@ class SmsNotificationSender extends Notification implements INotificationSender
     }
 
     /**
-     * Get the Vonage SMS object.
+     * Get the Twilio SMS representation.
      *
      * @throws RavenInvalidDataException
      * @throws RavenTemplateNotFoundException

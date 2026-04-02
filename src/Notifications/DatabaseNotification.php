@@ -8,7 +8,7 @@ use ChijiokeIbekwe\Raven\Exceptions\RavenInvalidDataException;
 use ChijiokeIbekwe\Raven\Library\TemplateCleaner;
 use Illuminate\Notifications\Notification;
 
-class DatabaseNotificationSender extends Notification implements INotificationSender
+class DatabaseNotification extends Notification implements RavenNotification
 {
     const IN_APP_FOLDER = '/in_app/';
 
