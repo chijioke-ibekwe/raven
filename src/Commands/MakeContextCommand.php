@@ -4,8 +4,6 @@ namespace ChijiokeIbekwe\Raven\Commands;
 
 use Illuminate\Console\Command;
 
-use function Laravel\Prompts\multiselect;
-
 class MakeContextCommand extends Command
 {
     protected $signature = 'raven:make-context';
@@ -78,11 +76,19 @@ class MakeContextCommand extends Command
 
     private function askForChannels(): array
     {
-        return multiselect(
-            label: 'Select channels',
-            options: ['email', 'sms', 'database'],
-            required: 'You must select at least one channel.',
-        );
+        while (true) {
+            $channels = $this->choice(
+                question: 'Select channels',
+                choices: ['email', 'sms', 'database'],
+                multiple: true,
+            );
+
+            if (! empty($channels)) {
+                return $channels;
+            }
+
+            $this->error('You must select at least one channel.');
+        }
     }
 
     private function askForEmailFields(array $channels): array
