@@ -58,6 +58,7 @@ class RavenServiceProvider extends ServiceProvider
             switch ($provider) {
                 case 'sendgrid':
                     $this->app->singleton(SendGrid::class, fn ($app) => new SendGrid(config('raven.providers.sendgrid.key')));
+                    $this->app->bind(TemplateStrategy::class, fn () => new FilesystemTemplateStrategy);
                     Notification::extend('sendgrid', fn ($app) => new SendGridChannel);
                     break;
 

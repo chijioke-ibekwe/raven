@@ -50,8 +50,14 @@ class EmailNotification extends Notification implements RavenNotification
         }
 
         $email = new Mail;
-        $email->setTemplateId($this->notificationContext->email_template_id);
         $email->addTo($route);
+
+        if ($this->notificationContext->email_template_id) {
+            $email->setTemplateId($this->notificationContext->email_template_id);
+
+            $substitutions = $this->scroll->getParams();
+            $email->addDynamicTemplateDatas($substitutions);
+        }
 
         if (! empty($ccs = $this->scroll->getCcs())) {
             if (! is_string(array_key_first($ccs))) {
@@ -80,9 +86,6 @@ class EmailNotification extends Notification implements RavenNotification
         if ($replyTo = $this->scroll->getReplyTo()) {
             $email->setReplyTo($replyTo);
         }
-
-        $substitutions = $this->scroll->getParams();
-        $email->addDynamicTemplateDatas($substitutions);
 
         if (! empty($this->scroll->getAttachmentUrls())) {
             $attachments = [];
@@ -167,16 +170,14 @@ class EmailNotification extends Notification implements RavenNotification
     {
         $context_name = $this->notificationContext->name;
 
-        if (config('raven.default.email') == 'sendgrid') {
-            throw_if(empty($this->notificationContext->email_template_id), RavenInvalidDataException::class,
-                "Email notification context with name $context_name has no email template id");
-        }
+        $hasTemplateId = ! empty($this->notificationContext->email_template_id);
+        $hasTemplateFilename = ! empty($this->notificationContext->email_template_filename);
 
-        if (config('raven.default.email') == 'ses') {
+        throw_if(! $hasTemplateId && ! $hasTemplateFilename, RavenInvalidDataException::class,
+            "Email notification context with name $context_name has no email template id or template file name");
+
+        if ($hasTemplateFilename) {
             $email_template_directory = config('raven.customizations.templates_directory').self::EMAIL_FOLDER;
-
-            throw_if(empty($this->notificationContext->email_template_filename), RavenInvalidDataException::class,
-                "Email notification context with name $context_name has no email template file name");
 
             throw_if(! file_exists($email_template_directory.$this->notificationContext->email_template_filename), RavenTemplateNotFoundException::class,
                 "Email notification context with name $context_name has no template file in $email_template_directory");

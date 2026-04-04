@@ -85,7 +85,7 @@ class AmazonSesNotificationTest extends TestCase
     public function test_that_exception_is_thrown_when_ses_context_has_no_email_template_filename(): void
     {
         $this->expectException(RavenInvalidDataException::class);
-        $this->expectExceptionMessage('Email notification context with name user-verified has no email template file name');
+        $this->expectExceptionMessage('Email notification context with name user-verified has no email template id or template file name');
         $this->expectExceptionCode(422);
 
         Notification::fake();

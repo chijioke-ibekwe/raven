@@ -127,10 +127,61 @@ class SendGridNotificationTest extends TestCase
     /**
      * @throws \Throwable
      */
+    public function test_that_email_notifications_are_sent_when_context_uses_filesystem_template()
+    {
+        $emailDir = resource_path('templates/email');
+        if (! is_dir($emailDir)) {
+            mkdir($emailDir, 0755, true);
+        }
+        file_put_contents($emailDir.'/welcome.html', '<p>Welcome {{name}}</p>');
+
+        Notification::fake();
+
+        $user = User::factory()->make([
+            'name' => 'John Doe',
+            'email' => 'john.doe@raven.com',
+        ]);
+
+        config()->set('notification-contexts.welcome', [
+            'email_template_filename' => 'welcome.html',
+            'email_subject' => 'Welcome, {{name}}!',
+            'channels' => ['email'],
+            'active' => true,
+        ]);
+
+        $context = NotificationContext::fromConfig('welcome', config('notification-contexts.welcome'));
+
+        $scroll = Scroll::make()
+            ->for('welcome')
+            ->to($user)
+            ->with(['name' => 'John Doe']);
+
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
+
+        Notification::assertSentTo(
+            $user,
+            EmailNotification::class,
+            function (EmailNotification $notification) use ($user, $scroll) {
+                $mail = $notification->toSendgrid($user);
+                $via = $notification->via($user);
+
+                return $notification->scroll === $scroll &&
+                    $notification->notificationContext->name === 'welcome' &&
+                    $mail->getTemplateId() === null &&
+                    $via === ['sendgrid'];
+            }
+        );
+
+        unlink($emailDir.'/welcome.html');
+    }
+
+    /**
+     * @throws \Throwable
+     */
     public function test_that_exception_is_thrown_when_email_notification_context_has_no_email_template()
     {
         $this->expectException(RavenInvalidDataException::class);
-        $this->expectExceptionMessage('Email notification context with name user-updated has no email template id');
+        $this->expectExceptionMessage('Email notification context with name user-updated has no email template id or template file name');
         $this->expectExceptionCode(422);
 
         Notification::fake();

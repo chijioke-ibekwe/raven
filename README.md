@@ -118,16 +118,13 @@ To use this package, you need the following requirements:
     ```
    - The `default` array allows you to configure your default service providers for your notification channels. Options
      are `sendgrid` and `ses` for email, and `vonage` or `twilio` for SMS.
-   - The `providers` array is where you supply the credentials for the service provider you choose. When using `ses`,
-     email templates are stored on the filesystem as `.html` files. The `email_subject` field must be provided in the
-     notification context, and `email_template_filename` must point to a valid `.html` file in the `email` subdirectory
-     of your templates directory.
+   - The `providers` array is where you supply the credentials for the service provider you choose.
    - The `customizations` array allows you to customize your email parameters, queue settings, and templates directory.
      - `queue_name` — sets the default queue name for all Raven notifications. The Laravel default queue is used if not provided.
      - `queue_connection` — sets the default queue connection for all Raven notifications. The Laravel default connection is used if not provided.
      - These global queue settings act as fallbacks. Per-channel queue routing can be configured on individual notification contexts (see step 4).
      - The default templates directory is a directory called `templates` in the resources path 
-     - The templates directory set, will contain three directories within: `email` (relevant when using the `ses` email provider), `sms`, and `in_app`.
+     - The templates directory set, will contain three directories within: `email`, `sms`, and `in_app`.
      - The `email` directory will contain the `.html` templates for your emails. 
      - The `sms` directory will contain the `.txt` files with the contents of your sms notifications. 
      - The `in_app` directory will contain `.json` files whose contents will be saved on the data column of the database notifications table. 
@@ -146,7 +143,7 @@ To use this package, you need the following requirements:
    - Choosing a context name
    - Adding an optional description
    - Selecting channels (email, sms, database)
-   - Configuring template fields based on your selected channels and email provider
+   - Choosing a template source for email contexts (provider-hosted or self-managed)
    - Optionally enabling payload encryption and per-channel queue routing
 
    Once confirmed, the context entry is appended to `notification-contexts.php` and any referenced template files are
@@ -157,7 +154,9 @@ To use this package, you need the following requirements:
    Open the published `notification-contexts.php` config file and define your notification contexts. Each context is
    keyed by its name and contains the relevant fields for the notification type(s) it handles. Examples for each type
    are shown below:
-   - Email Notification Context (when using `sendgrid` as provider)
+   - Email Notification Context (provider-hosted template)
+
+     Use `email_template_id` when the email template is hosted on the provider's platform (e.g. a SendGrid dynamic template). The provider handles rendering; Raven sends the template ID and substitution data.
     ```php
     // config/notification-contexts.php
     return [
@@ -170,7 +169,9 @@ To use this package, you need the following requirements:
     ];
     ```
 
-   - Email Notification Context (when using `ses` as provider)
+   - Email Notification Context (self-managed template)
+
+     Use `email_template_filename` and `email_subject` when you manage the email template yourself as an `.html` file in the `email` subdirectory of your templates directory. Raven resolves placeholders and sends the rendered HTML to the provider.
     ```php
     // config/notification-contexts.php
     return [
@@ -183,6 +184,8 @@ To use this package, you need the following requirements:
         ],
     ];
     ```
+
+     This works with any email provider (SendGrid, Amazon SES, etc.), and you can mix both approaches across different contexts — useful for gradually migrating templates off a provider's platform.
 
    - SMS Notification Context
     ```php
@@ -432,11 +435,10 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Dispatching a Raven with a `Scroll` object that has a `contextName` which does not exist in the `notification-contexts.php` config file.
 2. `RavenInvalidDataException` `code: 422`
    - Dispatching a Raven with a `Scroll` object without a `contextName` or `recipient`.
-   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_id` when your email provider is `sendgrid`.
+   - Attempting to send an Email Notification using a `NotificationContext` that has neither an `email_template_id` nor an `email_template_filename`.
    - Attempting to send an Email Notification using a `NotificationContext` that has an invalid channel i.e a channel
      that isn't one of "EMAIL", "DATABASE", or "SMS".
-   - Attempting to send an Email Notification using a `NotificationContext` that has no `email_template_filename` or `email_subject`
-     when your email provider is `ses`.
+   - Attempting to send an Email Notification using a `NotificationContext` with an `email_template_filename` but no `email_subject`.
    - Attempting to send a Database Notification using a `NotificationContext` that has no `in_app_template_filename`.
    - Attempting to send an SMS Notification using a `NotificationContext` that has no `sms_template_filename`.
    - Attempting to send a Database Notification using a `NotificationContext` that has a non-existent template file that matches the
