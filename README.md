@@ -156,7 +156,12 @@ To use this package, you need the following requirements:
    are shown below:
    - Email Notification Context (provider-hosted template)
 
-     Use `email_template_id` when the email template is hosted on the provider's platform (e.g. a SendGrid dynamic template). The provider handles rendering; Raven sends the template ID and substitution data.
+     Use `email_template_id` when the email template is hosted on the provider's platform. The provider handles rendering; Raven sends the identifier and substitution data. The value depends on your email provider:
+     - **SendGrid** — the dynamic template ID (e.g. `d-ad34ghAwe3mQRvb29`)
+     - **Amazon SES** — the template name as created via the SES `CreateEmailTemplate` API (e.g. `MyTemplate`)
+
+     Note: SES stored templates do not support attachments. An exception will be thrown if a context using a stored template includes attachments.
+
     ```php
     // config/notification-contexts.php
     return [
@@ -448,6 +453,7 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Attempting to send an Email Notification to a notifiable that has no `email` field or a `routeNotificationForMail()`
      method in the model class.
    - Attempting to send an SMS Notification to a notifiable that has no `routeNotificationFor$Provider()` method in the model class.
+   - Attempting to send an Email Notification with attachments using a stored SES template (SES stored templates do not support attachments).
 3. `RavenDeliveryException` `code: 502`
    - A notification channel (SendGrid, Vonage, Twilio, or Amazon SES) fails to deliver a message due to an API error,
      a non-success response status, or an SDK exception. Each recipient is dispatched as a separate queued job, so
