@@ -32,15 +32,13 @@ class EmailNotification extends Notification implements RavenNotification
     }
 
     /**
-     * Get the Sendgrid representation of the notification.
-     *
-     * @throws RavenInvalidDataException|TypeException
+     * @throws RavenInvalidDataException
      */
-    public function toSendgrid(mixed $notifiable): ?Mail
+    public function resolveRecipientRoute(mixed $notifiable): string
     {
-
-        $route = $notifiable instanceof AnonymousNotifiable ? $notifiable->routes[config('raven.default.email')] :
-            $notifiable->routeNotificationFor('mail');
+        $route = $notifiable instanceof AnonymousNotifiable
+            ? $notifiable->routes[config('raven.default.email')]
+            : $notifiable->routeNotificationFor('mail');
 
         if (! $route) {
             $class = get_class($notifiable);
@@ -48,6 +46,18 @@ class EmailNotification extends Notification implements RavenNotification
                 "Missing route for mail: ensure {$class}::routeNotificationForMail() is defined on the notifiable class"
             );
         }
+
+        return $route;
+    }
+
+    /**
+     * Get the Sendgrid representation of the notification.
+     *
+     * @throws RavenInvalidDataException|TypeException
+     */
+    public function toSendgrid(mixed $notifiable): ?Mail
+    {
+        $route = $this->resolveRecipientRoute($notifiable);
 
         $email = new Mail;
         $email->addTo($route);
@@ -115,16 +125,7 @@ class EmailNotification extends Notification implements RavenNotification
      */
     public function toAmazonSes(mixed $notifiable): ?PHPMailer
     {
-
-        $route = $notifiable instanceof AnonymousNotifiable ? $notifiable->routes[config('raven.default.email')] :
-            $notifiable->routeNotificationFor('mail');
-
-        if (! $route) {
-            $class = get_class($notifiable);
-            throw new RavenInvalidDataException(
-                "Missing route for mail: ensure {$class}::routeNotificationForMail() is defined on the notifiable class"
-            );
-        }
+        $route = $this->resolveRecipientRoute($notifiable);
 
         $email = new PHPMailer(true);
         $email->addAddress($route);
@@ -175,6 +176,10 @@ class EmailNotification extends Notification implements RavenNotification
 
         throw_if(! $hasTemplateId && ! $hasTemplateFilename, RavenInvalidDataException::class,
             "Email notification context with name $context_name has no email template id or template file name");
+
+        if ($hasTemplateId && config('raven.default.email') === 'ses' && ! empty($this->scroll->getAttachmentUrls())) {
+            throw new RavenInvalidDataException('Attachments are not supported with SES stored templates');
+        }
 
         if ($hasTemplateFilename) {
             $email_template_directory = config('raven.customizations.templates_directory').self::EMAIL_FOLDER;

@@ -3,6 +3,7 @@
 namespace ChijiokeIbekwe\Raven\Tests\Unit;
 
 use Aws\Ses\SesClient;
+use Aws\SesV2\SesV2Client;
 use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
 use ChijiokeIbekwe\Raven\Tests\TestCase;
 use Exception;
@@ -22,6 +23,7 @@ class AmazonSesChannelTest extends TestCase
         $this->expectExceptionMessage('AmazonSesChannel requires an EmailNotification notification');
 
         $this->app->instance(SesClient::class, Mockery::mock(SesClient::class));
+        $this->app->instance(SesV2Client::class, Mockery::mock(SesV2Client::class));
 
         $channel = new AmazonSesChannel;
         $channel->send(null, Mockery::mock(Notification::class));

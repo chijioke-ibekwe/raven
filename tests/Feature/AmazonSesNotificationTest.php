@@ -109,4 +109,75 @@ class AmazonSesNotificationTest extends TestCase
 
         (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
     }
+
+    /**
+     * @throws \Throwable
+     */
+    public function test_that_email_notifications_are_dispatched_when_context_uses_stored_template(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->make([
+            'name' => 'John Doe',
+            'email' => 'john.doe@raven.com',
+        ]);
+
+        config()->set('notification-contexts.welcome', [
+            'email_template_id' => 'MyTemplate',
+            'channels' => ['email'],
+            'active' => true,
+        ]);
+
+        $context = NotificationContext::fromConfig('welcome', config('notification-contexts.welcome'));
+
+        $scroll = Scroll::make()
+            ->for('welcome')
+            ->to($user)
+            ->with(['name' => 'John Doe']);
+
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
+
+        Notification::assertSentTo(
+            $user,
+            EmailNotification::class,
+            function (EmailNotification $notification) use ($user) {
+                return $notification->notificationContext->name === 'welcome' &&
+                    $notification->notificationContext->email_template_id === 'MyTemplate' &&
+                    $notification->via($user) === ['ses'];
+            }
+        );
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function test_that_exception_is_thrown_when_ses_stored_template_context_has_attachments(): void
+    {
+        $this->expectException(RavenInvalidDataException::class);
+        $this->expectExceptionMessage('Attachments are not supported with SES stored templates');
+        $this->expectExceptionCode(422);
+
+        Notification::fake();
+
+        $user = User::factory()->make([
+            'name' => 'John Doe',
+            'email' => 'john.doe@raven.com',
+        ]);
+
+        config()->set('notification-contexts.welcome', [
+            'email_template_id' => 'MyTemplate',
+            'channels' => ['email'],
+            'active' => true,
+        ]);
+
+        $context = NotificationContext::fromConfig('welcome', config('notification-contexts.welcome'));
+
+        $scroll = Scroll::make()
+            ->for('welcome')
+            ->to($user)
+            ->with(['name' => 'John Doe'])
+            ->attach('https://example.com/file.pdf');
+
+        (new RavenChannelJob($scroll, $context, ChannelType::EMAIL, $user))->handle();
+    }
 }

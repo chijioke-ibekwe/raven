@@ -3,6 +3,7 @@
 namespace ChijiokeIbekwe\Raven;
 
 use Aws\Ses\SesClient;
+use Aws\SesV2\SesV2Client;
 use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
 use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
 use ChijiokeIbekwe\Raven\Channels\TwilioChannel;
@@ -63,11 +64,13 @@ class RavenServiceProvider extends ServiceProvider
                     break;
 
                 case 'ses':
-                    $this->app->singleton(SesClient::class, fn ($app) => new SesClient([
+                    $sesCredentials = [
                         'credentials' => Arr::only(config('raven.providers.ses'), ['key', 'secret']),
                         'version' => 'latest',
                         'region' => config('raven.providers.ses.region'),
-                    ]));
+                    ];
+                    $this->app->singleton(SesClient::class, fn ($app) => new SesClient($sesCredentials));
+                    $this->app->singleton(SesV2Client::class, fn ($app) => new SesV2Client($sesCredentials));
                     $this->app->bind(TemplateStrategy::class, fn () => new FilesystemTemplateStrategy);
                     Notification::extend('ses', fn ($app) => new AmazonSesChannel);
                     break;
