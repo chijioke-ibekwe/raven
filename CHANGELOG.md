@@ -11,17 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] — First Stable Release
 
-Multi-channel Laravel notification package supporting Email (SendGrid, Amazon SES), SMS (Vonage,
-Twilio), and Database/In-App notifications through a single, config-driven interface.
+Multi-channel Laravel notification package supporting Email (SendGrid, Amazon SES, Postmark,
+Mailgun), SMS (Vonage, Twilio), and Database/In-App notifications through a single, config-driven
+interface.
 
 ### Features
 - **Config-driven notification contexts** — define notification contexts in a publishable
   `config/notification-contexts.php` file. Each context specifies its channels, templates, and
   whether it is active. No database tables required.
-- **Email notifications** via SendGrid or Amazon SES.
+- **Email notifications** via SendGrid, Amazon SES, Postmark, or Mailgun.
   - SendGrid: dynamic templates referenced by template ID.
-  - Amazon SES: raw email via SES with filesystem-based `.html` templates.
-  - CC, BCC, reply-to, and file attachment support.
+  - Amazon SES: filesystem-based `.html` templates, plus stored templates via the SES v2 API.
+  - Postmark and Mailgun: provider-native template IDs or filesystem-based `.html` templates.
+  - CC, BCC, reply-to, and file attachment support. Attachments accept remote URLs or
+    local paths (relative paths resolve against `base_path()`); missing or unreadable
+    files throw `RavenInvalidDataException` consistently across all providers.
 - **SMS notifications** via Vonage or Twilio.
   - Template-based messages using `.txt` files with `{{placeholder}}` substitution.
   - On-demand routing: pass phone number strings directly as recipients.
@@ -63,6 +67,8 @@ Twilio), and Database/In-App notifications through a single, config-driven inter
 - `sendgrid/sendgrid: ~7`
 - `aws/aws-sdk-php: ^3.300`
 - `phpmailer/phpmailer: ^6.9`
+- `wildbit/postmark-php: ^7.0`
+- `mailgun/mailgun-php: ^4.4`
 - `vonage/client: ^4.0`
 - `twilio/sdk: ^8.11`
 
