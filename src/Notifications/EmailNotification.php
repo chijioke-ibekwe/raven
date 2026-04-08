@@ -165,6 +165,89 @@ class EmailNotification extends Notification implements RavenNotification
     }
 
     /**
+     * Build the structured payload consumed by PostmarkChannel.
+     *
+     * @throws RavenInvalidDataException
+     */
+    public function toPostmark(mixed $notifiable): array
+    {
+        $payload = [
+            'to' => $this->resolveRecipientRoute($notifiable),
+            'cc' => $this->flattenAddressList($this->scroll->getCcs()),
+            'bcc' => $this->flattenAddressList($this->scroll->getBccs()),
+            'replyTo' => $this->scroll->getReplyTo(),
+            'attachments' => [],
+        ];
+
+        foreach ($this->scroll->getAttachmentUrls() as $url) {
+            $binary = file_get_contents($url);
+            if ($binary === false) {
+                throw new RavenInvalidDataException("Could not fetch remote content from: '$url'");
+            }
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($binary) ?: 'application/octet-stream';
+            $payload['attachments'][] = [
+                'Name' => basename($url),
+                'Content' => base64_encode($binary),
+                'ContentType' => $mimeType,
+            ];
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Build the structured payload consumed by MailgunChannel.
+     *
+     * @throws RavenInvalidDataException
+     */
+    public function toMailgun(mixed $notifiable): array
+    {
+        $payload = [
+            'to' => $this->resolveRecipientRoute($notifiable),
+            'cc' => $this->flattenAddressList($this->scroll->getCcs()),
+            'bcc' => $this->flattenAddressList($this->scroll->getBccs()),
+            'replyTo' => $this->scroll->getReplyTo(),
+            'attachments' => [],
+        ];
+
+        foreach ($this->scroll->getAttachmentUrls() as $url) {
+            $binary = file_get_contents($url);
+            if ($binary === false) {
+                throw new RavenInvalidDataException("Could not fetch remote content from: '$url'");
+            }
+            $payload['attachments'][] = [
+                'fileContent' => $binary,
+                'filename' => basename($url),
+            ];
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Flatten a CC/BCC list into a comma-separated string of addresses,
+     * supporting both ['email' => 'Name'] and [0 => 'email'] forms.
+     */
+    private function flattenAddressList(array $list): ?string
+    {
+        if (empty($list)) {
+            return null;
+        }
+
+        $addresses = [];
+        foreach ($list as $key => $value) {
+            if (is_string($key)) {
+                $addresses[] = "$value <$key>";
+            } else {
+                $addresses[] = $value;
+            }
+        }
+
+        return implode(', ', $addresses);
+    }
+
+    /**
      * @throws \Throwable
      */
     public function validateNotification(): void

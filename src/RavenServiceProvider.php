@@ -5,6 +5,8 @@ namespace ChijiokeIbekwe\Raven;
 use Aws\Ses\SesClient;
 use Aws\SesV2\SesV2Client;
 use ChijiokeIbekwe\Raven\Channels\AmazonSesChannel;
+use ChijiokeIbekwe\Raven\Channels\MailgunChannel;
+use ChijiokeIbekwe\Raven\Channels\PostmarkChannel;
 use ChijiokeIbekwe\Raven\Channels\SendGridChannel;
 use ChijiokeIbekwe\Raven\Channels\TwilioChannel;
 use ChijiokeIbekwe\Raven\Channels\VonageChannel;
@@ -14,6 +16,8 @@ use ChijiokeIbekwe\Raven\Templates\TemplateStrategy;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
+use Mailgun\Mailgun;
+use Postmark\PostmarkClient;
 use SendGrid;
 use Twilio\Rest\Client as TwilioClient;
 use Vonage\Client as VonageClient;
@@ -89,6 +93,21 @@ class RavenServiceProvider extends ServiceProvider
                         config('raven.providers.twilio.auth_token')
                     ));
                     Notification::extend('twilio', fn ($app) => new TwilioChannel);
+                    break;
+
+                case 'postmark':
+                    $this->app->singleton(PostmarkClient::class, fn ($app) => new PostmarkClient(config('raven.providers.postmark.token')));
+                    $this->app->bind(TemplateStrategy::class, fn () => new FilesystemTemplateStrategy);
+                    Notification::extend('postmark', fn ($app) => new PostmarkChannel);
+                    break;
+
+                case 'mailgun':
+                    $this->app->singleton(Mailgun::class, fn ($app) => Mailgun::create(
+                        config('raven.providers.mailgun.secret'),
+                        'https://'.config('raven.providers.mailgun.endpoint'),
+                    ));
+                    $this->app->bind(TemplateStrategy::class, fn () => new FilesystemTemplateStrategy);
+                    Notification::extend('mailgun', fn ($app) => new MailgunChannel);
                     break;
             }
         }

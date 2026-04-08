@@ -26,7 +26,12 @@
     "aws/aws-sdk-php": "^3.300",
     "phpmailer/phpmailer": "^6.9",
     "vonage/client": "^4.0",
-    "twilio/sdk": "^8.11"
+    "twilio/sdk": "^8.11",
+    "wildbit/postmark-php": "^7.0",
+    "guzzlehttp/guzzle": "^7.10",
+    "mailgun/mailgun-php": "^4.4",
+    "symfony/http-client": "^7.4",
+    "nyholm/psr7": "^1.8"
   },
   "require-dev": {
     "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",

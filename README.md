@@ -34,7 +34,7 @@
 Raven is a config-driven, multi-channel notification package for Laravel. Define your notification contexts — channels
 and templates — in a config file, and dispatch them with a single line. No notification classes to write.
 
-- **Multi-channel** — Email (SendGrid, Amazon SES), SMS (Vonage, Twilio), and database/in-app notifications through one interface.
+- **Multi-channel** — Email (SendGrid, Amazon SES, Postmark, Mailgun), SMS (Vonage, Twilio), and database/in-app notifications through one interface.
 - **Channel isolation** — each recipient on each channel is dispatched as an independent queued job, so a failure in one doesn't block the others.
 - **Provider-agnostic** — swap providers (e.g. Vonage to Twilio) by changing an env var. No code changes.
 - **Dispatch control** — sync, delayed, and after-commit dispatch modes via the Scroll API.
@@ -94,6 +94,14 @@ To use this package, you need the following requirements:
             'twilio' => [
                 'account_sid' => env('TWILIO_ACCOUNT_SID'),
                 'auth_token' => env('TWILIO_AUTH_TOKEN')
+            ],
+            'postmark' => [
+                'token' => env('POSTMARK_API_TOKEN')
+            ],
+            'mailgun' => [
+                'secret' => env('MAILGUN_SECRET'),
+                'domain' => env('MAILGUN_DOMAIN'),
+                'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net')
             ]
         ],
 
@@ -117,7 +125,8 @@ To use this package, you need the following requirements:
     ];
     ```
    - The `default` array allows you to configure your default service providers for your notification channels. Options
-     are `sendgrid` and `ses` for email, and `vonage` or `twilio` for SMS.
+     are `sendgrid`, `ses`, `postmark`, and `mailgun` for email, and `vonage` or `twilio` for SMS.
+     - For `mailgun`, set `MAILGUN_ENDPOINT` to `api.eu.mailgun.net` if your Mailgun account is hosted in the EU region.
    - The `providers` array is where you supply the credentials for the service provider you choose.
    - The `customizations` array allows you to customize your email parameters, queue settings, and templates directory.
      - `queue_name` — sets the default queue name for all Raven notifications. The Laravel default queue is used if not provided.
@@ -159,6 +168,8 @@ To use this package, you need the following requirements:
      Use `email_template_id` when the email template is hosted on the provider's platform. The provider handles rendering; Raven sends the identifier and substitution data. The value depends on your email provider:
      - **SendGrid** — the dynamic template ID (e.g. `d-ad34ghAwe3mQRvb29`)
      - **Amazon SES** — the template name as created via the SES `CreateEmailTemplate` API (e.g. `MyTemplate`)
+     - **Postmark** — the template ID (numeric, e.g. `1234567`) or template alias (e.g. `welcome-email`)
+     - **Mailgun** — the template name as created in the Mailgun dashboard (e.g. `welcome`)
 
      Note: SES stored templates do not support attachments. An exception will be thrown if a context using a stored template includes attachments.
 
@@ -190,7 +201,7 @@ To use this package, you need the following requirements:
     ];
     ```
 
-     This works with any email provider (SendGrid, Amazon SES, etc.), and you can mix both approaches across different contexts — useful for gradually migrating templates off a provider's platform.
+     This works with any email provider (SendGrid, Amazon SES, Postmark, Mailgun), and you can mix both approaches across different contexts — useful for gradually migrating templates off a provider's platform.
 
    - SMS Notification Context
     ```php
@@ -455,7 +466,7 @@ The following exceptions can be thrown by the package for the scenarios outlined
    - Attempting to send an SMS Notification to a notifiable that has no `routeNotificationFor$Provider()` method in the model class.
    - Attempting to send an Email Notification with attachments using a stored SES template (SES stored templates do not support attachments).
 3. `RavenDeliveryException` `code: 502`
-   - A notification channel (SendGrid, Vonage, Twilio, or Amazon SES) fails to deliver a message due to an API error,
+   - A notification channel (SendGrid, Amazon SES, Postmark, Mailgun, Vonage, or Twilio) fails to deliver a message due to an API error,
      a non-success response status, or an SDK exception. Each recipient is dispatched as a separate queued job, so
      failures are isolated per recipient.
 4. `RavenTemplateNotFoundException` `code: 404`
@@ -469,6 +480,8 @@ The following exceptions can be thrown by the package for the scenarios outlined
 - [PHP Mailer](https://github.com/PHPMailer/PHPMailer) - Library
 - [Vonage](https://github.com/vonage/vonage-php-sdk-core) - Library
 - [Twilio](https://github.com/twilio/twilio-php) - Library
+- [Postmark PHP](https://github.com/ActiveCampaign/postmark-php) - Library
+- [Mailgun PHP](https://github.com/mailgun/mailgun-php) - Library
 
 ## ✍️ Authors <a name = "authors"></a>
 - [@chijioke-ibekwe](https://github.com/chijioke-ibekwe) - Initial work
