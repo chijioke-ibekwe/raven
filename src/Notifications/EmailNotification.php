@@ -100,14 +100,11 @@ class EmailNotification extends Notification implements RavenNotification
         if (! empty($this->scroll->getAttachmentUrls())) {
             $attachments = [];
             foreach ($this->scroll->getAttachmentUrls() as $url) {
+                $resolved = $this->resolveAttachment($url);
                 $attachment = new Attachment;
-                $filename = basename($url);
-                $binary_content = file_get_contents($url);
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->buffer($binary_content) ?: 'application/octet-stream';
-                $attachment->setContent(base64_encode($binary_content));
-                $attachment->setType($mimeType);
-                $attachment->setFilename($filename);
+                $attachment->setContent(base64_encode($resolved['content']));
+                $attachment->setType($resolved['mimeType']);
+                $attachment->setFilename($resolved['filename']);
                 $attachment->setDisposition('attachment');
 
                 $attachments[] = $attachment;
@@ -148,16 +145,8 @@ class EmailNotification extends Notification implements RavenNotification
 
         if (! empty($this->scroll->getAttachmentUrls())) {
             foreach ($this->scroll->getAttachmentUrls() as $url) {
-                $filename = basename($url);
-                $binary_content = file_get_contents($url);
-
-                if ($binary_content === false) {
-                    throw new Exception("Could not fetch remote content from: '$url'");
-                }
-
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->buffer($binary_content) ?: 'application/octet-stream';
-                $email->AddStringAttachment($binary_content, $filename, PHPMailer::ENCODING_BASE64, $mimeType);
+                $resolved = $this->resolveAttachment($url);
+                $email->AddStringAttachment($resolved['content'], $resolved['filename'], PHPMailer::ENCODING_BASE64, $resolved['mimeType']);
             }
         }
 
@@ -180,16 +169,11 @@ class EmailNotification extends Notification implements RavenNotification
         ];
 
         foreach ($this->scroll->getAttachmentUrls() as $url) {
-            $binary = file_get_contents($url);
-            if ($binary === false) {
-                throw new RavenInvalidDataException("Could not fetch remote content from: '$url'");
-            }
-            $finfo = new \finfo(FILEINFO_MIME_TYPE);
-            $mimeType = $finfo->buffer($binary) ?: 'application/octet-stream';
+            $resolved = $this->resolveAttachment($url);
             $payload['attachments'][] = [
-                'Name' => basename($url),
-                'Content' => base64_encode($binary),
-                'ContentType' => $mimeType,
+                'Name' => $resolved['filename'],
+                'Content' => base64_encode($resolved['content']),
+                'ContentType' => $resolved['mimeType'],
             ];
         }
 
@@ -212,17 +196,73 @@ class EmailNotification extends Notification implements RavenNotification
         ];
 
         foreach ($this->scroll->getAttachmentUrls() as $url) {
-            $binary = file_get_contents($url);
-            if ($binary === false) {
-                throw new RavenInvalidDataException("Could not fetch remote content from: '$url'");
-            }
+            $resolved = $this->resolveAttachment($url);
             $payload['attachments'][] = [
-                'fileContent' => $binary,
-                'filename' => basename($url),
+                'fileContent' => $resolved['content'],
+                'filename' => $resolved['filename'],
             ];
         }
 
         return $payload;
+    }
+
+    /**
+     * Resolve an attachment URL or path into its binary content, filename, and MIME type.
+     *
+     * Supports remote URLs (http://, https://, etc.) and local file paths. Relative
+     * local paths are resolved against the application base path.
+     *
+     * @return array{content: string, filename: string, mimeType: string}
+     *
+     * @throws RavenInvalidDataException
+     */
+    private function resolveAttachment(string $url): array
+    {
+        $isRemote = (bool) preg_match('#^[a-z][a-z0-9+.-]*://#i', $url);
+
+        if ($isRemote) {
+            $binary = @file_get_contents($url);
+            if ($binary === false) {
+                throw new RavenInvalidDataException("Could not fetch remote content from: '$url'");
+            }
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($binary) ?: 'application/octet-stream';
+
+            return [
+                'content' => $binary,
+                'filename' => basename(parse_url($url, PHP_URL_PATH) ?: $url),
+                'mimeType' => $mimeType,
+            ];
+        }
+
+        $path = $url;
+        if (! $this->isAbsoluteLocalPath($path) && function_exists('base_path')) {
+            $path = base_path($path);
+        }
+
+        $real = realpath($path);
+        if ($real === false || ! is_file($real) || ! is_readable($real)) {
+            throw new RavenInvalidDataException("Could not read attachment from: '$url'");
+        }
+
+        $binary = @file_get_contents($real);
+        if ($binary === false) {
+            throw new RavenInvalidDataException("Could not read attachment from: '$url'");
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($real) ?: 'application/octet-stream';
+
+        return [
+            'content' => $binary,
+            'filename' => basename($real),
+            'mimeType' => $mimeType,
+        ];
+    }
+
+    private function isAbsoluteLocalPath(string $path): bool
+    {
+        return str_starts_with($path, '/') || (bool) preg_match('#^[A-Za-z]:[\\\\/]#', $path);
     }
 
     /**
