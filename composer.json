@@ -30,7 +30,6 @@
     "wildbit/postmark-php": "^7.0",
     "guzzlehttp/guzzle": "^7.10",
     "mailgun/mailgun-php": "^4.4",
-    "symfony/http-client": "^7.4",
     "nyholm/psr7": "^1.8"
   },
   "require-dev": {
