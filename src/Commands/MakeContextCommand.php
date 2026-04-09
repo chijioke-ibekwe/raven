@@ -97,9 +97,12 @@ class MakeContextCommand extends Command
             return [];
         }
 
-        $provider = config('raven.default.email', 'sendgrid');
+        $templateSource = $this->choice(
+            'How would you like to manage the email template for this context?',
+            ['provider-hosted', 'self-managed'],
+        );
 
-        if ($provider === 'ses') {
+        if ($templateSource === 'self-managed') {
             return [
                 'email_template_filename' => $this->ask('Enter the email template filename (e.g. user-verified.html)'),
                 'email_subject' => $this->ask('Enter the email subject (supports {{placeholder}} syntax)'),
@@ -107,7 +110,7 @@ class MakeContextCommand extends Command
         }
 
         return [
-            'email_template_id' => $this->ask('Enter the SendGrid email template ID'),
+            'email_template_id' => $this->ask('Enter the email template ID'),
         ];
     }
 

@@ -36,14 +36,15 @@ class MakeContextCommandTest extends TestCase
         config()->set('raven.customizations.templates_directory', resource_path('templates'));
     }
 
-    public function test_that_context_is_created_with_sendgrid_email_channel(): void
+    public function test_that_context_is_created_with_provider_hosted_email_template(): void
     {
         $this->artisan('raven:make-context')
             ->expectsQuestion('Enter the context name', 'order-confirmed')
             ->expectsQuestion('Enter an optional description (press Enter to skip)', 'Order confirmation email')
             ->expectsChoice('Select channels', ['email'], ['email', 'sms', 'database'])
             ->expectsConfirmation('Should this context be active?', 'yes')
-            ->expectsQuestion('Enter the SendGrid email template ID', 'd-abc123')
+            ->expectsChoice('How would you like to manage the email template for this context?', 'provider-hosted', ['provider-hosted', 'self-managed'])
+            ->expectsQuestion('Enter the email template ID', 'd-abc123')
             ->expectsConfirmation('Should queue payloads be encrypted?', 'no')
             ->expectsConfirmation('Do you want to configure per-channel queue routing?', 'no')
             ->expectsTable(['Field', 'Value'], [
@@ -66,15 +67,14 @@ class MakeContextCommandTest extends TestCase
         $this->assertEquals('d-abc123', $config['order-confirmed']['email_template_id']);
     }
 
-    public function test_that_context_is_created_with_ses_email_channel(): void
+    public function test_that_context_is_created_with_self_managed_email_template(): void
     {
-        config()->set('raven.default.email', 'ses');
-
         $this->artisan('raven:make-context')
             ->expectsQuestion('Enter the context name', 'welcome-email')
             ->expectsQuestion('Enter an optional description (press Enter to skip)', '')
             ->expectsChoice('Select channels', ['email'], ['email', 'sms', 'database'])
             ->expectsConfirmation('Should this context be active?', 'yes')
+            ->expectsChoice('How would you like to manage the email template for this context?', 'self-managed', ['provider-hosted', 'self-managed'])
             ->expectsQuestion('Enter the email template filename (e.g. user-verified.html)', 'welcome.html')
             ->expectsQuestion('Enter the email subject (supports {{placeholder}} syntax)', 'Welcome, {{name}}!')
             ->expectsConfirmation('Should queue payloads be encrypted?', 'no')
@@ -157,7 +157,8 @@ class MakeContextCommandTest extends TestCase
             ->expectsQuestion('Enter an optional description (press Enter to skip)', 'User verification notification')
             ->expectsChoice('Select channels', ['email', 'sms', 'database'], ['email', 'sms', 'database'])
             ->expectsConfirmation('Should this context be active?', 'yes')
-            ->expectsQuestion('Enter the SendGrid email template ID', 'd-xyz789')
+            ->expectsChoice('How would you like to manage the email template for this context?', 'provider-hosted', ['provider-hosted', 'self-managed'])
+            ->expectsQuestion('Enter the email template ID', 'd-xyz789')
             ->expectsQuestion('Enter the SMS template filename (e.g. user-verified.txt)', 'user-verified.txt')
             ->expectsQuestion('Enter the in-app template filename (e.g. user-verified.json)', 'user-verified.json')
             ->expectsConfirmation('Should queue payloads be encrypted?', 'no')
@@ -214,7 +215,8 @@ class MakeContextCommandTest extends TestCase
             ->expectsQuestion('Enter an optional description (press Enter to skip)', '')
             ->expectsChoice('Select channels', ['email'], ['email', 'sms', 'database'])
             ->expectsConfirmation('Should this context be active?', 'yes')
-            ->expectsQuestion('Enter the SendGrid email template ID', 'd-temp')
+            ->expectsChoice('How would you like to manage the email template for this context?', 'provider-hosted', ['provider-hosted', 'self-managed'])
+            ->expectsQuestion('Enter the email template ID', 'd-temp')
             ->expectsConfirmation('Should queue payloads be encrypted?', 'no')
             ->expectsConfirmation('Do you want to configure per-channel queue routing?', 'no')
             ->expectsConfirmation('Do you want to save this context?', 'no')
@@ -282,7 +284,8 @@ PHP;
             ->expectsQuestion('Enter an optional description (press Enter to skip)', '')
             ->expectsChoice('Select channels', ['email'], ['email', 'sms', 'database'])
             ->expectsConfirmation('Should this context be active?', 'yes')
-            ->expectsQuestion('Enter the SendGrid email template ID', 'd-reset123')
+            ->expectsChoice('How would you like to manage the email template for this context?', 'provider-hosted', ['provider-hosted', 'self-managed'])
+            ->expectsQuestion('Enter the email template ID', 'd-reset123')
             ->expectsConfirmation('Should queue payloads be encrypted?', 'yes')
             ->expectsConfirmation('Do you want to configure per-channel queue routing?', 'no')
             ->expectsTable(['Field', 'Value'], [
@@ -308,7 +311,8 @@ PHP;
             ->expectsQuestion('Enter an optional description (press Enter to skip)', '')
             ->expectsChoice('Select channels', ['email', 'sms'], ['email', 'sms', 'database'])
             ->expectsConfirmation('Should this context be active?', 'yes')
-            ->expectsQuestion('Enter the SendGrid email template ID', 'd-ship456')
+            ->expectsChoice('How would you like to manage the email template for this context?', 'provider-hosted', ['provider-hosted', 'self-managed'])
+            ->expectsQuestion('Enter the email template ID', 'd-ship456')
             ->expectsQuestion('Enter the SMS template filename (e.g. user-verified.txt)', 'order-shipped.txt')
             ->expectsConfirmation('Should queue payloads be encrypted?', 'no')
             ->expectsConfirmation('Do you want to configure per-channel queue routing?', 'yes')
@@ -344,7 +348,8 @@ PHP;
             ->expectsQuestion('Enter an optional description (press Enter to skip)', '')
             ->expectsChoice('Select channels', ['email', 'sms'], ['email', 'sms', 'database'])
             ->expectsConfirmation('Should this context be active?', 'yes')
-            ->expectsQuestion('Enter the SendGrid email template ID', 'd-mixed')
+            ->expectsChoice('How would you like to manage the email template for this context?', 'provider-hosted', ['provider-hosted', 'self-managed'])
+            ->expectsQuestion('Enter the email template ID', 'd-mixed')
             ->expectsQuestion('Enter the SMS template filename (e.g. user-verified.txt)', 'mixed.txt')
             ->expectsConfirmation('Should queue payloads be encrypted?', 'no')
             ->expectsConfirmation('Do you want to configure per-channel queue routing?', 'yes')

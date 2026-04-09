@@ -2,8 +2,10 @@
 
 namespace ChijiokeIbekwe\Raven\Channels;
 
+use Aws\Exception\AwsException;
 use Aws\Ses\Exception\SesException;
 use Aws\Ses\SesClient;
+use Aws\SesV2\SesV2Client;
 use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
 use ChijiokeIbekwe\Raven\Templates\TemplateStrategy;
@@ -14,11 +16,14 @@ class AmazonSesChannel
 {
     private SesClient $sesClient;
 
+    private SesV2Client $sesV2Client;
+
     private TemplateStrategy $templateStrategy;
 
     public function __construct()
     {
         $this->sesClient = app(SesClient::class);
+        $this->sesV2Client = app(SesV2Client::class);
         $this->templateStrategy = app(TemplateStrategy::class);
     }
 
@@ -31,6 +36,77 @@ class AmazonSesChannel
             throw new RavenDeliveryException('AmazonSesChannel requires an EmailNotification notification');
         }
 
+        if ($emailNotification->notificationContext->email_template_id) {
+            $this->sendWithStoredTemplate($notifiable, $emailNotification);
+        } else {
+            $this->sendWithFilesystemTemplate($notifiable, $emailNotification);
+        }
+    }
+
+    /**
+     * Send using a stored SES template via the SES v2 API.
+     *
+     * @throws RavenDeliveryException
+     */
+    private function sendWithStoredTemplate(mixed $notifiable, EmailNotification $emailNotification): void
+    {
+        $route = $emailNotification->resolveRecipientRoute($notifiable);
+        $sender = config('raven.customizations.email.from');
+        $context = $emailNotification->notificationContext;
+        $scroll = $emailNotification->scroll;
+
+        $destination = ['ToAddresses' => [$route]];
+
+        if (! empty($scroll->getCcs())) {
+            $destination['CcAddresses'] = array_map(
+                fn ($key, $value) => is_string($key) ? $key : $value,
+                array_keys($scroll->getCcs()),
+                array_values($scroll->getCcs())
+            );
+        }
+
+        if (! empty($scroll->getBccs())) {
+            $destination['BccAddresses'] = array_map(
+                fn ($key, $value) => is_string($key) ? $key : $value,
+                array_keys($scroll->getBccs()),
+                array_values($scroll->getBccs())
+            );
+        }
+
+        $params = [
+            'FromEmailAddress' => "{$sender['name']} <{$sender['address']}>",
+            'Destination' => $destination,
+            'Content' => [
+                'Template' => [
+                    'TemplateName' => $context->email_template_id,
+                    'TemplateData' => json_encode($scroll->getParams()),
+                ],
+            ],
+        ];
+
+        if ($replyTo = $scroll->getReplyTo()) {
+            $params['ReplyToAddresses'] = [$replyTo];
+        }
+
+        try {
+            $result = $this->sesV2Client->sendEmail($params);
+
+            Log::info('SES templated email sent successfully.', [
+                'MessageId' => $result->get('MessageId'),
+            ]);
+        } catch (AwsException $e) {
+            Log::error('SES error while sending templated email: '.$e->getAwsErrorMessage());
+            throw new RavenDeliveryException($e->getAwsErrorMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Send using a filesystem template via the SES v1 raw email API.
+     *
+     * @throws RavenDeliveryException
+     */
+    private function sendWithFilesystemTemplate(mixed $notifiable, EmailNotification $emailNotification): void
+    {
         $email = $emailNotification->toAmazonSes($notifiable);
 
         $sender = config('raven.customizations.email.from');

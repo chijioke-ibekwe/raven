@@ -4,6 +4,7 @@ namespace ChijiokeIbekwe\Raven\Channels;
 
 use ChijiokeIbekwe\Raven\Exceptions\RavenDeliveryException;
 use ChijiokeIbekwe\Raven\Notifications\EmailNotification;
+use ChijiokeIbekwe\Raven\Templates\TemplateStrategy;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use SendGrid;
@@ -13,9 +14,12 @@ class SendGridChannel
 {
     private SendGrid $sendGrid;
 
+    private TemplateStrategy $templateStrategy;
+
     public function __construct()
     {
         $this->sendGrid = app(SendGrid::class);
+        $this->templateStrategy = app(TemplateStrategy::class);
     }
 
     /**
@@ -32,6 +36,15 @@ class SendGridChannel
         $email->setOpenTracking(true, '--sub--');
         $sender = config('raven.customizations.email.from');
         $email->setFrom($sender['address'], $sender['name']);
+
+        if ($emailNotification->notificationContext->email_template_filename) {
+            $params = $emailNotification->scroll->getParams();
+            $template = $this->templateStrategy->resolve($params, $emailNotification->notificationContext);
+
+            $email->setSubject($template->subject);
+            $email->addContent('text/plain', $template->plainText);
+            $email->addContent('text/html', $template->html);
+        }
 
         try {
             $response = $this->sendGrid->send($email);

@@ -32,15 +32,13 @@ class EmailNotification extends Notification implements RavenNotification
     }
 
     /**
-     * Get the Sendgrid representation of the notification.
-     *
-     * @throws RavenInvalidDataException|TypeException
+     * @throws RavenInvalidDataException
      */
-    public function toSendgrid(mixed $notifiable): ?Mail
+    public function resolveRecipientRoute(mixed $notifiable): string
     {
-
-        $route = $notifiable instanceof AnonymousNotifiable ? $notifiable->routes[config('raven.default.email')] :
-            $notifiable->routeNotificationFor('mail');
+        $route = $notifiable instanceof AnonymousNotifiable
+            ? $notifiable->routes[config('raven.default.email')]
+            : $notifiable->routeNotificationFor('mail');
 
         if (! $route) {
             $class = get_class($notifiable);
@@ -49,9 +47,27 @@ class EmailNotification extends Notification implements RavenNotification
             );
         }
 
+        return $route;
+    }
+
+    /**
+     * Get the Sendgrid representation of the notification.
+     *
+     * @throws RavenInvalidDataException|TypeException
+     */
+    public function toSendgrid(mixed $notifiable): ?Mail
+    {
+        $route = $this->resolveRecipientRoute($notifiable);
+
         $email = new Mail;
-        $email->setTemplateId($this->notificationContext->email_template_id);
         $email->addTo($route);
+
+        if ($this->notificationContext->email_template_id) {
+            $email->setTemplateId($this->notificationContext->email_template_id);
+
+            $substitutions = $this->scroll->getParams();
+            $email->addDynamicTemplateDatas($substitutions);
+        }
 
         if (! empty($ccs = $this->scroll->getCcs())) {
             if (! is_string(array_key_first($ccs))) {
@@ -81,20 +97,14 @@ class EmailNotification extends Notification implements RavenNotification
             $email->setReplyTo($replyTo);
         }
 
-        $substitutions = $this->scroll->getParams();
-        $email->addDynamicTemplateDatas($substitutions);
-
         if (! empty($this->scroll->getAttachmentUrls())) {
             $attachments = [];
             foreach ($this->scroll->getAttachmentUrls() as $url) {
+                $resolved = $this->resolveAttachment($url);
                 $attachment = new Attachment;
-                $filename = basename($url);
-                $binary_content = file_get_contents($url);
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->buffer($binary_content) ?: 'application/octet-stream';
-                $attachment->setContent(base64_encode($binary_content));
-                $attachment->setType($mimeType);
-                $attachment->setFilename($filename);
+                $attachment->setContent(base64_encode($resolved['content']));
+                $attachment->setType($resolved['mimeType']);
+                $attachment->setFilename($resolved['filename']);
                 $attachment->setDisposition('attachment');
 
                 $attachments[] = $attachment;
@@ -112,16 +122,7 @@ class EmailNotification extends Notification implements RavenNotification
      */
     public function toAmazonSes(mixed $notifiable): ?PHPMailer
     {
-
-        $route = $notifiable instanceof AnonymousNotifiable ? $notifiable->routes[config('raven.default.email')] :
-            $notifiable->routeNotificationFor('mail');
-
-        if (! $route) {
-            $class = get_class($notifiable);
-            throw new RavenInvalidDataException(
-                "Missing route for mail: ensure {$class}::routeNotificationForMail() is defined on the notifiable class"
-            );
-        }
+        $route = $this->resolveRecipientRoute($notifiable);
 
         $email = new PHPMailer(true);
         $email->addAddress($route);
@@ -144,20 +145,146 @@ class EmailNotification extends Notification implements RavenNotification
 
         if (! empty($this->scroll->getAttachmentUrls())) {
             foreach ($this->scroll->getAttachmentUrls() as $url) {
-                $filename = basename($url);
-                $binary_content = file_get_contents($url);
-
-                if ($binary_content === false) {
-                    throw new Exception("Could not fetch remote content from: '$url'");
-                }
-
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->buffer($binary_content) ?: 'application/octet-stream';
-                $email->AddStringAttachment($binary_content, $filename, PHPMailer::ENCODING_BASE64, $mimeType);
+                $resolved = $this->resolveAttachment($url);
+                $email->AddStringAttachment($resolved['content'], $resolved['filename'], PHPMailer::ENCODING_BASE64, $resolved['mimeType']);
             }
         }
 
         return $email;
+    }
+
+    /**
+     * Build the structured payload consumed by PostmarkChannel.
+     *
+     * @throws RavenInvalidDataException
+     */
+    public function toPostmark(mixed $notifiable): array
+    {
+        $payload = [
+            'to' => $this->resolveRecipientRoute($notifiable),
+            'cc' => $this->flattenAddressList($this->scroll->getCcs()),
+            'bcc' => $this->flattenAddressList($this->scroll->getBccs()),
+            'replyTo' => $this->scroll->getReplyTo(),
+            'attachments' => [],
+        ];
+
+        foreach ($this->scroll->getAttachmentUrls() as $url) {
+            $resolved = $this->resolveAttachment($url);
+            $payload['attachments'][] = [
+                'Name' => $resolved['filename'],
+                'Content' => base64_encode($resolved['content']),
+                'ContentType' => $resolved['mimeType'],
+            ];
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Build the structured payload consumed by MailgunChannel.
+     *
+     * @throws RavenInvalidDataException
+     */
+    public function toMailgun(mixed $notifiable): array
+    {
+        $payload = [
+            'to' => $this->resolveRecipientRoute($notifiable),
+            'cc' => $this->flattenAddressList($this->scroll->getCcs()),
+            'bcc' => $this->flattenAddressList($this->scroll->getBccs()),
+            'replyTo' => $this->scroll->getReplyTo(),
+            'attachments' => [],
+        ];
+
+        foreach ($this->scroll->getAttachmentUrls() as $url) {
+            $resolved = $this->resolveAttachment($url);
+            $payload['attachments'][] = [
+                'fileContent' => $resolved['content'],
+                'filename' => $resolved['filename'],
+            ];
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Resolve an attachment URL or path into its binary content, filename, and MIME type.
+     *
+     * Supports remote URLs (http://, https://, etc.) and local file paths. Relative
+     * local paths are resolved against the application base path.
+     *
+     * @return array{content: string, filename: string, mimeType: string}
+     *
+     * @throws RavenInvalidDataException
+     */
+    private function resolveAttachment(string $url): array
+    {
+        $isRemote = (bool) preg_match('#^[a-z][a-z0-9+.-]*://#i', $url);
+
+        if ($isRemote) {
+            $binary = @file_get_contents($url);
+            if ($binary === false) {
+                throw new RavenInvalidDataException("Could not fetch remote content from: '$url'");
+            }
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($binary) ?: 'application/octet-stream';
+
+            return [
+                'content' => $binary,
+                'filename' => basename(parse_url($url, PHP_URL_PATH) ?: $url),
+                'mimeType' => $mimeType,
+            ];
+        }
+
+        $path = $url;
+        if (! $this->isAbsoluteLocalPath($path) && function_exists('base_path')) {
+            $path = base_path($path);
+        }
+
+        $real = realpath($path);
+        if ($real === false || ! is_file($real) || ! is_readable($real)) {
+            throw new RavenInvalidDataException("Could not read attachment from: '$url'");
+        }
+
+        $binary = @file_get_contents($real);
+        if ($binary === false) {
+            throw new RavenInvalidDataException("Could not read attachment from: '$url'");
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($real) ?: 'application/octet-stream';
+
+        return [
+            'content' => $binary,
+            'filename' => basename($real),
+            'mimeType' => $mimeType,
+        ];
+    }
+
+    private function isAbsoluteLocalPath(string $path): bool
+    {
+        return str_starts_with($path, '/') || (bool) preg_match('#^[A-Za-z]:[\\\\/]#', $path);
+    }
+
+    /**
+     * Flatten a CC/BCC list into a comma-separated string of addresses,
+     * supporting both ['email' => 'Name'] and [0 => 'email'] forms.
+     */
+    private function flattenAddressList(array $list): ?string
+    {
+        if (empty($list)) {
+            return null;
+        }
+
+        $addresses = [];
+        foreach ($list as $key => $value) {
+            if (is_string($key)) {
+                $addresses[] = "$value <$key>";
+            } else {
+                $addresses[] = $value;
+            }
+        }
+
+        return implode(', ', $addresses);
     }
 
     /**
@@ -167,16 +294,18 @@ class EmailNotification extends Notification implements RavenNotification
     {
         $context_name = $this->notificationContext->name;
 
-        if (config('raven.default.email') == 'sendgrid') {
-            throw_if(empty($this->notificationContext->email_template_id), RavenInvalidDataException::class,
-                "Email notification context with name $context_name has no email template id");
+        $hasTemplateId = ! empty($this->notificationContext->email_template_id);
+        $hasTemplateFilename = ! empty($this->notificationContext->email_template_filename);
+
+        throw_if(! $hasTemplateId && ! $hasTemplateFilename, RavenInvalidDataException::class,
+            "Email notification context with name $context_name has no email template id or template file name");
+
+        if ($hasTemplateId && config('raven.default.email') === 'ses' && ! empty($this->scroll->getAttachmentUrls())) {
+            throw new RavenInvalidDataException('Attachments are not supported with SES stored templates');
         }
 
-        if (config('raven.default.email') == 'ses') {
+        if ($hasTemplateFilename) {
             $email_template_directory = config('raven.customizations.templates_directory').self::EMAIL_FOLDER;
-
-            throw_if(empty($this->notificationContext->email_template_filename), RavenInvalidDataException::class,
-                "Email notification context with name $context_name has no email template file name");
 
             throw_if(! file_exists($email_template_directory.$this->notificationContext->email_template_filename), RavenTemplateNotFoundException::class,
                 "Email notification context with name $context_name has no template file in $email_template_directory");
