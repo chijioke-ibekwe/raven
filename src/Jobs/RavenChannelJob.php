@@ -30,10 +30,10 @@ class RavenChannelJob implements ShouldQueue
     const PHONE_PATTERN = '#^\+?[0-9\s\-()]+$#';
 
     public function __construct(
-        public readonly Scroll $scroll,
-        public readonly NotificationContext $context,
-        public readonly ChannelType $channelType,
-        public readonly mixed $recipient,
+        public Scroll $scroll,
+        public NotificationContext $context,
+        public ChannelType $channelType,
+        public mixed $recipient,
     ) {
         $channelKey = strtolower($this->channelType->name);
         $channelQueue = $context->queue[$channelKey] ?? [];
